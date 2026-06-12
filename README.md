@@ -5,7 +5,7 @@ Community entertainment platform — catalog, watchlists, ratings; community and
 ## Setup
 1. `npm install`
 2. Copy `.env.example` to `.env.local` and fill in Neon + Clerk values.
-3. `npm run db:push` (after Plan 1 Task 13 exists)
+3. `npm run db:push` (after Plan 1 Task 14 exists)
 4. `npm run dev`
 
 ## Docs
