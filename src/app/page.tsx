@@ -1,7 +1,10 @@
+import { BRAND_NAME } from "@/lib/brand";
+
 export default function Home() {
   return (
-    <main className="flex min-h-screen items-center justify-center">
-      <h1 className="text-3xl font-bold">reco</h1>
-    </main>
+    <section className="py-16 text-center">
+      <h1 className="text-4xl font-bold">{BRAND_NAME}</h1>
+      <p className="mt-3 text-text-muted">Find what to watch. Catalog arrives in Plan 3.</p>
+    </section>
   );
 }

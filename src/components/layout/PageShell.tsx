@@ -1,0 +1,50 @@
+import Link from "next/link";
+
+export interface NavLink {
+  href: string;
+  label: string;
+}
+
+export function PageShell({
+  brand,
+  navLinks,
+  actions,
+  footer,
+  children,
+}: {
+  brand: string;
+  navLinks: NavLink[];
+  actions?: React.ReactNode;
+  footer?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur">
+        <div className="mx-auto flex h-16 w-full max-w-(--breakpoint-xl) items-center gap-8 px-4">
+          <Link href="/" className="text-xl font-bold text-text">
+            {brand}
+          </Link>
+          <nav className="flex flex-1 gap-1" aria-label="Primary">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="rounded-md px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-surface-raised hover:text-text"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </nav>
+          {actions && <div className="flex items-center gap-2">{actions}</div>}
+        </div>
+      </header>
+      <main className="mx-auto w-full max-w-(--breakpoint-xl) flex-1 px-4 py-8">{children}</main>
+      <footer className="border-t border-border">
+        <div className="mx-auto w-full max-w-(--breakpoint-xl) px-4 py-6 text-sm text-text-muted">
+          {footer}
+        </div>
+      </footer>
+    </div>
+  );
+}
