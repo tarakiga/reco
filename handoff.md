@@ -10,3 +10,14 @@ Append an entry after each completed task: what was done, decisions made, where 
 - Env pattern: `.env.example` tracked with placeholders; `.env*` gitignored (with `!.env.example` negation if needed).
 - README, task-list.md, handoff.md created.
 - Pick up at: T3 Vitest + cn() helper (see plan).
+
+## 2026-06-13 — T3 through T12 complete (subagent-driven, reviewed)
+
+- T3: Vitest (jsdom) + cn() helper (clsx + tailwind-merge); tsconfig types ["node", "vitest/globals"].
+- T4: Tailwind v4 @theme token layer in globals.css (dark cinema palette, AAA contrast verified); unused scaffold SVGs removed.
+- T5: Storybook 10.4.4 (@storybook/nextjs-vite) + addon-vitest browser project in vitest.config.ts; preview imports globals.css, dark default background.
+- T6-T11: Component library, each TDD + story: Button (variants/sizes/loading), Input, Select, Badge, Skeleton, EmptyState, Tabs, Modal (escape/overlay close), Toast (provider + hook + 5s auto-dismiss).
+- T12: PageShell (sticky header, nav, actions/footer slots) wired into app layout with ToastProvider; interim brand.ts/nav.ts single-source modules (Plan 2 makes them config-driven).
+- State: 37 tests green, tsc clean, next build green, branch plan-1-foundation.
+- BLOCKED at T13/T14: need owner-provided Clerk keys + Neon DATABASE_URL in .env.local (copy .env.example). Drizzle-kit also reads .env — put DATABASE_URL in both. Run CREATE EXTENSION IF NOT EXISTS vector; on the Neon DB once.
+- Pick up at: T13 Clerk auth (plan task 13) once keys exist.
