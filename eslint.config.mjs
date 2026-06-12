@@ -15,6 +15,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Build artifacts not covered by eslint-config-next defaults:
+    "storybook-static/**",
   ]),
   ...storybook.configs["flat/recommended"]
 ]);
