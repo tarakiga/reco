@@ -21,3 +21,12 @@ Append an entry after each completed task: what was done, decisions made, where 
 - State: 37 tests green, tsc clean, next build green, branch plan-1-foundation.
 - BLOCKED at T13/T14: need owner-provided Clerk keys + Neon DATABASE_URL in .env.local (copy .env.example). Drizzle-kit also reads .env — put DATABASE_URL in both. Run CREATE EXTENSION IF NOT EXISTS vector; on the Neon DB once.
 - Pick up at: T13 Clerk auth (plan task 13) once keys exist.
+
+## 2026-06-13 — T13-T16 complete: Plan 1 DONE
+
+- T13: Clerk v7 auth (proxy.ts — Next 16 convention; Show components replace SignedIn/SignedOut).
+- T14: Drizzle + Neon, profiles schema pushed; pgvector confirmed enabled.
+- T15: usernameBase + ensureProfile/getCurrentProfile (server-only), home page greets by username.
+- T16: Playwright smoke (app shell landmarks, Clerk sign-in renders).
+- State: 41 Vitest + 2 Playwright green, tsc clean, build green.
+- Next: Plan 2 (config system + admin UI) — needs writing; see docs/superpowers/specs/2026-06-12-reco-v1-design.md sections 4.1/5.

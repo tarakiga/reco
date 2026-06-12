@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
+    "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
@@ -27,6 +28,7 @@
   },
   "devDependencies": {
     "@chromatic-com/storybook": "^5.2.1",
+    "@playwright/test": "^1.60.0",
     "@storybook/addon-a11y": "^10.4.4",
     "@storybook/addon-docs": "^10.4.4",
     "@storybook/addon-mcp": "^0.6.0",

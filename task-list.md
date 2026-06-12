@@ -13,10 +13,10 @@
 - [x] T10 Modal
 - [x] T11 Toast
 - [x] T12 PageShell + layout
-- [ ] T13 Clerk auth — BLOCKED: needs Clerk keys in .env.local
-- [ ] T14 Drizzle + Neon + profiles schema — BLOCKED: needs DATABASE_URL
-- [ ] T15 ensureProfile service — blocked by T13+T14
-- [ ] T16 Playwright smoke tests — blocked by T13
+- [x] T13 Clerk auth
+- [x] T14 Drizzle + Neon + profiles schema
+- [x] T15 ensureProfile service
+- [x] T16 Playwright smoke tests
 
 ## Plan 2: Config system + admin UI — not yet planned
 ## Plan 3: Catalog MVP — not yet planned
