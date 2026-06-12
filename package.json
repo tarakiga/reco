@@ -10,11 +10,16 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.2",
+    "@neondatabase/serverless": "^1.1.0",
     "clsx": "^2.1.1",
+    "drizzle-orm": "^0.45.2",
     "next": "16.2.9",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -37,6 +42,8 @@
     "@vitejs/plugin-react": "^6.0.2",
     "@vitest/browser-playwright": "^4.1.8",
     "@vitest/coverage-v8": "^4.1.8",
+    "dotenv": "^17.4.2",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "eslint-plugin-storybook": "^10.4.4",
