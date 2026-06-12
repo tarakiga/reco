@@ -11,7 +11,8 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(dirname, "./src")
+      "@": path.resolve(dirname, "./src"),
+      "server-only": path.resolve(dirname, "./src/test/server-only-stub.ts"),
     }
   },
   test: {
