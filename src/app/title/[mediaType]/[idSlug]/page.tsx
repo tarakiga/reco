@@ -9,6 +9,7 @@ import { Rail } from "@/components/catalog/Rail";
 import { PersonCard } from "@/components/catalog/PersonCard";
 import { TrailerEmbed } from "@/components/catalog/TrailerEmbed";
 import { WhereToWatch } from "@/components/catalog/WhereToWatch";
+import { TitleActions } from "@/components/catalog/TitleActions";
 
 export async function generateMetadata({
   params,
@@ -119,6 +120,11 @@ export default async function TitlePage({
       {title.overview && (
         <p className="mb-8 text-text-muted leading-relaxed">{title.overview}</p>
       )}
+
+      {/* User actions: watchlist + rating (client island, self-fetches user state) */}
+      <div className="mb-8">
+        <TitleActions mediaType={mediaType} tmdbId={id} />
+      </div>
 
       {/* Trailer */}
       {trailerKey && (
