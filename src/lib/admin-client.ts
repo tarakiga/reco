@@ -20,9 +20,16 @@ export async function adminFetch<T = unknown>(url: string, opts: AdminFetchOptio
   }
   const res = await fetch(url, init);
   const text = await res.text();
-  const data = text ? JSON.parse(text) : {};
+  let data: Record<string, unknown> = {};
+  if (text) {
+    try {
+      data = JSON.parse(text);
+    } catch {
+      // non-JSON body (e.g. a proxy/gateway error page) — leave data empty
+    }
+  }
   if (!res.ok) {
-    throw new AdminApiError(res.status, data.error ?? `Request failed (${res.status})`, data.issues);
+    throw new AdminApiError(res.status, (data.error as string) ?? `Request failed (${res.status})`, data.issues);
   }
   return data as T;
 }
