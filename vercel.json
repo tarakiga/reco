@@ -1,0 +1,3 @@
+{
+  "crons": [{ "path": "/api/cron/embed-popular", "schedule": "0 4 * * *" }]
+}
