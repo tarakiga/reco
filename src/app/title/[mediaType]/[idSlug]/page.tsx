@@ -25,6 +25,7 @@ import { TitleActions } from "@/components/catalog/TitleActions";
 import { HeroBackdrop } from "@/components/catalog/HeroBackdrop";
 import { AmbientBackground } from "@/components/catalog/AmbientBackground";
 import { FactsPanel } from "@/components/catalog/FactsPanel";
+import { TitleMatch } from "@/components/catalog/TitleMatch";
 
 export async function generateMetadata({
   params,
@@ -141,6 +142,7 @@ export default async function TitlePage({
                   )}
                 </>
               )}
+              <TitleMatch titleId={title.id} />
               {cert && (
                 <span className="rounded border border-border px-1.5 py-0.5 text-xs text-text-muted">
                   {cert}
