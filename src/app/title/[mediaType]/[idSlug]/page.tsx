@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Rail } from "@/components/catalog/Rail";
 import { PersonCard } from "@/components/catalog/PersonCard";
 import { TrailerEmbed } from "@/components/catalog/TrailerEmbed";
+import { WhereToWatch } from "@/components/catalog/WhereToWatch";
 
 export async function generateMetadata({
   params,
@@ -127,7 +128,8 @@ export default async function TitlePage({
         </div>
       )}
 
-      {/* TODO(Task 6): <WhereToWatch title={title} /> goes here */}
+      {/* Where to watch — region hardcoded "US" for v1; Plan 3b will wire user's profile.region */}
+      <WhereToWatch watch={meta["watch/providers"]} region="US" />
 
       {/* Cast rail */}
       {cast.length > 0 && (
