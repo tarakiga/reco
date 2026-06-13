@@ -10,12 +10,14 @@ export function PageShell({
   navLinks,
   actions,
   footer,
+  search,
   children,
 }: {
   brand: string;
   navLinks: NavLink[];
   actions?: React.ReactNode;
   footer?: React.ReactNode;
+  search?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -25,7 +27,7 @@ export function PageShell({
           <Link href="/" className="text-xl font-bold text-text">
             {brand}
           </Link>
-          <nav className="flex flex-1 gap-1" aria-label="Primary">
+          <nav className="flex gap-1" aria-label="Primary">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -36,6 +38,8 @@ export function PageShell({
               </Link>
             ))}
           </nav>
+          {search && <div className="flex flex-1 items-center">{search}</div>}
+          {!search && <div className="flex-1" />}
           {actions && <div className="flex items-center gap-2">{actions}</div>}
         </div>
       </header>

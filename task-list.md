@@ -38,4 +38,14 @@
 - [x] T7 Audit log view
 - [x] T8 Config-driven brand/nav
 - [x] T9 Admin e2e + close-out
-## Plan 3: Catalog MVP — not yet planned
+## Plan 3a: Catalog core (docs/superpowers/plans/2026-06-13-plan3a-catalog-core.md)
+- [x] T1 TMDB client + images
+- [x] T2 titles/people schema + lazy mirror
+- [x] T3 TitleCard/PersonCard/Rail
+- [x] T4 Search API + page
+- [x] T5 Title detail page
+- [x] T6 Where-to-watch
+- [x] T7 Person page
+- [x] T8 Home trending + close-out
+
+## Plan 3b: Watchlists, ratings, browse filters — not yet planned

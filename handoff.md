@@ -48,3 +48,15 @@ Append an entry after each completed task: what was done, decisions made, where 
 - Note: admin e2e covers the anonymous-guard security boundary; the signed-in admin flow (actual CRUD/publish through the UI) needs Clerk testing tokens and is verified manually for now.
 - Note React Query + Tiptap added.
 - Plan 2 (2a + 2b) DONE. Next: Plan 3 (catalog MVP — TMDB title/person pages, cast search, streaming availability, watchlists, ratings — to be planned).
+
+## 2026-06-13 — Plan 3a: Catalog core DONE
+
+- Plan 3a (catalog read surfaces) complete: TMDB v3 client + lazy mirror (titles/people), search, movie/tv detail (cast/trailer/where-to-watch), person filmography, trending home, header search, TMDB+JustWatch footer attribution.
+- Routes: `/title/[mediaType]/[id]-[slug]`, `/person/[id]-[slug]`.
+- Home page (`src/app/page.tsx`) uses `"use cache"` directive on `getTrending()` — cacheable under PPR/cacheComponents with no dynamic penalty.
+- Header: compact GET search form (`/search?q=...`) added via PageShell's new optional `search` prop.
+- Footer attribution (TMDB TOS requirement): "This product uses the TMDB API but is not endorsed or certified by TMDB." + "Streaming data powered by JustWatch." in PageShell footer slot.
+- Region hardcoded "US" pending profile wiring (Plan 3b).
+- Plain `<img>` for TMDB CDN (no next/image — avoids domain config).
+- e2e hits live TMDB (network-dependent — may be flaky in CI without internet).
+- Next: Plan 3b (watchlists, ratings, browse filters).
