@@ -69,7 +69,7 @@ export function TitleActions({ mediaType, tmdbId }: Props) {
           value={data.status ?? ""}
           onChange={(e) => handleWatchlistChange(e.target.value)}
           disabled={isPending}
-          className="min-w-[180px]"
+          className="min-w-48"
         >
           <option value="">Not tracking</option>
           <option value="want_to_watch">Want to watch</option>

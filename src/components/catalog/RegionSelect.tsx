@@ -25,8 +25,10 @@ export function RegionSelect() {
   const toast = useToast();
   const queryClient = useQueryClient();
 
+  // Distinct key from WhereToWatchClient's ["me-region"]: this one carries the
+  // signed-out sentinel (null), that one always resolves to a region string.
   const { data: region, isLoading, isError } = useQuery({
-    queryKey: ["me-region"],
+    queryKey: ["me-profile"],
     queryFn: () =>
       meFetch<{ region?: string }>("/api/v1/me/profile")
         .then((r) => r.region ?? "US")
@@ -40,6 +42,8 @@ export function RegionSelect() {
   async function handleChange(value: string) {
     try {
       await meFetch("/api/v1/me/profile", { method: "PATCH", body: { region: value } });
+      // refresh both this picker and the where-to-watch region island
+      await queryClient.invalidateQueries({ queryKey: ["me-profile"] });
       await queryClient.invalidateQueries({ queryKey: ["me-region"] });
       toast({ title: "Region updated", variant: "success" });
     } catch (err) {
@@ -52,7 +56,7 @@ export function RegionSelect() {
       label="Your region"
       value={region}
       onChange={(e) => handleChange(e.target.value)}
-      className="min-w-[180px]"
+      className="min-w-48"
     >
       {REGIONS.map((r) => (
         <option key={r.value} value={r.value}>

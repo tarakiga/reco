@@ -5,7 +5,7 @@ import { ProviderLogoRow } from "./ProviderLogoRow";
 
 /**
  * Pure presentational component — no data fetching.
- * Used by both the server WhereToWatch and the client WhereToWatchClient.
+ * Rendered by WhereToWatchClient (which resolves the viewer's region client-side).
  */
 export function WhereToWatchView({
   watch,
