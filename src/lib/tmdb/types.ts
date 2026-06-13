@@ -91,6 +91,7 @@ export interface TmdbTitleDetail {
   recommendations?: { results?: TmdbSearchItem[] };
   release_dates?: TmdbReleaseDates;
   content_ratings?: TmdbContentRatings;
+  keywords?: { keywords?: { id: number; name: string }[]; results?: { id: number; name: string }[] };
   "watch/providers"?: { results?: Record<string, TmdbWatchProviderRegion> };
 }
 export interface TmdbPersonDetail {

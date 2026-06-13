@@ -40,6 +40,7 @@ export const tmdb = {
         "videos",
         "watch/providers",
         "recommendations",
+        "keywords",
         mediaType === "movie" ? "release_dates" : "content_ratings",
       ].join(","),
     }),
