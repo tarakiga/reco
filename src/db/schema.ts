@@ -1,4 +1,4 @@
-import { boolean, integer, jsonb, pgEnum, pgTable, text, timestamp, uuid, unique } from "drizzle-orm/pg-core";
+import { boolean, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uuid, unique } from "drizzle-orm/pg-core";
 
 export const roleEnum = pgEnum("role", ["user", "editor", "admin"]);
 
@@ -100,3 +100,31 @@ export const people = pgTable("people", {
 
 export type TitleRow = typeof titles.$inferSelect;
 export type PersonRow = typeof people.$inferSelect;
+
+export const watchStatusEnum = pgEnum("watch_status", ["want_to_watch", "watching", "watched"]);
+
+export const watchlistItems = pgTable(
+  "watchlist_items",
+  {
+    userId: uuid("user_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+    titleId: uuid("title_id").notNull().references(() => titles.id, { onDelete: "cascade" }),
+    status: watchStatusEnum("status").notNull(),
+    addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.titleId] })],
+);
+
+export const ratings = pgTable(
+  "ratings",
+  {
+    userId: uuid("user_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+    titleId: uuid("title_id").notNull().references(() => titles.id, { onDelete: "cascade" }),
+    score: integer("score").notNull(), // 1..5
+    ratedAt: timestamp("rated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.titleId] })],
+);
+
+export type WatchlistItemRow = typeof watchlistItems.$inferSelect;
+export type RatingRow = typeof ratings.$inferSelect;
