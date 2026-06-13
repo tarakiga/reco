@@ -1,6 +1,6 @@
 import { afterAll, beforeAll } from "vitest";
 import { db } from "@/db";
-import { profiles, titles, watchlistItems, ratings } from "@/db/schema";
+import { profiles, titles } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import {
   setWatchStatus,
