@@ -34,8 +34,15 @@
   --breakpoint-xl: 80rem;
 }
 
+/* allow full-bleed (100vw) sections without a horizontal scrollbar; clip
+   does not create a scroll container, so position: sticky still works */
+html {
+  overflow-x: clip;
+}
+
 body {
   background-color: var(--color-surface);
   color: var(--color-text);
   font-family: var(--font-sans);
+  overflow-x: clip;
 }

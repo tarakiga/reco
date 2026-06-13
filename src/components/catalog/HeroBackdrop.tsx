@@ -1,12 +1,13 @@
 import type { ReactNode } from "react";
 
 /**
- * Hero wrapper: optional backdrop image with a neutral scrim for title
- * legibility, fading into the page. The page's dynamic color now comes from
- * AmbientBackground (the page background), not from this image — so the image
- * stays true to itself and the color reads as the page wash behind everything.
+ * Full-bleed hero: spans the full viewport width and sits flush against the top
+ * of the content area (the `-mt-16` cancels the page + main top padding). An
+ * optional backdrop image gets a neutral legibility scrim; the page's dynamic
+ * color comes from AmbientBackground behind everything.
  *
- * `children` (poster + title block) render above the backdrop.
+ * `children` (poster + title block) are re-constrained to the page's max width
+ * so they line up with the body content below.
  */
 export function HeroBackdrop({
   backdropUrl,
@@ -16,7 +17,7 @@ export function HeroBackdrop({
   children: ReactNode;
 }) {
   return (
-    <div className="relative isolate -mx-4 -mt-8 mb-8 overflow-hidden px-4 pt-8 sm:rounded-b-2xl">
+    <div className="relative left-1/2 isolate -mt-16 mb-8 w-screen -translate-x-1/2 overflow-hidden">
       {backdropUrl && (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -37,7 +38,7 @@ export function HeroBackdrop({
           />
         </>
       )}
-      {children}
+      <div className="mx-auto max-w-5xl px-4">{children}</div>
     </div>
   );
 }
