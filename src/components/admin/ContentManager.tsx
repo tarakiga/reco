@@ -122,6 +122,7 @@ export function ContentManager({ isAdmin }: { isAdmin: boolean }) {
 
   function openCreate() {
     setEditRow(undefined);
+    setSelectedKey("");
     setFormOpen(true);
   }
 
