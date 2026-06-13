@@ -71,3 +71,32 @@ export const auditLog = pgTable("audit_log", {
 export type ConfigOptionRow = typeof configOptions.$inferSelect;
 export type ContentBlockRow = typeof contentBlocks.$inferSelect;
 export type ConfigVersionRow = typeof configVersions.$inferSelect;
+
+export const mediaTypeEnum = pgEnum("media_type", ["movie", "tv"]);
+
+export const titles = pgTable("titles", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tmdbId: integer("tmdb_id").notNull(),
+  mediaType: mediaTypeEnum("media_type").notNull(),
+  slug: text("slug").notNull(),
+  title: text("title").notNull(),
+  releaseYear: integer("release_year"),
+  posterPath: text("poster_path"),
+  backdropPath: text("backdrop_path"),
+  overview: text("overview"),
+  metadata: jsonb("metadata"),
+  refreshedAt: timestamp("refreshed_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [unique("titles_tmdb_media").on(t.tmdbId, t.mediaType)]);
+
+export const people = pgTable("people", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  tmdbId: integer("tmdb_id").notNull().unique(),
+  slug: text("slug").notNull(),
+  name: text("name").notNull(),
+  profilePath: text("profile_path"),
+  metadata: jsonb("metadata"),
+  refreshedAt: timestamp("refreshed_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type TitleRow = typeof titles.$inferSelect;
+export type PersonRow = typeof people.$inferSelect;
