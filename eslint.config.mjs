@@ -18,7 +18,16 @@ const eslintConfig = defineConfig([
     // Build artifacts not covered by eslint-config-next defaults:
     "storybook-static/**",
   ]),
-  ...storybook.configs["flat/recommended"]
+  ...storybook.configs["flat/recommended"],
+  {
+    rules: {
+      // Allow intentionally-unused args/vars prefixed with underscore (e.g. interface-required params).
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_", caughtErrorsIgnorePattern: "^_" },
+      ],
+    },
+  },
 ]);
 
 export default eslintConfig;
