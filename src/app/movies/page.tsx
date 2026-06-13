@@ -4,7 +4,10 @@ import { FilterBar } from "@/components/catalog/FilterBar";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 
-export const metadata = { title: "Movies — reco" };
+export const metadata = {
+  title: "Movies",
+  description: "Browse and discover movies by genre and year.",
+};
 
 export default async function MoviesPage({
   searchParams,

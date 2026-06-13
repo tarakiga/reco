@@ -7,9 +7,7 @@ import { TitleCard } from "@/components/catalog/TitleCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { RegionSelect } from "@/components/catalog/RegionSelect";
 
-export async function generateMetadata() {
-  return { title: "Your watchlist — reco" };
-}
+export const metadata = { title: "Your watchlist" };
 
 const STATUS_GROUPS: { status: WatchStatus; label: string }[] = [
   { status: "watching", label: "Watching" },

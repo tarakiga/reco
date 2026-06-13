@@ -35,7 +35,20 @@ export async function generateMetadata({
   if (mediaType !== "movie" && mediaType !== "tv") return {};
   try {
     const row = await getOrCreateTitle(mediaType, id);
-    return { title: `${row.title} — reco` };
+    const description = row.overview ? row.overview.slice(0, 200) : undefined;
+    const images = [backdropUrl(row.backdropPath), posterUrl(row.posterPath)].filter(
+      (u): u is string => Boolean(u),
+    );
+    return {
+      title: row.title,
+      description,
+      openGraph: {
+        title: row.title,
+        description,
+        images,
+        type: "video.other",
+      },
+    };
   } catch {
     return {};
   }

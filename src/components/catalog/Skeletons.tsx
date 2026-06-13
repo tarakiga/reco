@@ -23,36 +23,50 @@ export function PosterGridSkeleton({ count = 12 }: { count?: number }) {
 }
 
 /**
- * Title/person detail placeholder: optional backdrop banner, poster + heading block,
- * a couple of overview lines, and a section grid — mirrors the real detail layout.
+ * Title/person detail placeholder: mirrors the real layout — a hero with
+ * poster + heading block (optional backdrop banner), then a main column and a
+ * facts sidebar.
  */
 export function DetailSkeleton({ backdrop = false }: { backdrop?: boolean }) {
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      {backdrop && (
-        <Skeleton className="mb-8 h-56 w-full rounded-xl sm:h-72 lg:h-80" />
-      )}
-      <div className="mb-8 flex gap-6">
-        <div className="w-32 shrink-0 sm:w-40">
-          <Skeleton className="aspect-2/3 w-full rounded-lg" />
-        </div>
-        <div className="flex min-w-0 flex-1 flex-col justify-end gap-3">
-          <Skeleton className="h-8 w-2/3" />
-          <Skeleton className="h-4 w-24" />
-          <div className="flex flex-wrap gap-2">
-            <Skeleton className="h-6 w-16" />
-            <Skeleton className="h-6 w-20" />
-            <Skeleton className="h-6 w-14" />
+      {/* Hero */}
+      <div className="relative -mx-4 -mt-8 mb-8 overflow-hidden px-4 pt-8 sm:rounded-b-2xl">
+        {backdrop && (
+          <Skeleton className="absolute inset-0 -z-10 rounded-none" />
+        )}
+        <div className="flex flex-col gap-6 pt-20 sm:flex-row sm:items-end sm:pt-32">
+          <div className="w-28 shrink-0 sm:w-40">
+            <Skeleton className="aspect-2/3 w-full rounded-lg" />
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col gap-3">
+            <Skeleton className="h-8 w-2/3" />
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-4 w-52" />
+            <div className="flex flex-wrap gap-2">
+              <Skeleton className="h-6 w-16" />
+              <Skeleton className="h-6 w-20" />
+            </div>
           </div>
         </div>
       </div>
 
-      <Skeleton className="mb-2 h-4 w-full" />
-      <Skeleton className="mb-2 h-4 w-11/12" />
-      <Skeleton className="mb-8 h-4 w-4/6" />
-
-      <Skeleton className="mb-4 h-6 w-32" />
-      <PosterGridSkeleton count={6} />
+      {/* Body: main column + facts sidebar */}
+      <div className="grid gap-8 lg:grid-cols-[1fr_220px]">
+        <div className="min-w-0">
+          <Skeleton className="mb-8 h-16 w-full rounded-lg" />
+          <Skeleton className="mb-2 h-4 w-full" />
+          <Skeleton className="mb-2 h-4 w-11/12" />
+          <Skeleton className="mb-8 h-4 w-4/6" />
+          <Skeleton className="mb-4 h-6 w-32" />
+          <div className="flex gap-4 overflow-hidden">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="aspect-2/3 w-28 shrink-0 rounded-md" />
+            ))}
+          </div>
+        </div>
+        <Skeleton className="h-52 w-full rounded-lg" />
+      </div>
     </div>
   );
 }

@@ -7,7 +7,7 @@ import { PageShell } from "@/components/layout/PageShell";
 import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { ToastProvider } from "@/components/ui/Toast";
 import { QueryProvider } from "@/components/providers/QueryProvider";
-import { BRAND_NAME } from "@/lib/brand";
+import { BRAND_NAME, BRAND_TAGLINE, SITE_URL } from "@/lib/brand";
 import { getBrandName, getNavLinks } from "@/services/site-config";
 
 const footerAttribution = (
@@ -50,8 +50,21 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: BRAND_NAME,
-  description: "Find what to watch.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: BRAND_NAME,
+    template: `%s — ${BRAND_NAME}`,
+  },
+  description: `${BRAND_TAGLINE} Search, discover, and track movies and TV shows.`,
+  openGraph: {
+    siteName: BRAND_NAME,
+    type: "website",
+    title: BRAND_NAME,
+    description: `${BRAND_TAGLINE} Search, discover, and track movies and TV shows.`,
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {

@@ -20,7 +20,19 @@ export async function generateMetadata({
   if (id === null) return {};
   try {
     const person = await getOrCreatePerson(id);
-    return { title: `${person.name} — reco` };
+    const meta = (person.metadata ?? {}) as TmdbPersonDetail;
+    const description = meta.biography ? meta.biography.slice(0, 200) : undefined;
+    const image = profileUrl(person.profilePath);
+    return {
+      title: person.name,
+      description,
+      openGraph: {
+        title: person.name,
+        description,
+        images: image ? [image] : undefined,
+        type: "profile",
+      },
+    };
   } catch {
     return {};
   }

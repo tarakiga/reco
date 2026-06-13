@@ -4,7 +4,10 @@ import { FilterBar } from "@/components/catalog/FilterBar";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 
-export const metadata = { title: "TV Shows — reco" };
+export const metadata = {
+  title: "TV Shows",
+  description: "Browse and discover TV shows by genre and year.",
+};
 
 export default async function TvPage({
   searchParams,

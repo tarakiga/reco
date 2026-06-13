@@ -8,6 +8,16 @@ import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
+  const query = q?.trim();
+  return { title: query ? `Search: ${query}` : "Search" };
+}
+
 export default async function SearchPage({
   searchParams,
 }: {

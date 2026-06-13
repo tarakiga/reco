@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { tmdb } from "@/lib/tmdb/client";
 import { toSearchResults } from "@/lib/tmdb/transform";
 import type { TitleResult } from "@/lib/tmdb/transform";
@@ -19,11 +20,26 @@ export default async function Home() {
   const trending = await getTrending();
   return (
     <div>
-      <section className="py-10 text-center">
-        <h1 className="text-4xl font-bold">Find what to watch.</h1>
-        <p className="mt-3 text-text-muted">
-          Movies and TV shows — search, discover, track.
+      <section className="py-12 text-center sm:py-16">
+        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Find what to watch.</h1>
+        <p className="mx-auto mt-4 max-w-xl text-text-muted">
+          Search movies and TV shows, see where they&apos;re streaming, and keep track of
+          what you want to watch.
         </p>
+        <div className="mt-6 flex flex-wrap justify-center gap-3">
+          <Link
+            href="/movies"
+            className="inline-flex h-10 items-center justify-center rounded-md bg-accent px-5 text-sm font-medium text-text transition-colors hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            Browse movies
+          </Link>
+          <Link
+            href="/tv"
+            className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface-raised px-5 text-sm font-medium text-text transition-colors hover:bg-surface-overlay focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            Browse TV
+          </Link>
+        </div>
       </section>
       {trending.length > 0 ? (
         <Rail title="Trending this week">
