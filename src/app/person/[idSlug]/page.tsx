@@ -7,6 +7,7 @@ import { filmography, personFacts } from "@/lib/tmdb/person";
 import type { TmdbPersonDetail } from "@/lib/tmdb/types";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { HeroBackdrop } from "@/components/catalog/HeroBackdrop";
+import { AmbientBackground } from "@/components/catalog/AmbientBackground";
 import { FactsPanel } from "@/components/catalog/FactsPanel";
 
 export async function generateMetadata({
@@ -49,8 +50,10 @@ export default async function PersonPage({
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      {/* Hero: dynamic-color tint sampled from the profile photo (no backdrop for people) */}
-      <HeroBackdrop backdropUrl={null} colorSrc={photo}>
+      {/* Dynamic dominant-color wash sampled from the profile photo */}
+      <AmbientBackground colorSrc={photo} />
+      {/* Hero: photo + name (no backdrop image for people) */}
+      <HeroBackdrop backdropUrl={null}>
         <div className="flex flex-col gap-6 pt-16 sm:flex-row sm:items-end sm:pt-24">
           <div className="w-28 shrink-0 sm:w-40">
             <div className="aspect-2/3 overflow-hidden rounded-lg border border-border bg-surface-overlay shadow-overlay">

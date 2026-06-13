@@ -21,6 +21,7 @@ import { TrailerEmbed } from "@/components/catalog/TrailerEmbed";
 import { WhereToWatchClient } from "@/components/catalog/WhereToWatchClient";
 import { TitleActions } from "@/components/catalog/TitleActions";
 import { HeroBackdrop } from "@/components/catalog/HeroBackdrop";
+import { AmbientBackground } from "@/components/catalog/AmbientBackground";
 import { FactsPanel } from "@/components/catalog/FactsPanel";
 
 export async function generateMetadata({
@@ -80,8 +81,10 @@ export default async function TitlePage({
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      {/* Cinematic hero: dynamic-color backdrop with poster + title block */}
-      <HeroBackdrop backdropUrl={backdrop} colorSrc={colorSrc}>
+      {/* Dynamic dominant-color wash across the page background */}
+      <AmbientBackground colorSrc={colorSrc} />
+      {/* Cinematic hero: backdrop image with poster + title block */}
+      <HeroBackdrop backdropUrl={backdrop}>
         <div className="flex flex-col gap-6 pt-28 sm:flex-row sm:items-end sm:pt-40">
           {poster && (
             <div className="w-28 shrink-0 sm:w-40">
