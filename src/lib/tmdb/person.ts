@@ -33,3 +33,61 @@ export function filmography(
   out.sort((a, b) => (b.date || "0").localeCompare(a.date || "0"));
   return out.map((o) => o.result);
 }
+
+export interface PersonFact {
+  label: string;
+  value: string;
+}
+
+function formatDate(iso: string): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
+
+/** Whole years between two ISO dates (yyyy-mm-dd). Exported for deterministic testing. */
+export function ageBetween(birth: string, end: string): number | null {
+  const b = new Date(`${birth}T00:00:00Z`);
+  const e = new Date(`${end}T00:00:00Z`);
+  if (Number.isNaN(b.getTime()) || Number.isNaN(e.getTime())) return null;
+  let age = e.getUTCFullYear() - b.getUTCFullYear();
+  const m = e.getUTCMonth() - b.getUTCMonth();
+  if (m < 0 || (m === 0 && e.getUTCDate() < b.getUTCDate())) age--;
+  return age >= 0 ? age : null;
+}
+
+export function personFacts(
+  meta: Pick<
+    TmdbPersonDetail,
+    "known_for_department" | "birthday" | "deathday" | "place_of_birth"
+  >,
+  today = new Date().toISOString().slice(0, 10),
+): PersonFact[] {
+  const facts: PersonFact[] = [];
+  if (meta.known_for_department) {
+    facts.push({ label: "Known for", value: meta.known_for_department });
+  }
+  if (meta.birthday) {
+    const livingAge = meta.deathday ? null : ageBetween(meta.birthday, today);
+    facts.push({
+      label: "Born",
+      value: livingAge != null ? `${formatDate(meta.birthday)} (age ${livingAge})` : formatDate(meta.birthday),
+    });
+  }
+  if (meta.deathday) {
+    const atDeath = meta.birthday ? ageBetween(meta.birthday, meta.deathday) : null;
+    facts.push({
+      label: "Died",
+      value: atDeath != null ? `${formatDate(meta.deathday)} (age ${atDeath})` : formatDate(meta.deathday),
+    });
+  }
+  if (meta.place_of_birth) {
+    facts.push({ label: "Place of birth", value: meta.place_of_birth });
+  }
+  return facts;
+}

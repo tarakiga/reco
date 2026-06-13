@@ -35,7 +35,13 @@ export const tmdb = {
     }),
   getTitle: (mediaType: "movie" | "tv", id: number) =>
     get<TmdbTitleDetail>(`/${mediaType}/${id}`, {
-      append_to_response: "credits,videos,watch/providers",
+      append_to_response: [
+        "credits",
+        "videos",
+        "watch/providers",
+        "recommendations",
+        mediaType === "movie" ? "release_dates" : "content_ratings",
+      ].join(","),
     }),
   getPerson: (id: number) =>
     get<TmdbPersonDetail>(`/person/${id}`, { append_to_response: "combined_credits" }),
