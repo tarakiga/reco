@@ -44,7 +44,8 @@ export function useRollback(entityType: EntityType, entityKey: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["versions", entityType, entityKey] });
       qc.invalidateQueries({ queryKey: ["options", entityKey] });
-      qc.invalidateQueries({ queryKey: ["block", entityKey] });
+      // refresh the content-blocks list (title/updatedAt) after a block rollback
+      qc.invalidateQueries({ queryKey: ["blocks"] });
     },
   });
 }
