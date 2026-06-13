@@ -55,6 +55,32 @@ test("getOrCreateTitle returns cached row without re-fetching when fresh", async
   expect((tmdb.getTitle as any).mock.calls.length).toBe(0);
 });
 
+test("getOrCreateTitle re-fetches and updates a stale row", async () => {
+  // Seed a row whose refreshedAt is older than the 7-day window.
+  const stale = new Date(Date.now() - 1000 * 60 * 60 * 24 * 8);
+  await db.insert(titles).values({
+    tmdbId: TMDB_ID,
+    mediaType: "movie",
+    slug: "old-title-2019",
+    title: "Old Title",
+    releaseYear: 2019,
+    refreshedAt: stale,
+  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (tmdb.getTitle as any).mockResolvedValue({
+    id: TMDB_ID,
+    title: "Fresh Title",
+    release_date: "2024-01-01",
+  });
+  const t = await getOrCreateTitle("movie", TMDB_ID);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  expect((tmdb.getTitle as any).mock.calls.length).toBe(1); // stale → refetched
+  expect(t.title).toBe("Fresh Title"); // working copy updated in place
+  expect(t.releaseYear).toBe(2024);
+  const rows = await db.select().from(titles).where(eq(titles.tmdbId, TMDB_ID));
+  expect(rows).toHaveLength(1); // upsert, not duplicate
+});
+
 test("getOrCreatePerson mirrors a person", async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (tmdb.getPerson as any).mockResolvedValue({
