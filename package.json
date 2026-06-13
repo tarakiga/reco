@@ -16,7 +16,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "promote": "node scripts/promote-admin.mjs",
-    "seed:site": "node scripts/seed-site-config.mjs"
+    "seed:site": "node scripts/seed-site-config.mjs",
+    "db:pgvector": "node scripts/enable-pgvector.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.2",
