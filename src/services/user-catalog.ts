@@ -1,7 +1,7 @@
 import "server-only";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { ratings, titles, watchlistItems } from "@/db/schema";
+import { profiles, ratings, titles, watchlistItems } from "@/db/schema";
 
 export type WatchStatus = "want_to_watch" | "watching" | "watched";
 
@@ -63,6 +63,10 @@ export async function listWatchlist(userId: string): Promise<WatchlistEntry[]> {
     .where(eq(watchlistItems.userId, userId))
     .orderBy(desc(watchlistItems.updatedAt));
   return rows;
+}
+
+export async function updateRegion(userId: string, region: string) {
+  await db.update(profiles).set({ region }).where(eq(profiles.id, userId));
 }
 
 export async function getTitleState(
