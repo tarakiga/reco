@@ -4,6 +4,7 @@ import "./globals.css";
 import { Suspense } from "react";
 import { ClerkProvider, Show, SignInButton, UserButton } from "@clerk/nextjs";
 import { PageShell } from "@/components/layout/PageShell";
+import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { ToastProvider } from "@/components/ui/Toast";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { BRAND_NAME } from "@/lib/brand";
@@ -62,6 +63,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
           <ToastProvider>
             <QueryProvider>
+            <Suspense>
+              <NavigationProgress />
+            </Suspense>
             <Suspense>
               <PageShell
                 brand={brand}

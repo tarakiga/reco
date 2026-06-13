@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { tmdb } from "@/lib/tmdb/client";
 import { toSearchResults, type TitleResult, type PersonResult } from "@/lib/tmdb/transform";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { PersonCard } from "@/components/catalog/PersonCard";
+import { PosterGridSkeleton } from "@/components/catalog/Skeletons";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -28,7 +30,9 @@ export default async function SearchPage({
           Search for movies, TV shows, and people.
         </p>
       ) : (
-        <SearchResults query={query} />
+        <Suspense key={query} fallback={<div className="mt-8"><PosterGridSkeleton /></div>}>
+          <SearchResults query={query} />
+        </Suspense>
       )}
     </div>
   );
