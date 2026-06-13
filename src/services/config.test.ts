@@ -7,6 +7,10 @@ import {
   upsertOption,
   deleteOption,
   reorderOptions,
+  publishOptionsNamespace,
+  getPublishedOptions,
+  listVersions,
+  rollbackOptionsNamespace,
 } from "./config";
 
 const NS = `__vitest__${Date.now()}`;
@@ -57,4 +61,36 @@ test("mutations are audited", async () => {
   const entries = await db.select().from(auditLog).where(eq(auditLog.entityKey, NS));
   expect(entries.length).toBeGreaterThanOrEqual(5);
   expect(entries.every((e) => e.actor === ACTOR)).toBe(true);
+});
+
+test("publishing an empty namespace is rejected", async () => {
+  await expect(publishOptionsNamespace("__vitest__empty", ACTOR)).rejects.toThrow(/empty/i);
+});
+
+test("publish snapshots and bumps version; public read serves latest snapshot only", async () => {
+  expect(await getPublishedOptions(NS)).toBeNull(); // nothing published yet
+
+  const v1 = await publishOptionsNamespace(NS, ACTOR);
+  expect(v1).toBe(1);
+
+  await upsertOption({ namespace: NS, key: "new", label: "Draft only" }, ACTOR);
+  const pub = await getPublishedOptions(NS);
+  expect(pub!.version).toBe(1);
+  expect(pub!.options.map((o) => o.key)).not.toContain("new"); // draft invisible
+
+  const v2 = await publishOptionsNamespace(NS, ACTOR);
+  expect(v2).toBe(2);
+  expect((await getPublishedOptions(NS))!.options.map((o) => o.key)).toContain("new");
+});
+
+test("listVersions returns descending history", async () => {
+  const versions = await listVersions("options_namespace", NS);
+  expect(versions.map((v) => v.version)).toEqual([2, 1]);
+});
+
+test("rollback restores an old snapshot into the working copy as draft", async () => {
+  await rollbackOptionsNamespace(NS, 1, ACTOR);
+  const working = await listOptions(NS);
+  expect(working.map((r) => r.key)).not.toContain("new"); // v1 had no "new"
+  expect((await getPublishedOptions(NS))!.version).toBe(2); // published unchanged until re-publish
 });

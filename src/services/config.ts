@@ -1,9 +1,10 @@
 import "server-only";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { configOptions, type ConfigOptionRow } from "@/db/schema";
+import { configOptions, configVersions, type ConfigOptionRow, type ConfigVersionRow } from "@/db/schema";
 import { writeAudit } from "./audit";
-import type { ReorderInput, UpsertOptionInput } from "@/lib/contracts/config";
+import { publishedOption } from "@/lib/contracts/config";
+import type { PublishedOption, ReorderInput, UpsertOptionInput } from "@/lib/contracts/config";
 
 export async function listOptions(namespace: string): Promise<ConfigOptionRow[]> {
   return db
@@ -87,5 +88,110 @@ export async function reorderOptions(input: ReorderInput, actor: string) {
     entityType: "options_namespace",
     entityKey: input.namespace,
     detail: { orderedKeys: input.orderedKeys },
+  });
+}
+
+export async function publishOptionsNamespace(namespace: string, actor: string): Promise<number> {
+  const rows = await listOptions(namespace);
+  if (rows.length === 0) {
+    throw new Error(`Cannot publish empty namespace "${namespace}"`);
+  }
+  const snapshot: PublishedOption[] = rows.map((r) => ({
+    key: r.key,
+    label: r.label,
+    value: r.value ?? null,
+    sortOrder: r.sortOrder,
+    enabled: r.enabled,
+  }));
+  const latest = await latestVersion("options_namespace", namespace);
+  const version = (latest?.version ?? 0) + 1;
+  await db.insert(configVersions).values({
+    entityType: "options_namespace",
+    entityKey: namespace,
+    version,
+    snapshot,
+    publishedBy: actor,
+  });
+  await writeAudit({
+    actor,
+    action: "namespace.publish",
+    entityType: "options_namespace",
+    entityKey: namespace,
+    detail: { version },
+  });
+  return version;
+}
+
+async function latestVersion(
+  entityType: "options_namespace" | "content_block",
+  entityKey: string,
+): Promise<ConfigVersionRow | undefined> {
+  const [row] = await db
+    .select()
+    .from(configVersions)
+    .where(and(eq(configVersions.entityType, entityType), eq(configVersions.entityKey, entityKey)))
+    .orderBy(desc(configVersions.version))
+    .limit(1);
+  return row;
+}
+
+export async function getPublishedOptions(
+  namespace: string,
+): Promise<{ version: number; options: PublishedOption[] } | null> {
+  const row = await latestVersion("options_namespace", namespace);
+  if (!row) return null;
+  const options = publishedOption.array().parse(row.snapshot);
+  return { version: row.version, options };
+}
+
+export async function listVersions(
+  entityType: "options_namespace" | "content_block",
+  entityKey: string,
+) {
+  return db
+    .select({
+      version: configVersions.version,
+      publishedBy: configVersions.publishedBy,
+      publishedAt: configVersions.publishedAt,
+    })
+    .from(configVersions)
+    .where(and(eq(configVersions.entityType, entityType), eq(configVersions.entityKey, entityKey)))
+    .orderBy(desc(configVersions.version));
+}
+
+export async function rollbackOptionsNamespace(namespace: string, version: number, actor: string) {
+  const [row] = await db
+    .select()
+    .from(configVersions)
+    .where(
+      and(
+        eq(configVersions.entityType, "options_namespace"),
+        eq(configVersions.entityKey, namespace),
+        eq(configVersions.version, version),
+      ),
+    );
+  if (!row) throw new Error(`No version ${version} for namespace "${namespace}"`);
+  const options = publishedOption.array().parse(row.snapshot);
+  await db.delete(configOptions).where(eq(configOptions.namespace, namespace));
+  if (options.length > 0) {
+    await db.insert(configOptions).values(
+      options.map((o) => ({
+        namespace,
+        key: o.key,
+        label: o.label,
+        value: o.value ?? null,
+        sortOrder: o.sortOrder,
+        enabled: o.enabled,
+        updatedBy: actor,
+        updatedAt: new Date(),
+      })),
+    );
+  }
+  await writeAudit({
+    actor,
+    action: "namespace.rollback",
+    entityType: "options_namespace",
+    entityKey: namespace,
+    detail: { restoredVersion: version },
   });
 }
