@@ -30,3 +30,14 @@ Append an entry after each completed task: what was done, decisions made, where 
 - T16: Playwright smoke (app shell landmarks, Clerk sign-in renders).
 - State: 41 Vitest + 2 Playwright green, tsc clean, build green.
 - Next: Plan 2 (config system + admin UI) — needs writing; see docs/superpowers/specs/2026-06-12-reco-v1-design.md sections 4.1/5.
+
+## 2026-06-13 — T8: Public config API + cached helpers — Plan 2a DONE
+
+- Model: `config_options`/`content_blocks` = working copy; publishing snapshots monotonically into `config_versions`; public reads serve the latest snapshot via `src/services/public-config.ts` — functions tagged `config:<entityType>:<key>` (e.g. `config:options_namespace:nav`), busted by the publish route's `revalidateTag("config:options_namespace:nav", "default")`. Tag strings are byte-identical on both sides.
+- Cache mechanism: Next.js 16 `"use cache"` directive + `cacheTag()` (requires `cacheComponents: true` in next.config.ts). `unstable_cache` is deprecated in Next.js 16.
+- Public API: `GET /api/v1/config/[namespace]` — unauthenticated, returns `{namespace, options:[]}` (empty safe default when unpublished).
+- Rollback fix (B1): delete + insert in `rollbackOptionsNamespace` wrapped in `db.batch([deleteStmt, insertStmt])` — atomic on neon-http (implicit transaction). Audit write remains outside batch.
+- jsonError fix (B2): `issues` key omitted from response when undefined — explicit conditional in `src/lib/api.ts`.
+- Layout: added `<Suspense>` wrapper around `<PageShell>` in root layout to satisfy `cacheComponents` PPR requirements for auth-accessing Clerk components.
+- State: 59 tests green, tsc clean, lint clean, build green (exit 0). First admin must be promoted via `npm run promote -- <username>`.
+- Pick up at: Plan 2b (admin UI — to be planned).

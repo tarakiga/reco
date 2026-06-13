@@ -3,7 +3,10 @@ import { ZodError, type ZodType } from "zod";
 import { AuthzError } from "@/services/authz";
 
 export function jsonError(status: number, message: string, issues?: unknown) {
-  return NextResponse.json({ error: message, issues }, { status });
+  return NextResponse.json(
+    issues === undefined ? { error: message } : { error: message, issues },
+    { status },
+  );
 }
 
 export async function parseBody<T>(req: Request, schema: ZodType<T>): Promise<T> {

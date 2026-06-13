@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Suspense } from "react";
 import { ClerkProvider, Show, SignInButton, UserButton } from "@clerk/nextjs";
 import { PageShell } from "@/components/layout/PageShell";
 import { ToastProvider } from "@/components/ui/Toast";
@@ -21,22 +22,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <html lang="en">
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
           <ToastProvider>
-            <PageShell
-              brand={BRAND_NAME}
-              navLinks={NAV_LINKS}
-              actions={
-                <>
-                  <Show when="signed-out">
-                    <SignInButton mode="modal" />
-                  </Show>
-                  <Show when="signed-in">
-                    <UserButton />
-                  </Show>
-                </>
-              }
-            >
-              {children}
-            </PageShell>
+            <Suspense>
+              <PageShell
+                brand={BRAND_NAME}
+                navLinks={NAV_LINKS}
+                actions={
+                  <>
+                    <Show when="signed-out">
+                      <SignInButton mode="modal" />
+                    </Show>
+                    <Show when="signed-in">
+                      <UserButton />
+                    </Show>
+                  </>
+                }
+              >
+                {children}
+              </PageShell>
+            </Suspense>
           </ToastProvider>
         </body>
       </html>

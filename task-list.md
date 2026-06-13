@@ -18,5 +18,15 @@
 - [x] T15 ensureProfile service
 - [x] T16 Playwright smoke tests
 
-## Plan 2: Config system + admin UI — not yet planned
+## Plan 2a: Config backend (docs/superpowers/plans/2026-06-13-plan2a-config-backend.md)
+- [x] T1 Config schema + promote-admin script
+- [x] T2 Zod contracts + server-only stub
+- [x] T3 Options service CRUD + reorder
+- [x] T4 Publish/versions/rollback
+- [x] T5 Content blocks service
+- [x] T6 Authz guard
+- [x] T7 Admin API routes
+- [x] T8 Public config API + cached helpers
+
+## Plan 2b: Admin UI — not yet planned
 ## Plan 3: Catalog MVP — not yet planned

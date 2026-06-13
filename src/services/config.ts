@@ -172,9 +172,12 @@ export async function rollbackOptionsNamespace(namespace: string, version: numbe
     );
   if (!row) throw new Error(`No version ${version} for namespace "${namespace}"`);
   const options = publishedOption.array().parse(row.snapshot);
-  await db.delete(configOptions).where(eq(configOptions.namespace, namespace));
+  // Wrap delete + insert in an atomic batch so a failed insert doesn't leave
+  // the working copy wiped. db.batch() on neon-http is atomic (implicit
+  // transaction). The audit write is intentionally outside the batch.
+  const deleteStmt = db.delete(configOptions).where(eq(configOptions.namespace, namespace));
   if (options.length > 0) {
-    await db.insert(configOptions).values(
+    const insertStmt = db.insert(configOptions).values(
       options.map((o) => ({
         namespace,
         key: o.key,
@@ -186,6 +189,9 @@ export async function rollbackOptionsNamespace(namespace: string, version: numbe
         updatedAt: new Date(),
       })),
     );
+    await db.batch([deleteStmt, insertStmt]);
+  } else {
+    await deleteStmt;
   }
   await writeAudit({
     actor,
