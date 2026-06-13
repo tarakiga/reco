@@ -48,4 +48,11 @@
 - [x] T7 Person page
 - [x] T8 Home trending + close-out
 
-## Plan 3b: Watchlists, ratings, browse filters — not yet planned
+## Plan 3b: Watchlists, ratings, browse (docs/superpowers/plans/2026-06-13-plan3b-user-data.md)
+- [x] T1 watchlist/ratings schema + service
+- [x] T2 Authed me/* API
+- [x] T3 StarRating component
+- [x] T4 TitleActions island
+- [x] T5 Watchlist page
+- [x] T6 Browse /movies + /tv
+- [x] T7 Region wiring + close-out

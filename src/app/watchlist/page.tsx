@@ -5,6 +5,7 @@ import { listWatchlist, type WatchStatus } from "@/services/user-catalog";
 import { posterUrl } from "@/lib/tmdb/images";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { RegionSelect } from "@/components/catalog/RegionSelect";
 
 export async function generateMetadata() {
   return { title: "Your watchlist — reco" };
@@ -70,7 +71,10 @@ export default async function WatchlistPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="mb-8 text-2xl font-bold text-text">Your watchlist</h1>
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <h1 className="text-2xl font-bold text-text">Your watchlist</h1>
+        <RegionSelect />
+      </div>
       <div className="space-y-10">
         {STATUS_GROUPS.map(({ status, label }) => {
           const group = grouped.get(status);

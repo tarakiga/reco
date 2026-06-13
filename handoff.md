@@ -49,6 +49,14 @@ Append an entry after each completed task: what was done, decisions made, where 
 - Note React Query + Tiptap added.
 - Plan 2 (2a + 2b) DONE. Next: Plan 3 (catalog MVP — TMDB title/person pages, cast search, streaming availability, watchlists, ratings — to be planned).
 
+## 2026-06-13 — Plan 3b: Watchlists, ratings, browse, region wiring DONE
+
+- Plan 3b (user data + catalog personalization) complete: watchlist/ratings schema + services, authed me/* API, StarRating, TitleActions island (watchlist+rating on PPR title pages), /watchlist page, browse /movies+/tv with genre/year filters, region wiring (WhereToWatchClient personalizes availability per signed-in user's region via a client island; RegionSelect on /watchlist; default US).
+- WhereToWatch refactored: pure `WhereToWatchView` shared by both the server wrapper and the `WhereToWatchClient` island — zero markup duplication. Title page stays PPR `◐` (region resolved client-side, no dynamic server cost).
+- Rating scale = 5 whole stars. Signed-in flows verified via anon-path e2e + manual (Clerk testing tokens not configured).
+- **Plan 3 (3a+3b) DONE → catalog MVP complete.**
+- Next: Phase 2 (community: reviews/lists/profiles/follows) or Phase 3 (AI taste layer: embeddings/match scores/semantic search) — see spec.
+
 ## 2026-06-13 — Plan 3a: Catalog core DONE
 
 - Plan 3a (catalog read surfaces) complete: TMDB v3 client + lazy mirror (titles/people), search, movie/tv detail (cast/trailer/where-to-watch), person filmography, trending home, header search, TMDB+JustWatch footer attribution.
