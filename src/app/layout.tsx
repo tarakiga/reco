@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { ClerkProvider, Show, SignInButton, UserButton } from "@clerk/nextjs";
 import { PageShell } from "@/components/layout/PageShell";
 import { ToastProvider } from "@/components/ui/Toast";
+import { QueryProvider } from "@/components/providers/QueryProvider";
 import { BRAND_NAME } from "@/lib/brand";
 import { NAV_LINKS } from "@/lib/nav";
 
@@ -22,6 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <html lang="en">
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
           <ToastProvider>
+            <QueryProvider>
             <Suspense>
               <PageShell
                 brand={BRAND_NAME}
@@ -40,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 {children}
               </PageShell>
             </Suspense>
+            </QueryProvider>
           </ToastProvider>
         </body>
       </html>
