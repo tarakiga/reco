@@ -40,4 +40,8 @@ export const tmdb = {
   getPerson: (id: number) =>
     get<TmdbPersonDetail>(`/person/${id}`, { append_to_response: "combined_credits" }),
   trending: () => get<{ results: TmdbSearchItem[] }>("/trending/all/week"),
+  discover: (mediaType: "movie" | "tv", params: Record<string, string>) =>
+    get<{ results: TmdbSearchItem[]; total_pages: number }>(`/discover/${mediaType}`, params),
+  genres: (mediaType: "movie" | "tv") =>
+    get<{ genres: { id: number; name: string }[] }>(`/genre/${mediaType}/list`),
 };
