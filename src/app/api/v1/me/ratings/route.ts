@@ -1,10 +1,11 @@
-import { connection, NextResponse } from "next/server";
+import { connection, NextResponse, after } from "next/server";
 import { ZodError } from "zod";
 import { getCurrentProfile } from "@/services/profile";
 import { getOrCreateTitle } from "@/services/catalog";
 import { setRating, removeRating } from "@/services/user-catalog";
 import { setRatingInput, titleRef } from "@/lib/contracts/me";
 import { jsonError } from "@/lib/api";
+import { onSignalChanged } from "@/services/taste-hooks";
 
 async function requireProfile() {
   const p = await getCurrentProfile();
@@ -27,6 +28,7 @@ export async function PUT(req: Request) {
     const input = setRatingInput.parse(body);
     const title = await getOrCreateTitle(input.mediaType, input.tmdbId);
     await setRating(profile.id, title.id, input.score);
+    after(() => onSignalChanged(profile.id, input.mediaType, input.tmdbId));
     return NextResponse.json({ ok: true });
   } catch (err) {
     if (err instanceof ZodError) return jsonError(400, "Validation failed", err.issues);
@@ -50,6 +52,7 @@ export async function DELETE(req: Request) {
     const input = titleRef.parse(body);
     const title = await getOrCreateTitle(input.mediaType, input.tmdbId);
     await removeRating(profile.id, title.id);
+    after(() => onSignalChanged(profile.id, input.mediaType, input.tmdbId));
     return NextResponse.json({ ok: true });
   } catch (err) {
     if (err instanceof ZodError) return jsonError(400, "Validation failed", err.issues);

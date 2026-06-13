@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
+import { after } from "next/server";
 import { getOrCreateTitle } from "@/services/catalog";
+import { onTitleViewed } from "@/services/taste-hooks";
 import { TmdbError } from "@/lib/tmdb/client";
 import {
   parseIdSlug,
@@ -75,6 +77,8 @@ export default async function TitlePage({
   }
 
   const meta = (title.metadata ?? {}) as TmdbTitleDetail;
+
+  after(() => onTitleViewed(title.id));
 
   const genres = meta.genres ?? [];
   const runtime = formatRuntime(
