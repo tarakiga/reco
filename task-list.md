@@ -28,5 +28,14 @@
 - [x] T7 Admin API routes
 - [x] T8 Public config API + cached helpers
 
-## Plan 2b: Admin UI — not yet planned
+## Plan 2b: Admin UI (docs/superpowers/plans/2026-06-13-plan2b-admin-ui.md)
+- [x] T1 React Query + admin client
+- [x] T2 Admin guard + shell
+- [x] T3 AdminTable component
+- [x] T4 Options management UI
+- [x] T5 PublishPanel (publish/versions/rollback)
+- [x] T6 Content blocks + Tiptap editor
+- [x] T7 Audit log view
+- [x] T8 Config-driven brand/nav
+- [x] T9 Admin e2e + close-out
 ## Plan 3: Catalog MVP — not yet planned

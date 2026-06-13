@@ -41,3 +41,10 @@ Append an entry after each completed task: what was done, decisions made, where 
 - Layout: added `<Suspense>` wrapper around `<PageShell>` in root layout to satisfy `cacheComponents` PPR requirements for auth-accessing Clerk components.
 - State: 59 tests green, tsc clean, lint clean, build green (exit 0). First admin must be promoted via `npm run promote -- <username>`.
 - Pick up at: Plan 2b (admin UI — to be planned).
+
+## 2026-06-13 — Plan 2b: Admin UI DONE
+
+- Plan 2b (admin UI) complete — guarded `/admin` (editor+), Options manager (CRUD/reorder/enable-toggle/publish/version/rollback), Content blocks with Tiptap rich-text editor, Audit log view, config-driven brand+nav via `npm run seed:site` (with safe fallbacks).
+- Note: admin e2e covers the anonymous-guard security boundary; the signed-in admin flow (actual CRUD/publish through the UI) needs Clerk testing tokens and is verified manually for now.
+- Note React Query + Tiptap added.
+- Plan 2 (2a + 2b) DONE. Next: Plan 3 (catalog MVP — TMDB title/person pages, cast search, streaming availability, watchlists, ratings — to be planned).
