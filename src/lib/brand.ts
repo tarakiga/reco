@@ -1,3 +1,2 @@
-// INTERIM: replaced by the config system (content_blocks) in Plan 2.
-// Nothing else in the codebase may hardcode the product name.
+// Fallback default used by site-config.ts when the config system has no published brand/nav (build-guide safe-default rule).
 export const BRAND_NAME = "reco";

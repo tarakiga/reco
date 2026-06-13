@@ -15,7 +15,8 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "promote": "node scripts/promote-admin.mjs"
+    "promote": "node scripts/promote-admin.mjs",
+    "seed:site": "node scripts/seed-site-config.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.5.2",

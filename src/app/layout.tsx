@@ -7,7 +7,7 @@ import { PageShell } from "@/components/layout/PageShell";
 import { ToastProvider } from "@/components/ui/Toast";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { BRAND_NAME } from "@/lib/brand";
-import { NAV_LINKS } from "@/lib/nav";
+import { getBrandName, getNavLinks } from "@/services/site-config";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -17,7 +17,9 @@ export const metadata: Metadata = {
   description: "Find what to watch.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const brand = await getBrandName();
+  const navLinks = await getNavLinks();
   return (
     <ClerkProvider>
       <html lang="en">
@@ -26,8 +28,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <QueryProvider>
             <Suspense>
               <PageShell
-                brand={BRAND_NAME}
-                navLinks={NAV_LINKS}
+                brand={brand}
+                navLinks={navLinks}
                 actions={
                   <>
                     <Show when="signed-out">
