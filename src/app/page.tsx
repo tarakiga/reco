@@ -7,6 +7,7 @@ import { TitleCard } from "@/components/catalog/TitleCard";
 import { Rail } from "@/components/catalog/Rail";
 import { ForYouPreview } from "@/components/home/ForYouPreview";
 import { GenreTiles } from "@/components/home/GenreTiles";
+import { SceneSearchBar } from "@/components/search/SceneSearchBar";
 
 async function getTrending(): Promise<TitleResult[]> {
   "use cache";
@@ -92,6 +93,20 @@ export default async function Home() {
           >
             <span aria-hidden className="text-lg">🎲</span> Find me something to watch
           </Link>
+        </div>
+      </section>
+
+      {/* "Describe a scene" CTA — find a film by what you remember. */}
+      <section className="mb-10">
+        <div className="rounded-2xl border border-border bg-surface-raised p-6 sm:p-8">
+          <p className="text-sm font-semibold uppercase tracking-wide text-accent">
+            Can&apos;t remember the name?
+          </p>
+          <h2 className="mt-1 text-2xl font-bold text-text sm:text-3xl">Describe what you remember</h2>
+          <p className="mb-4 mt-2 max-w-xl text-text-muted">
+            Recall a scene but not the title? Describe it and we&apos;ll find the closest matches.
+          </p>
+          <SceneSearchBar />
         </div>
       </section>
 
