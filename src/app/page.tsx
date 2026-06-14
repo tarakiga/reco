@@ -96,10 +96,11 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* "Describe a scene" CTA — find a film by what you remember. */}
+      {/* "Describe a scene" CTA — find a film by what you remember. Warm amber to
+          contrast with the red "Can't decide?" Shuffle card above. */}
       <section className="mb-10">
-        <div className="rounded-2xl border border-border bg-surface-raised p-6 sm:p-8">
-          <p className="text-sm font-semibold uppercase tracking-wide text-accent">
+        <div className="rounded-2xl border border-warning/30 bg-gradient-to-br from-warning/20 via-surface-raised to-surface-raised p-6 sm:p-8">
+          <p className="text-sm font-semibold uppercase tracking-wide text-warning">
             Can&apos;t remember the name?
           </p>
           <h2 className="mt-1 text-2xl font-bold text-text sm:text-3xl">Describe what you remember</h2>
