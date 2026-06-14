@@ -128,8 +128,19 @@ export const ratings = pgTable(
   (t) => [primaryKey({ columns: [t.userId, t.titleId] })],
 );
 
+export const favourites = pgTable(
+  "favourites",
+  {
+    userId: uuid("user_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+    titleId: uuid("title_id").notNull().references(() => titles.id, { onDelete: "cascade" }),
+    addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.titleId] })],
+);
+
 export type WatchlistItemRow = typeof watchlistItems.$inferSelect;
 export type RatingRow = typeof ratings.$inferSelect;
+export type FavouriteRow = typeof favourites.$inferSelect;
 
 const vec = vector(EMBEDDING_DIM);
 

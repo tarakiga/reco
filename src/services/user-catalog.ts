@@ -1,7 +1,7 @@
 import "server-only";
 import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { profiles, ratings, titles, watchlistItems } from "@/db/schema";
+import { favourites, profiles, ratings, titles, watchlistItems } from "@/db/schema";
 
 export type WatchStatus = "want_to_watch" | "watching" | "watched";
 
@@ -69,10 +69,52 @@ export async function updateRegion(userId: string, region: string) {
   await db.update(profiles).set({ region }).where(eq(profiles.id, userId));
 }
 
+/** Partial profile update — only the provided fields are written. */
+export async function updateProfile(
+  userId: string,
+  fields: { region?: string; preferredGenres?: number[] },
+) {
+  const set: { region?: string; preferredGenres?: number[] } = {};
+  if (fields.region !== undefined) set.region = fields.region;
+  if (fields.preferredGenres !== undefined) set.preferredGenres = fields.preferredGenres;
+  if (Object.keys(set).length === 0) return;
+  await db.update(profiles).set(set).where(eq(profiles.id, userId));
+}
+
+export async function addFavourite(userId: string, titleId: string) {
+  await db.insert(favourites).values({ userId, titleId }).onConflictDoNothing();
+}
+
+export async function removeFavourite(userId: string, titleId: string) {
+  await db
+    .delete(favourites)
+    .where(and(eq(favourites.userId, userId), eq(favourites.titleId, titleId)));
+}
+
+/** Favourited titles, newest first — same card shape as the watchlist (no status). */
+export type FavouriteEntry = Omit<WatchlistEntry, "status">;
+
+export async function listFavourites(userId: string): Promise<FavouriteEntry[]> {
+  return db
+    .select({
+      titleId: titles.id,
+      tmdbId: titles.tmdbId,
+      mediaType: titles.mediaType,
+      slug: titles.slug,
+      title: titles.title,
+      releaseYear: titles.releaseYear,
+      posterPath: titles.posterPath,
+    })
+    .from(favourites)
+    .innerJoin(titles, eq(favourites.titleId, titles.id))
+    .where(eq(favourites.userId, userId))
+    .orderBy(desc(favourites.addedAt));
+}
+
 export async function getTitleState(
   userId: string,
   titleId: string,
-): Promise<{ status: WatchStatus | null; score: number | null }> {
+): Promise<{ status: WatchStatus | null; score: number | null; favourite: boolean }> {
   const [w] = await db
     .select({ status: watchlistItems.status })
     .from(watchlistItems)
@@ -81,5 +123,9 @@ export async function getTitleState(
     .select({ score: ratings.score })
     .from(ratings)
     .where(and(eq(ratings.userId, userId), eq(ratings.titleId, titleId)));
-  return { status: w?.status ?? null, score: r?.score ?? null };
+  const [f] = await db
+    .select({ titleId: favourites.titleId })
+    .from(favourites)
+    .where(and(eq(favourites.userId, userId), eq(favourites.titleId, titleId)));
+  return { status: w?.status ?? null, score: r?.score ?? null, favourite: Boolean(f) };
 }

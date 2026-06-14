@@ -91,7 +91,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                       <SignInButton mode="modal" />
                     </Show>
                     <Show when="signed-in">
-                      <UserButton />
+                      <UserButton>
+                        <UserButton.MenuItems>
+                          <UserButton.Link
+                            label="Account"
+                            labelIcon={<span aria-hidden>👤</span>}
+                            href="/account"
+                          />
+                        </UserButton.MenuItems>
+                      </UserButton>
                     </Show>
                   </>
                 }

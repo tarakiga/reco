@@ -1,19 +1,12 @@
 import { connection } from "next/server";
 import Link from "next/link";
 import { getCurrentProfile } from "@/services/profile";
-import { listWatchlist, type WatchStatus } from "@/services/user-catalog";
-import { posterUrl } from "@/lib/tmdb/images";
-import { TitleCard } from "@/components/catalog/TitleCard";
+import { listWatchlist } from "@/services/user-catalog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { RegionSelect } from "@/components/catalog/RegionSelect";
+import { WatchlistSections } from "@/components/account/WatchlistSections";
 
 export const metadata = { title: "Your watchlist" };
-
-const STATUS_GROUPS: { status: WatchStatus; label: string }[] = [
-  { status: "watching", label: "Watching" },
-  { status: "want_to_watch", label: "Want to watch" },
-  { status: "watched", label: "Watched" },
-];
 
 export default async function WatchlistPage() {
   await connection();
@@ -60,41 +53,13 @@ export default async function WatchlistPage() {
     );
   }
 
-  const grouped = new Map<WatchStatus, typeof items>();
-  for (const item of items) {
-    const bucket = grouped.get(item.status) ?? [];
-    bucket.push(item);
-    grouped.set(item.status, bucket);
-  }
-
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <h1 className="text-2xl font-bold text-text">Your watchlist</h1>
         <RegionSelect />
       </div>
-      <div className="space-y-10">
-        {STATUS_GROUPS.map(({ status, label }) => {
-          const group = grouped.get(status);
-          if (!group || group.length === 0) return null;
-          return (
-            <section key={status}>
-              <h2 className="mb-4 text-lg font-semibold text-text">{label}</h2>
-              <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
-                {group.map((item) => (
-                  <TitleCard
-                    key={item.titleId}
-                    href={`/title/${item.mediaType}/${item.tmdbId}-${item.slug}`}
-                    title={item.title}
-                    year={item.releaseYear}
-                    posterUrl={posterUrl(item.posterPath)}
-                  />
-                ))}
-              </div>
-            </section>
-          );
-        })}
-      </div>
+      <WatchlistSections items={items} />
     </div>
   );
 }

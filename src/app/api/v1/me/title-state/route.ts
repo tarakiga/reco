@@ -10,7 +10,7 @@ export async function GET(req: Request) {
 
   const profile = await getCurrentProfile();
   if (!profile) {
-    return NextResponse.json({ status: null, score: null, signedIn: false });
+    return NextResponse.json({ status: null, score: null, favourite: false, signedIn: false });
   }
 
   const { searchParams } = new URL(req.url);

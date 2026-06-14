@@ -9,6 +9,10 @@ import {
   setRating,
   removeRating,
   getTitleState,
+  addFavourite,
+  removeFavourite,
+  listFavourites,
+  updateProfile,
 } from "./user-catalog";
 
 const CLERK = "__vitest__clerk_uc";
@@ -45,13 +49,40 @@ test("setRating upserts; getTitleState returns status + score", async () => {
   await setRating(userId, titleId, 4);
   await setRating(userId, titleId, 5);
   const state = await getTitleState(userId, titleId);
-  expect(state).toEqual({ status: "watching", score: 5 });
+  expect(state).toEqual({ status: "watching", score: 5, favourite: false });
 });
 
 test("remove clears watchlist and rating", async () => {
   await removeFromWatchlist(userId, titleId);
   await removeRating(userId, titleId);
   const state = await getTitleState(userId, titleId);
-  expect(state).toEqual({ status: null, score: null });
+  expect(state).toEqual({ status: null, score: null, favourite: false });
   expect(await listWatchlist(userId)).toHaveLength(0);
+});
+
+test("favourites: add is idempotent, list returns it, getTitleState reflects it", async () => {
+  await addFavourite(userId, titleId);
+  await addFavourite(userId, titleId); // idempotent — no duplicate / no throw
+  const list = await listFavourites(userId);
+  expect(list).toHaveLength(1);
+  expect(list[0].title).toBe("UC Test");
+  expect((await getTitleState(userId, titleId)).favourite).toBe(true);
+});
+
+test("removeFavourite clears it", async () => {
+  await removeFavourite(userId, titleId);
+  expect(await listFavourites(userId)).toHaveLength(0);
+  expect((await getTitleState(userId, titleId)).favourite).toBe(false);
+});
+
+test("updateProfile writes only provided fields", async () => {
+  await updateProfile(userId, { region: "GB", preferredGenres: [28, 35] });
+  const [p1] = await db.select().from(profiles).where(eq(profiles.id, userId));
+  expect(p1.region).toBe("GB");
+  expect(p1.preferredGenres).toEqual([28, 35]);
+
+  await updateProfile(userId, { preferredGenres: [18] }); // region untouched
+  const [p2] = await db.select().from(profiles).where(eq(profiles.id, userId));
+  expect(p2.region).toBe("GB");
+  expect(p2.preferredGenres).toEqual([18]);
 });
