@@ -4,11 +4,11 @@ vi.mock("@/lib/tmdb/client", () => ({
   tmdb: { discover: vi.fn(), watchProviders: vi.fn(), getTitle: vi.fn() },
 }));
 
-import { eq, inArray } from "drizzle-orm";
+import { inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { titles } from "@/db/schema";
 import { tmdb } from "@/lib/tmdb/client";
-import { shuffle, regionProviders } from "./shuffle";
+import { shuffle } from "./shuffle";
 
 const IDS = [999200001, 999200002, 999200003];
 
