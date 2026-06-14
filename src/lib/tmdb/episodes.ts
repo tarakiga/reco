@@ -1,5 +1,12 @@
-import { posterUrl, stillUrl } from "./images";
+import { posterUrl, stillUrl, profileUrl } from "./images";
 import type { TmdbTitleDetail, TmdbSeasonDetail } from "./types";
+
+export interface EpisodeCastMember {
+  id: number;
+  name: string;
+  character: string | null;
+  profileUrl: string | null;
+}
 
 export interface SeasonSummary {
   seasonNumber: number;
@@ -17,6 +24,8 @@ export interface EpisodeVM {
   airDate: string | null;
   stillUrl: string | null;
   voteAverage: number | null;
+  /** Per-episode guest cast (with photos) — the regulars live in the show Cast. */
+  cast: EpisodeCastMember[];
 }
 
 /** Real seasons (specials/season 0 hidden), sorted, mapped for the accordion. */
@@ -42,6 +51,12 @@ export function toEpisodes(season: TmdbSeasonDetail): EpisodeVM[] {
     airDate: e.air_date || null,
     stillUrl: stillUrl(e.still_path),
     voteAverage: e.vote_average && e.vote_average > 0 ? e.vote_average : null,
+    cast: (e.guest_stars ?? []).map((g) => ({
+      id: g.id,
+      name: g.name,
+      character: g.character || null,
+      profileUrl: profileUrl(g.profile_path),
+    })),
   }));
 }
 

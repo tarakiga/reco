@@ -27,6 +27,7 @@ async function episodeIndex(tvId: number): Promise<EpisodeIndexEntry[]> {
         airDate: e.air_date || null,
         stillUrl: stillUrl(e.still_path),
         voteAverage: e.vote_average && e.vote_average > 0 ? e.vote_average : null,
+        cast: [], // finder results don't render the cast grid
         guestStars: (e.guest_stars ?? []).map((g) => g.name),
         crew: (e.crew ?? []).map((c) => c.name),
       });
