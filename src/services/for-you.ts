@@ -38,7 +38,7 @@ export async function forYou(userId: string, limit = 24, offset = 0): Promise<Fo
     LIMIT ${limit} OFFSET ${offset}
   `);
 
-  const rows = (result.rows ?? result) as Record<string, unknown>[];
+  const rows = ((result as { rows?: Record<string, unknown>[] }).rows ?? result) as Record<string, unknown>[];
 
   return rows.map((r) => {
     const title = r.title as string;
@@ -69,7 +69,7 @@ export async function matchForTitles(userId: string, titleIds: string[]): Promis
     FROM ${titleEmbeddings}
     WHERE title_id IN (${sql.join(titleIds.map((id) => sql`${id}`), sql`, `)})
   `);
-  const rows = (result.rows ?? result) as Record<string, unknown>[];
+  const rows = ((result as { rows?: Record<string, unknown>[] }).rows ?? result) as Record<string, unknown>[];
   const out: Record<string, number> = {};
   for (const r of rows) {
     out[r.title_id as string] = matchPercent(r.cos as number);
