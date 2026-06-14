@@ -3,8 +3,8 @@ import { db } from "@/db";
 import { profiles, titles, titleEmbeddings, ratings, userTaste } from "@/db/schema";
 import { forYou } from "./for-you";
 
-const TMDB_A = 999000020, TMDB_B = 999000021, TMDB_C = 999000022;
-let userId: string, titleA: string, titleB: string, titleC: string;
+const TMDB_A = 999000020, TMDB_B = 999000021, TMDB_C = 999000022, TMDB_D = 999000023;
+let userId: string, titleA: string, titleB: string, titleC: string, titleD: string;
 
 /** Build a 1024-dim unit vector whose first two components are v[0] and v[1]. */
 function unit(v: number[]): number[] {
@@ -82,6 +82,26 @@ beforeAll(async () => {
     embedding: unit([0.9, 0.1]),
   });
 
+  // Title D: unit([0.8, 0.2]) — a second unseen candidate (for pagination)
+  const [tD] = await db
+    .insert(titles)
+    .values({
+      tmdbId: TMDB_D,
+      mediaType: "movie",
+      slug: "__vitest__foryou_d",
+      title: "ForYou Title D",
+      metadata: {},
+      refreshedAt: new Date(),
+    })
+    .returning();
+  titleD = tD.id;
+  await db.insert(titleEmbeddings).values({
+    titleId: titleD,
+    model: "fake",
+    descriptorHash: "fy-D",
+    embedding: unit([0.8, 0.2]),
+  });
+
   // Rate A=5 (liked) and B=1 (disliked) — both are "seen"
   await db.insert(ratings).values([
     { userId, titleId: titleA, score: 5 },
@@ -101,6 +121,7 @@ afterAll(async () => {
   await db.delete(titles).where(eq(titles.tmdbId, TMDB_A));
   await db.delete(titles).where(eq(titles.tmdbId, TMDB_B));
   await db.delete(titles).where(eq(titles.tmdbId, TMDB_C));
+  await db.delete(titles).where(eq(titles.tmdbId, TMDB_D));
   await db.delete(profiles).where(eq(profiles.id, userId));
 });
 
@@ -111,4 +132,15 @@ test("forYou returns nearest unseen titles, excluding rated, with match%", async
   expect(ids).not.toContain(titleA); // already rated
   expect(ids).not.toContain(titleB); // already rated
   expect(res[0].match).toBeGreaterThan(0);
+});
+
+test("forYou paginates with offset (Load more)", async () => {
+  // C (unit[0.9,0.1]) and D (unit[0.8,0.2]) sit far nearer the taste vector than
+  // any real embedding, so they're deterministically the top two regardless of
+  // other rows in the shared DB. Offset must walk past page 1 to page 2.
+  const page1 = await forYou(userId, 1, 0);
+  const page2 = await forYou(userId, 1, 1);
+  expect(page1[0]?.titleId).toBe(titleC); // nearest
+  expect(page2[0]?.titleId).toBe(titleD); // second-nearest (offset worked)
+  expect(page1[0]?.titleId).not.toBe(page2[0]?.titleId);
 });

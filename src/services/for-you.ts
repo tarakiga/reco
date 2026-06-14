@@ -18,7 +18,7 @@ export interface ForYouItem {
   match: number;
 }
 
-export async function forYou(userId: string, limit = 24): Promise<ForYouItem[]> {
+export async function forYou(userId: string, limit = 24, offset = 0): Promise<ForYouItem[]> {
   const [taste] = await db.select().from(userTaste).where(sql`${userTaste.userId} = ${userId}`);
   if (!taste) return [];
   const vec = toVectorLiteral(taste.embedding);
@@ -35,7 +35,7 @@ export async function forYou(userId: string, limit = 24): Promise<ForYouItem[]> 
       SELECT title_id FROM ${watchlistItems} WHERE user_id = ${userId}
     )
     ORDER BY te.embedding <=> ${vec}::vector
-    LIMIT ${limit}
+    LIMIT ${limit} OFFSET ${offset}
   `);
 
   const rows = (result.rows ?? result) as Record<string, unknown>[];
