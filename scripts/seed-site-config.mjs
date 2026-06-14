@@ -7,9 +7,10 @@ const sql = neon(process.env.DATABASE_URL);
 // Nav options (namespace = "nav")
 // ──────────────────────────────────────────────
 const navOptions = [
-  { key: "home",   label: "Home",      value: { href: "/",       label: "Home"      }, sortOrder: 0 },
-  { key: "movies", label: "Movies",    value: { href: "/movies", label: "Movies"    }, sortOrder: 1 },
-  { key: "tv",     label: "TV Shows",  value: { href: "/tv",     label: "TV Shows"  }, sortOrder: 2 },
+  { key: "home",    label: "Home",      value: { href: "/",        label: "Home"      }, sortOrder: 0 },
+  { key: "for-you", label: "For you",   value: { href: "/for-you", label: "For you"   }, sortOrder: 1 },
+  { key: "movies",  label: "Movies",    value: { href: "/movies",  label: "Movies"    }, sortOrder: 2 },
+  { key: "tv",      label: "TV Shows",  value: { href: "/tv",      label: "TV Shows"  }, sortOrder: 3 },
 ];
 
 for (const opt of navOptions) {

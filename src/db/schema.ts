@@ -1,4 +1,5 @@
 import { boolean, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uuid, unique } from "drizzle-orm/pg-core";
+import { vector, EMBEDDING_DIM } from "./vector";
 
 export const roleEnum = pgEnum("role", ["user", "editor", "admin"]);
 
@@ -128,3 +129,27 @@ export const ratings = pgTable(
 
 export type WatchlistItemRow = typeof watchlistItems.$inferSelect;
 export type RatingRow = typeof ratings.$inferSelect;
+
+const vec = vector(EMBEDDING_DIM);
+
+export const titleEmbeddings = pgTable("title_embeddings", {
+  titleId: uuid("title_id")
+    .primaryKey()
+    .references(() => titles.id, { onDelete: "cascade" }),
+  embedding: vec("embedding").notNull(),
+  model: text("model").notNull(),
+  descriptorHash: text("descriptor_hash").notNull(),
+  builtAt: timestamp("built_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const userTaste = pgTable("user_taste", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => profiles.id, { onDelete: "cascade" }),
+  embedding: vec("embedding").notNull(),
+  ratedCount: integer("rated_count").notNull().default(0),
+  builtAt: timestamp("built_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export type TitleEmbeddingRow = typeof titleEmbeddings.$inferSelect;
+export type UserTasteRow = typeof userTaste.$inferSelect;

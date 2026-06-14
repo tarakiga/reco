@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
+import { after } from "next/server";
 import { getOrCreateTitle } from "@/services/catalog";
+import { onTitleViewed } from "@/services/taste-hooks";
 import { TmdbError } from "@/lib/tmdb/client";
 import {
   parseIdSlug,
@@ -23,6 +25,7 @@ import { TitleActions } from "@/components/catalog/TitleActions";
 import { HeroBackdrop } from "@/components/catalog/HeroBackdrop";
 import { AmbientBackground } from "@/components/catalog/AmbientBackground";
 import { FactsPanel } from "@/components/catalog/FactsPanel";
+import { TitleMatch } from "@/components/catalog/TitleMatch";
 
 export async function generateMetadata({
   params,
@@ -75,6 +78,8 @@ export default async function TitlePage({
   }
 
   const meta = (title.metadata ?? {}) as TmdbTitleDetail;
+
+  after(() => onTitleViewed(title.id));
 
   const genres = meta.genres ?? [];
   const runtime = formatRuntime(
@@ -137,6 +142,7 @@ export default async function TitlePage({
                   )}
                 </>
               )}
+              <TitleMatch titleId={title.id} />
               {cert && (
                 <span className="rounded border border-border px-1.5 py-0.5 text-xs text-text-muted">
                   {cert}

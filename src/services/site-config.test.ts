@@ -25,7 +25,10 @@ test("brand strips html and uses block body", async () => {
 test("nav falls back when namespace empty", async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (publishedOptions as any).mockResolvedValue([]);
-  expect(await getNavLinks()).toEqual([{ href: "/", label: "Home" }]);
+  expect(await getNavLinks()).toEqual([
+    { href: "/", label: "Home" },
+    { href: "/for-you", label: "For you" },
+  ]);
 });
 
 test("nav maps published option values", async () => {
