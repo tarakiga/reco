@@ -9,6 +9,8 @@ export interface ProviderVM {
 export interface RegionProviders {
   link: string | null;
   flatrate: ProviderVM[];
+  free: ProviderVM[];
+  ads: ProviderVM[];
   rent: ProviderVM[];
   buy: ProviderVM[];
 }
@@ -30,6 +32,8 @@ export function providersForRegion(
   return {
     link: r.link ?? null,
     flatrate: map(r.flatrate),
+    free: map(r.free),
+    ads: map(r.ads),
     rent: map(r.rent),
     buy: map(r.buy),
   };
