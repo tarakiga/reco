@@ -1,7 +1,7 @@
 import { connection, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { getCurrentProfile } from "@/services/profile";
-import { updateRegion } from "@/services/user-catalog";
+import { updateProfile } from "@/services/user-catalog";
 import { updateProfileInput } from "@/lib/contracts/me";
 import { jsonError } from "@/lib/api";
 
@@ -15,7 +15,12 @@ export async function GET() {
   await connection();
   const profile = await requireProfile();
   if (!profile) return jsonError(401, "Sign in required");
-  return NextResponse.json({ username: profile.username, region: profile.region, role: profile.role });
+  return NextResponse.json({
+    username: profile.username,
+    region: profile.region,
+    role: profile.role,
+    preferredGenres: profile.preferredGenres ?? [],
+  });
 }
 
 export async function PATCH(req: Request) {
@@ -31,7 +36,7 @@ export async function PATCH(req: Request) {
       return jsonError(400, "Invalid JSON body");
     }
     const input = updateProfileInput.parse(body);
-    await updateRegion(profile.id, input.region);
+    await updateProfile(profile.id, input);
     return NextResponse.json({ ok: true });
   } catch (err) {
     if (err instanceof ZodError) return jsonError(400, "Validation failed", err.issues);

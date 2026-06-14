@@ -2,7 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { meFetch } from "@/lib/me-client";
 
-interface TitleState { status: string | null; score: number | null; signedIn: boolean }
+interface TitleState { status: string | null; score: number | null; favourite: boolean; signedIn: boolean }
 
 export function useTitleState(mediaType: "movie" | "tv", tmdbId: number) {
   return useQuery({
@@ -34,6 +34,18 @@ export function useSetRating(mediaType: "movie" | "tv", tmdbId: number) {
   return useMutation({
     mutationFn: (score: number) =>
       meFetch("/api/v1/me/ratings", { method: "PUT", body: { mediaType, tmdbId, score } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["title-state", mediaType, tmdbId] }),
+  });
+}
+
+export function useToggleFavourite(mediaType: "movie" | "tv", tmdbId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (favourite: boolean) =>
+      meFetch("/api/v1/me/favourites", {
+        method: favourite ? "PUT" : "DELETE",
+        body: { mediaType, tmdbId },
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["title-state", mediaType, tmdbId] }),
   });
 }
