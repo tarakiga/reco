@@ -11,6 +11,7 @@ const navOptions = [
   { key: "for-you", label: "For you",   value: { href: "/for-you", label: "For you"   }, sortOrder: 1 },
   { key: "movies",  label: "Movies",    value: { href: "/movies",  label: "Movies"    }, sortOrder: 2 },
   { key: "tv",      label: "TV Shows",  value: { href: "/tv",      label: "TV Shows"  }, sortOrder: 3 },
+  { key: "shuffle", label: "Shuffle",   value: { href: "/shuffle", label: "Shuffle"   }, sortOrder: 4 },
 ];
 
 for (const opt of navOptions) {
