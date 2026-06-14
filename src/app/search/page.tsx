@@ -28,11 +28,11 @@ export default async function SearchPage({
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
-      <form action="/search" method="get" className="flex items-end gap-3">
+      <form action="/search" method="get" className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3">
         <div className="flex-1">
           <Input name="q" label="Search" defaultValue={query} />
         </div>
-        <Button type="submit">Search</Button>
+        <Button type="submit" className="w-full sm:w-auto">Search</Button>
       </form>
 
       {!query ? (
