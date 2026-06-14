@@ -141,6 +141,18 @@ test("titleFacts returns money for movies and counts for TV", () => {
   expect(facts.some((f) => f.label === "Binge watch")).toBe(false);
 });
 
+test("titleFacts attaches the network logo when present", () => {
+  const tv: TmdbTitleDetail = {
+    id: 1,
+    networks: [{ id: 1, name: "HBO", logo_path: "/hbo.png" }],
+  };
+  expect(titleFacts(tv, "tv")).toContainEqual({
+    label: "Network",
+    value: "HBO",
+    imageUrl: "https://image.tmdb.org/t/p/w92/hbo.png",
+  });
+});
+
 test("formatBinge renders days/hours/minutes compactly", () => {
   expect(formatBinge(2914)).toBe("2d 1h"); // 62 eps x 47m, rounds to 49h
   expect(formatBinge(2880)).toBe("2d"); // exactly 48h → drop 0h
