@@ -51,6 +51,30 @@ export interface TmdbNetwork {
   name: string;
   logo_path?: string | null;
 }
+export interface TmdbSeasonSummary {
+  id: number;
+  season_number: number;
+  name: string;
+  episode_count?: number;
+  air_date?: string | null;
+  poster_path?: string | null;
+  overview?: string;
+}
+export interface TmdbEpisode {
+  id: number;
+  episode_number: number;
+  name: string;
+  overview?: string;
+  runtime?: number | null;
+  air_date?: string | null;
+  still_path?: string | null;
+  vote_average?: number;
+}
+export interface TmdbSeasonDetail {
+  id: number;
+  season_number: number;
+  episodes?: TmdbEpisode[];
+}
 /** Movie age-rating payload (append_to_response=release_dates). */
 export interface TmdbReleaseDates {
   results?: {
@@ -88,6 +112,7 @@ export interface TmdbTitleDetail {
   number_of_episodes?: number;
   last_episode_to_air?: { runtime?: number | null } | null;
   next_episode_to_air?: { runtime?: number | null } | null;
+  seasons?: TmdbSeasonSummary[];
   created_by?: TmdbNamedRef[];
   networks?: TmdbNetwork[];
   credits?: { cast?: TmdbCastMember[]; crew?: TmdbCrewMember[] };

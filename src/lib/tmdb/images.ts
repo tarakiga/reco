@@ -9,3 +9,5 @@ export const posterUrlSmall = (p: string | null | undefined) => url("w154", p);
 export const backdropUrl = (p: string | null | undefined) => url("w1280", p);
 export const profileUrl = (p: string | null | undefined) => url("w185", p);
 export const logoUrl = (p: string | null | undefined) => url("w92", p);
+/** Episode still image. */
+export const stillUrl = (p: string | null | undefined) => url("w300", p);

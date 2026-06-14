@@ -1,5 +1,5 @@
 import "server-only";
-import type { TmdbPersonDetail, TmdbTitleDetail, TmdbSearchItem } from "./types";
+import type { TmdbPersonDetail, TmdbTitleDetail, TmdbSearchItem, TmdbSeasonDetail } from "./types";
 
 const BASE = "https://api.themoviedb.org/3";
 
@@ -46,6 +46,8 @@ export const tmdb = {
     }),
   getPerson: (id: number) =>
     get<TmdbPersonDetail>(`/person/${id}`, { append_to_response: "combined_credits" }),
+  season: (tvId: number, seasonNumber: number) =>
+    get<TmdbSeasonDetail>(`/tv/${tvId}/season/${seasonNumber}`),
   trending: () => get<{ results: TmdbSearchItem[] }>("/trending/all/week"),
   popular: (mediaType: "movie" | "tv", page = 1) =>
     get<{ results: TmdbSearchItem[] }>(`/${mediaType}/popular`, { page: String(page) }),

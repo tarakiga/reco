@@ -25,6 +25,8 @@ import { TitleActions } from "@/components/catalog/TitleActions";
 import { HeroBackdrop } from "@/components/catalog/HeroBackdrop";
 import { AmbientBackground } from "@/components/catalog/AmbientBackground";
 import { FactsPanel } from "@/components/catalog/FactsPanel";
+import { SeasonsAccordion } from "@/components/catalog/SeasonsAccordion";
+import { seasonSummaries } from "@/lib/tmdb/episodes";
 import { TitleMatch } from "@/components/catalog/TitleMatch";
 
 export async function generateMetadata({
@@ -90,6 +92,7 @@ export default async function TitlePage({
   const cast = topCast(meta.credits?.cast);
   const trailerKey = pickTrailerKey(meta.videos?.results);
   const recs = recommendations(meta);
+  const seasons = mediaType === "tv" ? seasonSummaries(meta) : [];
   const facts = titleFacts(meta, mediaType);
   const voteAverage = meta.vote_average;
   const voteCount = meta.vote_count;
@@ -197,6 +200,8 @@ export default async function TitlePage({
 
           {/* Where to watch — client island resolves user's region (US default) */}
           <WhereToWatchClient watch={meta["watch/providers"]} />
+
+          {seasons.length > 0 && <SeasonsAccordion tvId={id} seasons={seasons} />}
 
           {cast.length > 0 && (
             <Rail title="Cast">
