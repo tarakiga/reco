@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
-import { ClerkProvider, Show, SignInButton, UserButton } from "@clerk/nextjs";
+import { ClerkProvider, Show, SignInButton } from "@clerk/nextjs";
 import { PageShell } from "@/components/layout/PageShell";
+import { AccountAvatar } from "@/components/layout/AccountAvatar";
 import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { ToastProvider } from "@/components/ui/Toast";
 import { QueryProvider } from "@/components/providers/QueryProvider";
@@ -91,15 +92,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                       <SignInButton mode="modal" />
                     </Show>
                     <Show when="signed-in">
-                      <UserButton>
-                        <UserButton.MenuItems>
-                          <UserButton.Link
-                            label="Account"
-                            labelIcon={<span aria-hidden>👤</span>}
-                            href="/account"
-                          />
-                        </UserButton.MenuItems>
-                      </UserButton>
+                      <AccountAvatar />
                     </Show>
                   </>
                 }

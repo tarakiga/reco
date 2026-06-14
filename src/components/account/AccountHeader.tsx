@@ -20,13 +20,22 @@ export function AccountHeader({ username, memberSince }: { username: string; mem
         <p className="text-sm text-text-muted">
           @{username} · Member since {memberSince}
         </p>
-        <button
-          type="button"
-          onClick={() => clerk.openUserProfile()}
-          className="mt-2 inline-flex h-9 items-center justify-center rounded-md border border-border bg-surface-raised px-4 text-sm font-medium text-text transition-colors hover:bg-surface-overlay focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-        >
-          Manage account
-        </button>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => clerk.openUserProfile()}
+            className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-surface-raised px-4 text-sm font-medium text-text transition-colors hover:bg-surface-overlay focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            Manage account
+          </button>
+          <button
+            type="button"
+            onClick={() => clerk.signOut({ redirectUrl: "/" })}
+            className="inline-flex h-9 items-center justify-center rounded-md border border-border bg-surface-raised px-4 text-sm font-medium text-text-muted transition-colors hover:bg-surface-overlay hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            Sign out
+          </button>
+        </div>
       </div>
     </div>
   );
