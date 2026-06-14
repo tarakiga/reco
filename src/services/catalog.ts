@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { titles, people, type TitleRow, type PersonRow } from "@/db/schema";
 import { tmdb } from "@/lib/tmdb/client";
+import { slimTitleMetadata } from "@/lib/tmdb/slim";
 import { titleSlug, slugify } from "@/lib/slug";
 
 const STALE_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
@@ -34,7 +35,7 @@ export async function getOrCreateTitle(
     posterPath: data.poster_path ?? null,
     backdropPath: data.backdrop_path ?? null,
     overview: data.overview ?? null,
-    metadata: data,
+    metadata: slimTitleMetadata(data),
     refreshedAt: new Date(),
   };
   const [row] = await db
