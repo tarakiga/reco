@@ -1,5 +1,5 @@
 import { slugify, titleSlug } from "@/lib/slug";
-import { profileUrl, posterUrl } from "./images";
+import { profileUrl, posterUrl, logoUrl } from "./images";
 import type { TitleResult } from "./transform";
 import type { TmdbTitleDetail, TmdbCastMember, TmdbVideo } from "./types";
 
@@ -140,6 +140,8 @@ export interface Fact {
   label: string;
   value: string;
   tone?: "default" | "money";
+  /** Optional logo (e.g. the network) rendered in place of plain text. */
+  imageUrl?: string;
 }
 
 /** Type-appropriate facts for the detail sidebar. */
@@ -174,8 +176,11 @@ export function titleFacts(meta: TmdbTitleDetail, mediaType: MediaType): Fact[] 
       const binge = formatBinge(Math.round(meta.number_of_episodes * perEpisode));
       if (binge) facts.push({ label: "Binge watch", value: binge });
     }
-    const network = meta.networks?.[0]?.name;
-    if (network) facts.push({ label: "Network", value: network });
+    const network = meta.networks?.[0];
+    if (network?.name) {
+      const logo = network.logo_path ? logoUrl(network.logo_path) : null;
+      facts.push({ label: "Network", value: network.name, ...(logo ? { imageUrl: logo } : {}) });
+    }
   }
   return facts;
 }
