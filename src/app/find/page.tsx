@@ -1,28 +1,33 @@
 import { Suspense } from "react";
-import { searchByScene } from "@/services/scene-search";
+import { sceneSearch } from "@/services/scene-search";
+import { parseMediaIntent } from "@/lib/scene/intent";
 import { SceneSearchBar } from "@/components/search/SceneSearchBar";
+import { SceneFilters } from "@/components/search/SceneFilters";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { MatchBadge } from "@/components/catalog/MatchBadge";
 import { PosterGridSkeleton } from "@/components/catalog/Skeletons";
 import { EmptyState } from "@/components/ui/EmptyState";
 
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string }>;
-}) {
+type FindParams = { q?: string; type?: string };
+type MediaOverride = "movie" | "tv" | "all" | undefined;
+
+const asOverride = (type?: string): MediaOverride =>
+  type === "movie" || type === "tv" || type === "all" ? type : undefined;
+
+export async function generateMetadata({ searchParams }: { searchParams: Promise<FindParams> }) {
   const { q } = await searchParams;
   const query = q?.trim();
   return { title: query ? `Find: ${query}` : "Find a movie" };
 }
 
-export default async function FindPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string }>;
-}) {
-  const { q } = await searchParams;
+export default async function FindPage({ searchParams }: { searchParams: Promise<FindParams> }) {
+  const { q, type } = await searchParams;
   const query = q?.trim() ?? "";
+  const override = asOverride(type);
+
+  // Effective filter for the toggle highlight: explicit override, else auto-detected.
+  const detected = parseMediaIntent(query).mediaType;
+  const active = override === undefined ? detected : override === "all" ? null : override;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
@@ -32,9 +37,12 @@ export default async function FindPage({
       </p>
       <SceneSearchBar initialQuery={query} />
       {query ? (
-        <Suspense key={query} fallback={<div className="mt-8"><PosterGridSkeleton /></div>}>
-          <SceneResults query={query} />
-        </Suspense>
+        <>
+          <SceneFilters query={query} active={active} />
+          <Suspense key={`${query}|${override ?? "auto"}`} fallback={<div className="mt-8"><PosterGridSkeleton /></div>}>
+            <SceneResults query={query} override={override} />
+          </Suspense>
+        </>
       ) : (
         <p className="mt-8 text-center text-text-muted">
           Try something like &ldquo;a giant squid attacks a cruise ship&rdquo;.
@@ -44,8 +52,8 @@ export default async function FindPage({
   );
 }
 
-async function SceneResults({ query }: { query: string }) {
-  const results = await searchByScene(query, { limit: 24 });
+async function SceneResults({ query, override }: { query: string; override: MediaOverride }) {
+  const { results } = await sceneSearch(query, { limit: 24, override });
 
   if (results.length === 0) {
     return (

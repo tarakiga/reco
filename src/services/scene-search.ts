@@ -7,6 +7,8 @@ import { matchPercent } from "@/lib/taste/match";
 import { titleSlug } from "@/lib/slug";
 import { posterUrl } from "@/lib/tmdb/images";
 import { defaultEmbedder, type Embedder } from "@/lib/taste/embedder";
+import { parseMediaIntent, type SceneMediaType } from "@/lib/scene/intent";
+import { expandSceneQuery } from "@/lib/scene/expand";
 
 export interface SceneResult {
   titleId: string;
@@ -76,4 +78,29 @@ export async function searchByScene(
         match: matchPercent(r.cos as number),
       };
     });
+}
+
+export interface SceneSearchOutcome {
+  results: SceneResult[];
+  /** Media filter actually applied (null = no filter / all). */
+  mediaType: SceneMediaType | null;
+  /** Media type auto-detected from the raw query text, if any. */
+  detected: SceneMediaType | null;
+}
+
+/**
+ * Full scene-search pipeline: detect + strip a media-type hint, expand the vague
+ * query for recall, then run the filtered vector search. `override` lets the UI
+ * force a media type ("all" disables the filter); when omitted, auto-detect wins.
+ */
+export async function sceneSearch(
+  rawQuery: string,
+  opts: { limit?: number; override?: SceneMediaType | "all" } = {},
+): Promise<SceneSearchOutcome> {
+  const { mediaType: detected, cleaned } = parseMediaIntent(rawQuery);
+  const mediaType: SceneMediaType | null =
+    opts.override === undefined ? detected : opts.override === "all" ? null : opts.override;
+  const expanded = await expandSceneQuery(cleaned);
+  const results = await searchByScene(expanded, { limit: opts.limit, mediaType: mediaType ?? undefined });
+  return { results, mediaType, detected };
 }
