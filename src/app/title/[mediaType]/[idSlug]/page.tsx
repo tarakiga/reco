@@ -30,6 +30,7 @@ import { SeasonsAccordion } from "@/components/catalog/SeasonsAccordion";
 import { EpisodeFinder } from "@/components/catalog/EpisodeFinder";
 import { RelatedTitlesRail } from "@/components/catalog/RelatedTitlesRail";
 import { MovieCollection } from "@/components/catalog/MovieCollection";
+import { TitleExtras } from "@/components/catalog/TitleExtras";
 import { seasonSummaries } from "@/lib/tmdb/episodes";
 import { TitleMatch } from "@/components/catalog/TitleMatch";
 
@@ -194,6 +195,10 @@ export default async function TitlePage({
           {title.overview && (
             <p className="mb-8 leading-relaxed text-text-muted">{title.overview}</p>
           )}
+
+          <Suspense fallback={null}>
+            <TitleExtras mediaType={mediaType} tmdbId={id} />
+          </Suspense>
 
           {trailerKey && (
             <div className="mb-8">
