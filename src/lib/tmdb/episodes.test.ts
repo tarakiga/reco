@@ -85,7 +85,13 @@ test("toEpisodes maps fields and builds still url", () => {
     stillUrl: null,
     voteAverage: null,
     cast: [
-      { id: 7, name: "Brad Pitt", character: "Will", profileUrl: "https://image.tmdb.org/t/p/w185/bp.jpg" },
+      {
+        id: 7,
+        name: "Brad Pitt",
+        character: "Will",
+        profileUrl: "https://image.tmdb.org/t/p/w185/bp.jpg",
+        href: "/person/7-brad-pitt",
+      },
     ],
   });
 });

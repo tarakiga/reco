@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import type { SeasonSummary, EpisodeVM, EpisodeCastMember } from "@/lib/tmdb/episodes";
 
@@ -20,8 +21,8 @@ function fmtRuntime(min: number | null): string | null {
 
 function CastAvatar({ member }: { member: EpisodeCastMember }) {
   return (
-    <div className="w-16 text-center">
-      <div className="mx-auto flex size-14 items-center justify-center overflow-hidden rounded-full border border-border bg-surface-overlay text-sm text-text-muted">
+    <Link href={member.href} className="group w-16 text-center">
+      <div className="mx-auto flex size-14 items-center justify-center overflow-hidden rounded-full border border-border bg-surface-overlay text-sm text-text-muted transition-colors group-hover:border-accent">
         {member.profileUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={member.profileUrl} alt={member.name} className="h-full w-full object-cover" loading="lazy" />
@@ -29,11 +30,13 @@ function CastAvatar({ member }: { member: EpisodeCastMember }) {
           member.name.charAt(0)
         )}
       </div>
-      <p className="mt-1 line-clamp-2 text-[11px] font-medium leading-tight text-text">{member.name}</p>
+      <p className="mt-1 line-clamp-2 text-[11px] font-medium leading-tight text-text group-hover:text-accent">
+        {member.name}
+      </p>
       {member.character && (
         <p className="line-clamp-1 text-[10px] text-text-muted">{member.character}</p>
       )}
-    </div>
+    </Link>
   );
 }
 

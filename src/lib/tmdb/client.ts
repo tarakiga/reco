@@ -48,6 +48,10 @@ export const tmdb = {
     get<TmdbPersonDetail>(`/person/${id}`, { append_to_response: "combined_credits" }),
   season: (tvId: number, seasonNumber: number) =>
     get<TmdbSeasonDetail>(`/tv/${tvId}/season/${seasonNumber}`),
+  externalIds: (mediaType: "movie" | "tv", id: number) =>
+    get<{ wikidata_id?: string | null; imdb_id?: string | null }>(`/${mediaType}/${id}/external_ids`),
+  tvBrief: (id: number) =>
+    get<{ name?: string; poster_path?: string | null; first_air_date?: string }>(`/tv/${id}`),
   trending: () => get<{ results: TmdbSearchItem[] }>("/trending/all/week"),
   popular: (mediaType: "movie" | "tv", page = 1) =>
     get<{ results: TmdbSearchItem[] }>(`/${mediaType}/popular`, { page: String(page) }),

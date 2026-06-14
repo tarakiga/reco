@@ -1,3 +1,4 @@
+import { slugify } from "@/lib/slug";
 import { posterUrl, stillUrl, profileUrl } from "./images";
 import type { TmdbTitleDetail, TmdbSeasonDetail } from "./types";
 
@@ -6,6 +7,7 @@ export interface EpisodeCastMember {
   name: string;
   character: string | null;
   profileUrl: string | null;
+  href: string;
 }
 
 export interface SeasonSummary {
@@ -56,6 +58,7 @@ export function toEpisodes(season: TmdbSeasonDetail): EpisodeVM[] {
       name: g.name,
       character: g.character || null,
       profileUrl: profileUrl(g.profile_path),
+      href: `/person/${g.id}-${slugify(g.name)}`,
     })),
   }));
 }

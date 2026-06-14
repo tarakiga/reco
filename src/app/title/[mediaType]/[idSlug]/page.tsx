@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
 import { getOrCreateTitle } from "@/services/catalog";
@@ -27,6 +28,7 @@ import { AmbientBackground } from "@/components/catalog/AmbientBackground";
 import { FactsPanel } from "@/components/catalog/FactsPanel";
 import { SeasonsAccordion } from "@/components/catalog/SeasonsAccordion";
 import { EpisodeFinder } from "@/components/catalog/EpisodeFinder";
+import { RelatedShows } from "@/components/catalog/RelatedShows";
 import { seasonSummaries } from "@/lib/tmdb/episodes";
 import { TitleMatch } from "@/components/catalog/TitleMatch";
 
@@ -223,6 +225,12 @@ export default async function TitlePage({
                 </div>
               ))}
             </Rail>
+          )}
+
+          {mediaType === "tv" && (
+            <Suspense fallback={null}>
+              <RelatedShows tvId={id} />
+            </Suspense>
           )}
 
           {recs.length > 0 && (
