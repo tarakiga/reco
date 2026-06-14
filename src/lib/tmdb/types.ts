@@ -109,6 +109,7 @@ export interface TmdbTitleDetail {
   // movie-only
   budget?: number;
   revenue?: number;
+  belongs_to_collection?: { id: number; name: string; poster_path?: string | null } | null;
   // tv-only
   number_of_seasons?: number;
   number_of_episodes?: number;

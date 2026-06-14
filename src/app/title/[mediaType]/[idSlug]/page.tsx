@@ -28,7 +28,8 @@ import { AmbientBackground } from "@/components/catalog/AmbientBackground";
 import { FactsPanel } from "@/components/catalog/FactsPanel";
 import { SeasonsAccordion } from "@/components/catalog/SeasonsAccordion";
 import { EpisodeFinder } from "@/components/catalog/EpisodeFinder";
-import { RelatedShows } from "@/components/catalog/RelatedShows";
+import { RelatedTitlesRail } from "@/components/catalog/RelatedTitlesRail";
+import { MovieCollection } from "@/components/catalog/MovieCollection";
 import { seasonSummaries } from "@/lib/tmdb/episodes";
 import { TitleMatch } from "@/components/catalog/TitleMatch";
 
@@ -229,8 +230,19 @@ export default async function TitlePage({
 
           {mediaType === "tv" && (
             <Suspense fallback={null}>
-              <RelatedShows tvId={id} />
+              <RelatedTitlesRail mediaType="tv" tmdbId={id} title="Spinoffs & related" />
             </Suspense>
+          )}
+
+          {mediaType === "movie" && (
+            <>
+              <Suspense fallback={null}>
+                <MovieCollection movieId={id} collection={meta.belongs_to_collection ?? null} />
+              </Suspense>
+              <Suspense fallback={null}>
+                <RelatedTitlesRail mediaType="movie" tmdbId={id} title="Remake / related" />
+              </Suspense>
+            </>
           )}
 
           {recs.length > 0 && (
