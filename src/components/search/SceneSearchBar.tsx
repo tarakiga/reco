@@ -14,7 +14,9 @@ export function SceneSearchBar({ initialQuery }: { initialQuery?: string }) {
           defaultValue={initialQuery}
         />
       </div>
-      <Button type="submit">Search</Button>
+      <Button type="submit" className="bg-warning text-surface hover:bg-warning/90">
+        Search
+      </Button>
     </form>
   );
 }
