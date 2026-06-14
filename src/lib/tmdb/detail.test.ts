@@ -7,6 +7,7 @@ import {
   recommendations,
   formatRuntime,
   formatMoney,
+  formatBinge,
   titleFacts,
 } from "./detail";
 import type { TmdbTitleDetail } from "./types";
@@ -136,4 +137,40 @@ test("titleFacts returns money for movies and counts for TV", () => {
   expect(facts).toContainEqual({ label: "Seasons", value: "5" });
   expect(facts).toContainEqual({ label: "Episodes", value: "62" });
   expect(facts).toContainEqual({ label: "Network", value: "AMC" });
+  // no episode_run_time on this fixture → no binge row
+  expect(facts.some((f) => f.label === "Binge watch")).toBe(false);
+});
+
+test("formatBinge renders days/hours/minutes compactly", () => {
+  expect(formatBinge(2914)).toBe("2d 1h"); // 62 eps x 47m, rounds to 49h
+  expect(formatBinge(2880)).toBe("2d"); // exactly 48h → drop 0h
+  expect(formatBinge(480)).toBe("8h");
+  expect(formatBinge(45)).toBe("45m");
+  expect(formatBinge(0)).toBeNull();
+  expect(formatBinge(undefined)).toBeNull();
+});
+
+test("titleFacts adds a Binge watch row for TV when runtime is known", () => {
+  const tv: TmdbTitleDetail = {
+    id: 1,
+    number_of_seasons: 5,
+    number_of_episodes: 62,
+    episode_run_time: [47],
+  };
+  const facts = titleFacts(tv, "tv");
+  expect(facts).toContainEqual({ label: "Binge watch", value: "2d 1h" });
+  // it sits after Episodes
+  const labels = facts.map((f) => f.label);
+  expect(labels.indexOf("Binge watch")).toBe(labels.indexOf("Episodes") + 1);
+});
+
+test("titleFacts falls back to last/next episode runtime when episode_run_time is empty", () => {
+  const tv: TmdbTitleDetail = {
+    id: 1,
+    number_of_episodes: 62,
+    episode_run_time: [], // TMDB increasingly returns this empty
+    last_episode_to_air: { runtime: 56 },
+  };
+  // 62 x 56 = 3472m → round(57.9h) = 58h → 2d 10h
+  expect(titleFacts(tv, "tv")).toContainEqual({ label: "Binge watch", value: "2d 10h" });
 });
