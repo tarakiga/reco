@@ -14,6 +14,12 @@ import { getBrandName, getNavLinks } from "@/services/site-config";
 const footerAttribution = (
   <div className="space-y-1">
     <p>
+      Questions or feedback?{" "}
+      <a href="mailto:hello@haystackk.com" className="underline hover:text-text">
+        hello@haystackk.com
+      </a>
+    </p>
+    <p>
       This product uses the{" "}
       <a
         href="https://www.themoviedb.org"
