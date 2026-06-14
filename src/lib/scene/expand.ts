@@ -1,6 +1,6 @@
 import "server-only";
 
-const MODEL = "claude-haiku-4-5-20251001";
+const MODEL = "gemini-2.0-flash";
 
 const prompt = (q: string) =>
   `A user is trying to find a movie or TV show they can't name, describing it vaguely. ` +
@@ -11,30 +11,28 @@ const prompt = (q: string) =>
 
 /**
  * Expand a vague scene query to improve semantic recall (bridges vocabulary gaps
- * like "dorm" → "boarding school"). Uses Anthropic Haiku when ANTHROPIC_API_KEY
+ * like "dorm" → "boarding school"). Uses Google Gemini Flash when GEMINI_API_KEY
  * is set; otherwise returns the query unchanged so search still works.
  */
 export async function expandSceneQuery(query: string): Promise<string> {
-  const key = process.env.ANTHROPIC_API_KEY;
+  const key = process.env.GEMINI_API_KEY;
   const q = query.trim();
   if (!key || q.length === 0) return q;
   try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`,
+      {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-goog-api-key": key },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt(q) }] }],
+          generationConfig: { maxOutputTokens: 256, temperature: 0.3 },
+        }),
       },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 120,
-        messages: [{ role: "user", content: prompt(q) }],
-      }),
-    });
+    );
     if (!res.ok) return q;
-    const json = (await res.json()) as { content?: { text?: string }[] };
-    const text = json.content?.map((c) => c.text ?? "").join(" ").trim();
+    const json = (await res.json()) as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
+    const text = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join(" ").trim();
     // Keep the literal query AND the expansion so exact terms aren't diluted away.
     return text ? `${q}. ${text}` : q;
   } catch {

@@ -3,19 +3,22 @@ import { expandSceneQuery } from "./expand";
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  delete process.env.ANTHROPIC_API_KEY;
+  delete process.env.GEMINI_API_KEY;
 });
 
 test("returns the query unchanged when no API key is set", async () => {
-  delete process.env.ANTHROPIC_API_KEY;
+  delete process.env.GEMINI_API_KEY;
   expect(await expandSceneQuery("girls in a dorm")).toBe("girls in a dorm");
 });
 
-test("appends the Haiku expansion when a key is present", async () => {
-  process.env.ANTHROPIC_API_KEY = "test-key";
+test("appends the Gemini expansion when a key is present", async () => {
+  process.env.GEMINI_API_KEY = "test-key";
   vi.stubGlobal(
     "fetch",
-    vi.fn(async () => ({ ok: true, json: async () => ({ content: [{ text: "teenage girls living at a boarding school dormitory" }] }) })),
+    vi.fn(async () => ({
+      ok: true,
+      json: async () => ({ candidates: [{ content: { parts: [{ text: "teenage girls living at a boarding school dormitory" }] } }] }),
+    })),
   );
   const r = await expandSceneQuery("girls in a dorm");
   expect(r).toContain("girls in a dorm");
@@ -23,7 +26,7 @@ test("appends the Haiku expansion when a key is present", async () => {
 });
 
 test("falls back to the original query on API error", async () => {
-  process.env.ANTHROPIC_API_KEY = "test-key";
+  process.env.GEMINI_API_KEY = "test-key";
   vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, status: 500 })));
   expect(await expandSceneQuery("a heist gone wrong")).toBe("a heist gone wrong");
 });
