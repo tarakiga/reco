@@ -1,5 +1,19 @@
-import { seasonSummaries, toEpisodes } from "./episodes";
+import { seasonSummaries, toEpisodes, searchEpisodes, type EpisodeIndexEntry } from "./episodes";
 import type { TmdbTitleDetail, TmdbSeasonDetail } from "./types";
+
+const entry = (over: Partial<EpisodeIndexEntry>): EpisodeIndexEntry => ({
+  seasonNumber: 1,
+  episodeNumber: 1,
+  name: "",
+  overview: "",
+  runtime: null,
+  airDate: null,
+  stillUrl: null,
+  voteAverage: null,
+  guestStars: [],
+  crew: [],
+  ...over,
+});
 
 test("seasonSummaries hides specials, sorts, and maps", () => {
   const meta: TmdbTitleDetail = {
@@ -63,4 +77,31 @@ test("toEpisodes maps fields and builds still url", () => {
     stillUrl: null,
     voteAverage: null,
   });
+});
+
+test("searchEpisodes finds an episode by guest star not in the overview", () => {
+  const entries = [
+    entry({ seasonNumber: 8, episodeNumber: 9, name: "The One with the Rumor", overview: "Monica hosts Thanksgiving.", guestStars: ["Brad Pitt"] }),
+    entry({ seasonNumber: 1, episodeNumber: 1, name: "The Pilot", overview: "Rachel arrives." }),
+  ];
+  const res = searchEpisodes(entries, "brad pitt");
+  expect(res).toHaveLength(1);
+  expect(res[0].episodeNumber).toBe(9);
+  expect(res[0].matchedOn).toBe("Guest: Brad Pitt");
+});
+
+test("searchEpisodes matches title/overview and ranks title hits first", () => {
+  const entries = [
+    entry({ episodeNumber: 1, name: "Thanksgiving leftovers", overview: "nothing" }),
+    entry({ episodeNumber: 2, name: "The Pilot", overview: "A big thanksgiving dinner." }),
+  ];
+  const res = searchEpisodes(entries, "thanksgiving");
+  expect(res.map((r) => r.episodeNumber)).toEqual([1, 2]); // title hit ranks above overview hit
+  expect(res[0].matchedOn).toBeNull(); // not a person match
+});
+
+test("searchEpisodes requires all words and ignores too-short queries", () => {
+  const entries = [entry({ guestStars: ["Brad Pitt"] }), entry({ episodeNumber: 2, overview: "pitt stop" })];
+  expect(searchEpisodes(entries, "brad pitt").every((r) => r.guestStars.includes("Brad Pitt"))).toBe(true);
+  expect(searchEpisodes(entries, "x")).toEqual([]);
 });
