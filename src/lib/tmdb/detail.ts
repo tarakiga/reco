@@ -117,6 +117,17 @@ export function formatMoney(n: number | undefined | null): string | null {
   return `$${n.toLocaleString("en-US")}`;
 }
 
+/** Total binge duration as a compact "2d 1h" / "8h" / "45m" string. */
+export function formatBinge(min: number | undefined | null): string | null {
+  if (!min || min <= 0) return null;
+  if (min < 60) return `${min}m`;
+  const totalHours = Math.round(min / 60);
+  const d = Math.floor(totalHours / 24);
+  const h = totalHours % 24;
+  if (d > 0) return h > 0 ? `${d}d ${h}h` : `${d}d`;
+  return `${h}h`;
+}
+
 function languageName(code: string): string {
   try {
     return new Intl.DisplayNames(["en"], { type: "language" }).of(code) ?? code.toUpperCase();
@@ -152,6 +163,16 @@ export function titleFacts(meta: TmdbTitleDetail, mediaType: MediaType): Fact[] 
     }
     if (meta.number_of_episodes) {
       facts.push({ label: "Episodes", value: String(meta.number_of_episodes) });
+    }
+    // TMDB has largely deprecated episode_run_time (often []), so fall back to a
+    // single known episode runtime (last/next aired) as a per-episode estimate.
+    const runtimes = (meta.episode_run_time ?? []).filter((r) => r > 0);
+    const perEpisode = runtimes.length
+      ? runtimes.reduce((a, b) => a + b, 0) / runtimes.length
+      : meta.last_episode_to_air?.runtime || meta.next_episode_to_air?.runtime || 0;
+    if (meta.number_of_episodes && perEpisode > 0) {
+      const binge = formatBinge(Math.round(meta.number_of_episodes * perEpisode));
+      if (binge) facts.push({ label: "Binge watch", value: binge });
     }
     const network = meta.networks?.[0]?.name;
     if (network) facts.push({ label: "Network", value: network });

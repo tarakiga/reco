@@ -86,6 +86,8 @@ export interface TmdbTitleDetail {
   // tv-only
   number_of_seasons?: number;
   number_of_episodes?: number;
+  last_episode_to_air?: { runtime?: number | null } | null;
+  next_episode_to_air?: { runtime?: number | null } | null;
   created_by?: TmdbNamedRef[];
   networks?: TmdbNetwork[];
   credits?: { cast?: TmdbCastMember[]; crew?: TmdbCrewMember[] };
