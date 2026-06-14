@@ -81,7 +81,7 @@ export function ForYouGrid() {
     <>
       <p className="-mt-3 mb-6 max-w-2xl text-sm leading-relaxed text-text-muted">
         These picks are tuned to your taste. The more movies and shows you rate or add to your
-        watchlist, the sharper they get — your suggestions keep refreshing as you go.
+        watchlist, the sharper they get, and your suggestions keep refreshing as you go.
       </p>
 
       <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
@@ -105,7 +105,7 @@ export function ForYouGrid() {
           </button>
         ) : (
           <p className="text-center text-sm text-text-muted">
-            That&apos;s everything matched to you for now — rate a few more titles to unlock fresh picks.
+            That&apos;s everything matched to you for now. Rate a few more titles to unlock fresh picks.
           </p>
         )}
       </div>
