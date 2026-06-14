@@ -56,7 +56,7 @@ export async function searchByScene(
     ORDER BY te.embedding <=> ${vec}::vector
     LIMIT ${limit}
   `);
-  const rows = (result.rows ?? result) as Record<string, unknown>[];
+  const rows = ((result as { rows?: Record<string, unknown>[] }).rows ?? result) as Record<string, unknown>[];
 
   return rows
     .filter((r) => (r.cos as number) >= MIN_SIMILARITY)
