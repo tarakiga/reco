@@ -20,7 +20,8 @@ export async function GET(req: Request) {
   const typeParam = url.searchParams.get("type");
   const mediaType = typeParam === "movie" || typeParam === "tv" ? typeParam : "any";
   const matchTaste = url.searchParams.get("matchTaste") === "1" && !!profile;
-  const region = (profile?.region ?? "US").toUpperCase().slice(0, 2);
+  // explicit region (from the country picker) wins, else the user's profile, else US
+  const region = (url.searchParams.get("region") || profile?.region || "US").toUpperCase().slice(0, 2);
   const page = Math.floor(Math.random() * 5) + 1; // variety across "Shuffle again"
 
   const { picks, broaden, pickIds } = await shuffle({

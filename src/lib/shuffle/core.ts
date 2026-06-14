@@ -12,6 +12,13 @@ export interface TmdbProviderListItem {
   display_priority?: number;
 }
 
+/** Well-known free / ad-supported services — surfaced in the picker even though
+ *  they rank low by display priority (Tubi ~277, Pluto ~70, etc.). */
+const FREE_SERVICE_PATTERNS = [/tubi/i, /pluto/i, /freevee/i, /\bplex\b/i, /crackle/i, /roku channel/i];
+export function isFreeService(name: string): boolean {
+  return FREE_SERVICE_PATTERNS.some((re) => re.test(name));
+}
+
 /** Random subset of up to n distinct members (Fisher–Yates). */
 export function sample<T>(arr: T[], n: number): T[] {
   const a = [...arr];
@@ -30,7 +37,8 @@ export function buildDiscoverParams(opts: {
 }): Record<string, string> {
   const p: Record<string, string> = {
     watch_region: opts.region,
-    with_watch_monetization_types: "flatrate",
+    // include free + ad-supported so services like Tubi/Pluto return their catalog
+    with_watch_monetization_types: "flatrate|free|ads",
     sort_by: "popularity.desc",
     "vote_count.gte": "100",
     page: String(opts.page),
@@ -40,21 +48,35 @@ export function buildDiscoverParams(opts: {
   return p;
 }
 
-/** Region's providers for the picker, sorted by how prominent they are there. */
+/**
+ * Region's providers for the picker: the top `limit` by display priority, PLUS
+ * any well-known free/ad services present in the region (which rank too low to
+ * make the cut otherwise). Sorted by priority within each group.
+ */
 export function mapProviders(list: TmdbProviderListItem[], region: string, limit = 18): ProviderVM[] {
   const prio = (p: TmdbProviderListItem) => p.display_priorities?.[region] ?? p.display_priority ?? 999;
-  return [...list]
-    .sort((a, b) => prio(a) - prio(b))
-    .slice(0, limit)
-    .map((p) => ({ id: p.provider_id, name: p.provider_name, logoUrl: logoUrl(p.logo_path) }));
+  const sorted = [...list].sort((a, b) => prio(a) - prio(b));
+  const top = sorted.slice(0, limit);
+  const inTop = new Set(top.map((p) => p.provider_id));
+  const free = sorted.filter((p) => isFreeService(p.provider_name) && !inTop.has(p.provider_id));
+  return [...top, ...free].map((p) => ({ id: p.provider_id, name: p.provider_name, logoUrl: logoUrl(p.logo_path) }));
 }
 
-/** Flatrate providers for a title in the region, limited to the chosen services. */
+/**
+ * Providers a title is watchable on for free or with the subscription
+ * (flatrate + free + ads), limited to the viewer's chosen services.
+ */
 export function selectedProviders(
   watch: TmdbTitleDetail["watch/providers"] | undefined,
   region: string,
   services: number[],
 ): ProviderVM[] {
   const rp = providersForRegion(watch, region);
-  return (rp?.flatrate ?? []).filter((p) => services.includes(p.id));
+  if (!rp) return [];
+  const seen = new Set<number>();
+  return [...rp.flatrate, ...rp.free, ...rp.ads].filter((p) => {
+    if (!services.includes(p.id) || seen.has(p.id)) return false;
+    seen.add(p.id);
+    return true;
+  });
 }

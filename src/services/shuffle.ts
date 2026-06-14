@@ -39,6 +39,23 @@ export async function regionProviders(region: string): Promise<ProviderVM[]> {
   }
 }
 
+export interface ShuffleRegion {
+  code: string;
+  name: string;
+}
+
+/** Countries TMDB has streaming data for, for the region picker. */
+export async function shuffleRegions(): Promise<ShuffleRegion[]> {
+  try {
+    const { results } = await tmdb.watchRegions();
+    return results
+      .map((r) => ({ code: r.iso_3166_1, name: r.english_name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  } catch {
+    return [];
+  }
+}
+
 export async function shuffle(
   opts: ShuffleOpts,
 ): Promise<{ picks: ShufflePick[]; broaden: boolean; pickIds: string[] }> {

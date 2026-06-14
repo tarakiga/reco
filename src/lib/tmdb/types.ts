@@ -37,6 +37,8 @@ export interface TmdbProvider {
 export interface TmdbWatchProviderRegion {
   link?: string;
   flatrate?: TmdbProvider[];
+  free?: TmdbProvider[];
+  ads?: TmdbProvider[];
   rent?: TmdbProvider[];
   buy?: TmdbProvider[];
 }

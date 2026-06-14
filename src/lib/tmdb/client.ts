@@ -58,4 +58,6 @@ export const tmdb = {
       `/watch/providers/${mediaType}`,
       { watch_region: region },
     ),
+  watchRegions: () =>
+    get<{ results: { iso_3166_1: string; english_name: string }[] }>("/watch/providers/regions"),
 };
