@@ -10,6 +10,7 @@ const entry = (over: Partial<EpisodeIndexEntry>): EpisodeIndexEntry => ({
   airDate: null,
   stillUrl: null,
   voteAverage: null,
+  cast: [],
   guestStars: [],
   crew: [],
   ...over,
@@ -54,7 +55,13 @@ test("toEpisodes maps fields and builds still url", () => {
         still_path: "/still.jpg",
         vote_average: 8.2,
       },
-      { id: 12, episode_number: 2, name: "", vote_average: 0 },
+      {
+        id: 12,
+        episode_number: 2,
+        name: "",
+        vote_average: 0,
+        guest_stars: [{ id: 7, name: "Brad Pitt", character: "Will", profile_path: "/bp.jpg" }],
+      },
     ],
   };
   const eps = toEpisodes(season);
@@ -66,8 +73,9 @@ test("toEpisodes maps fields and builds still url", () => {
     airDate: "2008-01-20",
     stillUrl: "https://image.tmdb.org/t/p/w300/still.jpg",
     voteAverage: 8.2,
+    cast: [],
   });
-  // empty name → fallback; 0 vote → null; missing fields → null
+  // empty name → fallback; 0 vote → null; missing fields → null; guest → cast
   expect(eps[1]).toEqual({
     episodeNumber: 2,
     name: "Episode 2",
@@ -76,6 +84,9 @@ test("toEpisodes maps fields and builds still url", () => {
     airDate: null,
     stillUrl: null,
     voteAverage: null,
+    cast: [
+      { id: 7, name: "Brad Pitt", character: "Will", profileUrl: "https://image.tmdb.org/t/p/w185/bp.jpg" },
+    ],
   });
 });
 

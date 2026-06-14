@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { SeasonSummary, EpisodeVM } from "@/lib/tmdb/episodes";
+import type { SeasonSummary, EpisodeVM, EpisodeCastMember } from "@/lib/tmdb/episodes";
 
 function fmtDate(iso: string | null): string | null {
   if (!iso) return null;
@@ -18,7 +18,27 @@ function fmtRuntime(min: number | null): string | null {
   return h ? `${h}h` : `${m}m`;
 }
 
+function CastAvatar({ member }: { member: EpisodeCastMember }) {
+  return (
+    <div className="w-16 text-center">
+      <div className="mx-auto flex size-14 items-center justify-center overflow-hidden rounded-full border border-border bg-surface-overlay text-sm text-text-muted">
+        {member.profileUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={member.profileUrl} alt={member.name} className="h-full w-full object-cover" loading="lazy" />
+        ) : (
+          member.name.charAt(0)
+        )}
+      </div>
+      <p className="mt-1 line-clamp-2 text-[11px] font-medium leading-tight text-text">{member.name}</p>
+      {member.character && (
+        <p className="line-clamp-1 text-[10px] text-text-muted">{member.character}</p>
+      )}
+    </div>
+  );
+}
+
 function EpisodeRow({ ep }: { ep: EpisodeVM }) {
+  const [showCast, setShowCast] = useState(false);
   const meta = [fmtDate(ep.airDate), fmtRuntime(ep.runtime)].filter(Boolean).join(" · ");
   return (
     <li className="flex gap-3">
@@ -39,6 +59,25 @@ function EpisodeRow({ ep }: { ep: EpisodeVM }) {
         </div>
         {meta && <p className="mt-0.5 text-xs text-text-muted">{meta}</p>}
         {ep.overview && <p className="mt-1 line-clamp-2 text-sm text-text-muted">{ep.overview}</p>}
+        {ep.cast.length > 0 && (
+          <div className="mt-2">
+            <button
+              type="button"
+              onClick={() => setShowCast((s) => !s)}
+              aria-expanded={showCast}
+              className="text-xs font-medium text-accent transition-colors hover:text-accent-hover"
+            >
+              {showCast ? "Hide episode cast" : `Show episode cast (${ep.cast.length})`}
+            </button>
+            {showCast && (
+              <div className="mt-3 flex flex-wrap gap-3">
+                {ep.cast.map((m) => (
+                  <CastAvatar key={m.id} member={m} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </li>
   );
