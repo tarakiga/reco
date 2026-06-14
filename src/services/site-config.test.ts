@@ -13,7 +13,7 @@ beforeEach(() => vi.clearAllMocks());
 test("brand falls back when no block", async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (publishedBlock as any).mockResolvedValue(null);
-  expect(await getBrandName()).toBe("reco");
+  expect(await getBrandName()).toBe("Haystackk");
 });
 
 test("brand strips html and uses block body", async () => {

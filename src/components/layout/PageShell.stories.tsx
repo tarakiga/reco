@@ -8,7 +8,7 @@ type Story = StoryObj<typeof PageShell>;
 
 export const Default: Story = {
   args: {
-    brand: "reco",
+    brand: "Haystackk",
     navLinks: [
       { href: "/", label: "Home" },
       { href: "/movies", label: "Movies" },

@@ -60,7 +60,7 @@ export function TasteOnboarding({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-surface" role="dialog" aria-modal="true" aria-label="Build your taste profile" ref={dialogRef} tabIndex={-1}>
       <header className="flex items-center gap-4 border-b border-border px-5 py-4">
-        <span className="text-lg font-bold text-text">reco</span>
+        <span className="text-lg font-bold text-text">Haystackk</span>
         <div className="flex flex-1 items-center gap-2">
           <div className="h-1 flex-1 overflow-hidden rounded-full bg-surface-overlay">
             <div className="h-full bg-accent transition-[width] duration-300" style={{ width: `${stepIndex === 1 ? 30 : 65}%` }} />
