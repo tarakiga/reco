@@ -89,7 +89,7 @@ export default async function Home() {
           </div>
           <Link
             href="/shuffle"
-            className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-accent px-7 text-base font-semibold text-text shadow-lg shadow-accent/20 transition-colors hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            className="inline-flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-accent px-7 py-2.5 text-center text-base font-semibold leading-tight text-text shadow-lg shadow-accent/20 transition-colors hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto"
           >
             <span aria-hidden className="text-lg">🎲</span> Find me something to watch
           </Link>

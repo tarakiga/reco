@@ -57,7 +57,7 @@ export function EpisodeFinder({ tvId }: { tvId: number }) {
           e.preventDefault();
           setQuery(input.trim());
         }}
-        className="flex items-end gap-3"
+        className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3"
       >
         <div className="flex-1">
           <Input
@@ -68,12 +68,14 @@ export function EpisodeFinder({ tvId }: { tvId: number }) {
             onChange={(e) => setInput(e.target.value)}
           />
         </div>
-        <Button type="submit">Search</Button>
-        {query && (
-          <Button type="button" variant="secondary" onClick={() => { setInput(""); setQuery(""); }}>
-            Clear
-          </Button>
-        )}
+        <div className="flex gap-2">
+          <Button type="submit" className="flex-1 sm:flex-none">Search</Button>
+          {query && (
+            <Button type="button" variant="secondary" className="flex-1 sm:flex-none" onClick={() => { setInput(""); setQuery(""); }}>
+              Clear
+            </Button>
+          )}
+        </div>
       </form>
 
       {query.length >= 2 && (
