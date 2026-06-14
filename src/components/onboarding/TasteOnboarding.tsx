@@ -111,7 +111,7 @@ export function TasteOnboarding({ onClose }: { onClose: () => void }) {
               {proceedLabel}
             </button>
           </div>
-          {error && <p className="sr-only">{error}</p>}
+          {error && <p className="text-sm text-danger" role="alert">{error}</p>}
         </footer>
       )}
     </div>
