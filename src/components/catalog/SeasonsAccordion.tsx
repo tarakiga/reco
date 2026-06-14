@@ -126,13 +126,10 @@ function SeasonItem({
 export function SeasonsAccordion({ tvId, seasons }: { tvId: number; seasons: SeasonSummary[] }) {
   if (seasons.length === 0) return null;
   return (
-    <section className="mb-8">
-      <h2 className="mb-3 text-lg font-semibold text-text">Episodes</h2>
-      <div className="divide-y divide-border rounded-lg border border-border bg-surface-raised px-4">
-        {seasons.map((s, i) => (
-          <SeasonItem key={s.seasonNumber} tvId={tvId} season={s} defaultOpen={i === 0} />
-        ))}
-      </div>
-    </section>
+    <div className="divide-y divide-border rounded-lg border border-border bg-surface-raised px-4">
+      {seasons.map((s, i) => (
+        <SeasonItem key={s.seasonNumber} tvId={tvId} season={s} defaultOpen={i === 0} />
+      ))}
+    </div>
   );
 }

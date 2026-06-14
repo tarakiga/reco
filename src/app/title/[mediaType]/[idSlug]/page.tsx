@@ -26,6 +26,7 @@ import { HeroBackdrop } from "@/components/catalog/HeroBackdrop";
 import { AmbientBackground } from "@/components/catalog/AmbientBackground";
 import { FactsPanel } from "@/components/catalog/FactsPanel";
 import { SeasonsAccordion } from "@/components/catalog/SeasonsAccordion";
+import { EpisodeFinder } from "@/components/catalog/EpisodeFinder";
 import { seasonSummaries } from "@/lib/tmdb/episodes";
 import { TitleMatch } from "@/components/catalog/TitleMatch";
 
@@ -201,7 +202,13 @@ export default async function TitlePage({
           {/* Where to watch — client island resolves user's region (US default) */}
           <WhereToWatchClient watch={meta["watch/providers"]} />
 
-          {seasons.length > 0 && <SeasonsAccordion tvId={id} seasons={seasons} />}
+          {seasons.length > 0 && (
+            <section className="mb-8">
+              <h2 className="mb-3 text-lg font-semibold text-text">Episodes</h2>
+              <EpisodeFinder tvId={id} />
+              <SeasonsAccordion tvId={id} seasons={seasons} />
+            </section>
+          )}
 
           {cast.length > 0 && (
             <Rail title="Cast">
