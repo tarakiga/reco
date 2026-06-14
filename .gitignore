@@ -49,3 +49,8 @@ storybook-static
 
 # local Claude Code permission settings
 .claude/settings.local.json
+
+# backfill runtime artifacts
+scripts/backfill.log
+scripts/backfill.err
+scripts/backfill.pid
