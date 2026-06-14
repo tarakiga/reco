@@ -46,3 +46,10 @@ body {
   font-family: var(--font-sans);
   overflow-x: clip;
 }
+
+/* Tailwind v4's preflight dropped the default cursor:pointer on buttons —
+   restore it so all clickable controls signal they're interactive. */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]) {
+  cursor: pointer;
+}
