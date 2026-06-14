@@ -1,15 +1,21 @@
 "use client";
+import { useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@clerk/nextjs";
 import { meFetch } from "@/lib/me-client";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { MatchBadge } from "@/components/catalog/MatchBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PosterGridSkeleton } from "@/components/catalog/Skeletons";
+import { TasteOnboarding } from "@/components/onboarding/TasteOnboarding";
 import type { ForYouItem } from "@/services/for-you";
 
 interface FeedResponse { needsMoreRatings: boolean; have?: number; need?: number; items: ForYouItem[] }
 
 export function ForYouGrid() {
+  const { isSignedIn } = useAuth();
+  const [onboarding, setOnboarding] = useState(false);
   const { data, isLoading } = useQuery({
     queryKey: ["for-you"],
     queryFn: () => meFetch<FeedResponse>("/api/v1/me/for-you"),
@@ -18,10 +24,24 @@ export function ForYouGrid() {
   if (isLoading) return <PosterGridSkeleton />;
   if (!data || data.needsMoreRatings) {
     return (
-      <EmptyState
-        title="Rate a few titles to unlock your matches"
-        description={`Rate at least ${data?.need ?? 5} movies or shows and we'll build your taste profile.`}
-      />
+      <>
+        <EmptyState
+          title="Discover what to watch next"
+          description={`Build your taste profile and we'll surface movies and shows matched to you.`}
+          action={
+            isSignedIn === false ? (
+              <Link href="/sign-in" className="inline-flex h-10 items-center justify-center rounded-md bg-accent px-5 text-sm font-medium text-text hover:bg-accent-hover">
+                Sign in to get started
+              </Link>
+            ) : (
+              <button type="button" onClick={() => setOnboarding(true)} className="inline-flex h-10 items-center justify-center rounded-md bg-accent px-5 text-sm font-medium text-text hover:bg-accent-hover">
+                Build your taste profile
+              </button>
+            )
+          }
+        />
+        {onboarding && <TasteOnboarding onClose={() => setOnboarding(false)} />}
+      </>
     );
   }
   if (data.items.length === 0) {
