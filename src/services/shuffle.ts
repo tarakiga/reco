@@ -64,23 +64,29 @@ export async function shuffle(
 
   const chosen = sample(candidates, 5);
   const pickIds: string[] = [];
-  const picks = await Promise.all(
-    chosen.map(async (item) => {
-      const row = await getOrCreateTitle(item._mt, item.id);
-      pickIds.push(row.id);
-      const meta = (row.metadata ?? {}) as TmdbTitleDetail;
-      return {
-        titleId: row.id,
-        tmdbId: item.id,
-        mediaType: item._mt,
-        title: row.title,
-        year: row.releaseYear,
-        posterUrl: posterUrl(row.posterPath),
-        href: `/title/${item._mt}/${item.id}-${row.slug}`,
-        providers: selectedProviders(meta["watch/providers"], opts.region, opts.services),
-      };
+  const settled = await Promise.all(
+    chosen.map(async (item): Promise<ShufflePick | null> => {
+      try {
+        const row = await getOrCreateTitle(item._mt, item.id);
+        pickIds.push(row.id);
+        const meta = (row.metadata ?? {}) as TmdbTitleDetail;
+        return {
+          titleId: row.id,
+          tmdbId: item.id,
+          mediaType: item._mt,
+          title: row.title,
+          year: row.releaseYear,
+          posterUrl: posterUrl(row.posterPath),
+          href: `/title/${item._mt}/${item.id}-${row.slug}`,
+          providers: selectedProviders(meta["watch/providers"], opts.region, opts.services),
+        };
+      } catch {
+        // a single pick that won't mirror shouldn't fail the whole shuffle
+        return null;
+      }
     }),
   );
+  const picks = settled.filter((p): p is ShufflePick => p !== null);
 
   return { picks, broaden: candidates.length < 5, pickIds };
 }
