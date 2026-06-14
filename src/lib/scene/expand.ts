@@ -1,13 +1,17 @@
 import "server-only";
 
-const MODEL = "gemini-2.0-flash";
+// Alias (not a pinned version) so it doesn't get retired out from under us.
+const MODEL = "gemini-flash-lite-latest";
 
+// Deliberately CONCISE + NEUTRAL: a verbose expansion over-specifies and drifts
+// (e.g. "dorm" → "college, secret societies"), which buries good matches. Keep
+// it to the literal subject + direct setting synonyms + broad genre.
 const prompt = (q: string) =>
-  `A user is trying to find a movie or TV show they can't name, describing it vaguely. ` +
-  `Rewrite their description into ONE rich search phrase that keeps their literal details and adds ` +
-  `closely-related themes, synonyms, setting, era, and genre cues likely to appear in a plot or keyword ` +
-  `description (e.g. "dorm" → also "boarding school, dormitory"). Do NOT name specific titles. ` +
-  `Under 40 words, one line, no preamble.\n\nDescription: "${q}"`;
+  `Rewrite this vague movie/TV-show memory into ONE concise search phrase (under 25 words). ` +
+  `Keep the literal subject and add only direct synonyms for the setting ` +
+  `(e.g. dorm = boarding school, dormitory, residence hall) and the broad genre (e.g. comedy, drama). ` +
+  `Do NOT invent narrow plot themes (no "secret societies", "academic rivalry") and do NOT narrow the ` +
+  `era or age group. No titles, no preamble.\n\nMemory: "${q}"`;
 
 /**
  * Expand a vague scene query to improve semantic recall (bridges vocabulary gaps
