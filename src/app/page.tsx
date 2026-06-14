@@ -54,16 +54,10 @@ export default async function Home() {
       <section className="py-12 text-center sm:py-16">
         <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Find what to watch.</h1>
         <p className="mx-auto mt-4 max-w-xl text-text-muted">
-          Search, browse, and get picks tuned to your taste — or when you just can&apos;t decide,
-          let Shuffle deal you a few great options.
+          Search and browse movies and TV shows, see where they&apos;re streaming, and keep track
+          of what you want to watch.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Link
-            href="/shuffle"
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-accent px-5 text-sm font-medium text-text transition-colors hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-          >
-            <span aria-hidden>🎲</span> Shuffle
-          </Link>
           <Link
             href="/movies"
             className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface-raised px-5 text-sm font-medium text-text transition-colors hover:bg-surface-overlay focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
@@ -75,6 +69,28 @@ export default async function Home() {
             className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface-raised px-5 text-sm font-medium text-text transition-colors hover:bg-surface-overlay focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
           >
             Browse TV
+          </Link>
+        </div>
+      </section>
+
+      {/* Shuffle call-to-action — prominent so impatient visitors can't miss it. */}
+      <section className="mb-10">
+        <div className="flex flex-col items-start gap-5 rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/20 via-surface-raised to-surface-raised p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+          <div className="max-w-xl">
+            <p className="text-sm font-semibold uppercase tracking-wide text-accent">Can&apos;t decide?</p>
+            <h2 className="mt-1 text-2xl font-bold text-text sm:text-3xl">
+              We&apos;ll find something you can watch right now
+            </h2>
+            <p className="mt-2 text-text-muted">
+              Pick the streaming services you have and we&apos;ll instantly deal you a few great
+              movies and shows everyone can actually agree on.
+            </p>
+          </div>
+          <Link
+            href="/shuffle"
+            className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-lg bg-accent px-7 text-base font-semibold text-text shadow-lg shadow-accent/20 transition-colors hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+          >
+            <span aria-hidden className="text-lg">🎲</span> Find me something to watch
           </Link>
         </div>
       </section>
