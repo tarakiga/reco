@@ -53,4 +53,9 @@ export const tmdb = {
     get<{ results: TmdbSearchItem[]; total_pages: number }>(`/discover/${mediaType}`, params),
   genres: (mediaType: "movie" | "tv") =>
     get<{ genres: { id: number; name: string }[] }>(`/genre/${mediaType}/list`),
+  watchProviders: (mediaType: "movie" | "tv", region: string) =>
+    get<{ results: { provider_id: number; provider_name: string; logo_path: string | null; display_priorities?: Record<string, number>; display_priority?: number }[] }>(
+      `/watch/providers/${mediaType}`,
+      { watch_region: region },
+    ),
 };
