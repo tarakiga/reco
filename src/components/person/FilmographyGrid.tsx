@@ -3,13 +3,44 @@ import { useState } from "react";
 import type { FilmographyCredit } from "@/lib/tmdb/person";
 import { FilmographyModal } from "./FilmographyModal";
 
+type Filter = "all" | "movie" | "tv";
+
 export function FilmographyGrid({ personId, credits }: { personId: number; credits: FilmographyCredit[] }) {
   const [selected, setSelected] = useState<FilmographyCredit | null>(null);
+  const [filter, setFilter] = useState<Filter>("all");
+
+  const movies = credits.filter((c) => c.mediaType === "movie").length;
+  const tv = credits.filter((c) => c.mediaType === "tv").length;
+  const shown = filter === "all" ? credits : credits.filter((c) => c.mediaType === filter);
+  const tabs: { key: Filter; label: string }[] = [
+    { key: "all", label: `All ${credits.length}` },
+    { key: "movie", label: `Movies ${movies}` },
+    { key: "tv", label: `TV ${tv}` },
+  ];
 
   return (
     <>
+      {movies > 0 && tv > 0 && (
+        <div className="mb-4 inline-flex rounded-lg border border-border bg-surface-raised p-1 text-sm">
+          {tabs.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setFilter(t.key)}
+              aria-pressed={filter === t.key}
+              className={
+                filter === t.key
+                  ? "rounded-md bg-accent px-3 py-1 font-medium text-text"
+                  : "rounded-md px-3 py-1 text-text-muted transition-colors hover:text-text"
+              }
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
       <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
-        {credits.map((c) => (
+        {shown.map((c) => (
           <button
             key={`${c.mediaType}-${c.tmdbId}`}
             type="button"

@@ -50,6 +50,8 @@ export const tmdb = {
     get<TmdbSeasonDetail>(`/tv/${tvId}/season/${seasonNumber}`),
   externalIds: (mediaType: "movie" | "tv", id: number) =>
     get<{ wikidata_id?: string | null; imdb_id?: string | null }>(`/${mediaType}/${id}/external_ids`),
+  personExternalIds: (id: number) =>
+    get<{ wikidata_id?: string | null; imdb_id?: string | null }>(`/person/${id}/external_ids`),
   titleBrief: (mediaType: "movie" | "tv", id: number) =>
     get<{ title?: string; name?: string; poster_path?: string | null; release_date?: string; first_air_date?: string }>(
       `/${mediaType}/${id}`,

@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getOrCreatePerson } from "@/services/catalog";
 import { TmdbError } from "@/lib/tmdb/client";
@@ -6,6 +7,7 @@ import { profileUrl } from "@/lib/tmdb/images";
 import { filmography, personFacts } from "@/lib/tmdb/person";
 import type { TmdbPersonDetail } from "@/lib/tmdb/types";
 import { FilmographyGrid } from "@/components/person/FilmographyGrid";
+import { PersonAwards } from "@/components/person/PersonAwards";
 import { HeroBackdrop } from "@/components/catalog/HeroBackdrop";
 import { AmbientBackground } from "@/components/catalog/AmbientBackground";
 import { FactsPanel } from "@/components/catalog/FactsPanel";
@@ -58,6 +60,12 @@ export default async function PersonPage({
   const meta = (person.metadata ?? {}) as TmdbPersonDetail;
   const credits = filmography(meta.combined_credits);
   const facts = personFacts(meta);
+  const years = credits.map((c) => c.year).filter((y): y is number => y != null);
+  if (years.length > 0) {
+    const min = Math.min(...years);
+    const max = Math.max(...years);
+    facts.push({ label: "Active", value: min === max ? `${min}` : `${min}–${max}` });
+  }
   const photo = profileUrl(person.profilePath);
 
   return (
@@ -131,7 +139,12 @@ export default async function PersonPage({
           </section>
         </div>
 
-        <FactsPanel facts={facts} />
+        <div className="space-y-4">
+          <FactsPanel facts={facts} />
+          <Suspense fallback={null}>
+            <PersonAwards personId={id} />
+          </Suspense>
+        </div>
       </div>
     </div>
   );
