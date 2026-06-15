@@ -4,6 +4,8 @@ import { getCurrentProfile } from "@/services/profile";
 import { listWatchlist, listFavourites } from "@/services/user-catalog";
 import { getEpg } from "@/services/epg";
 import { tvStatusBadges } from "@/services/tv-status";
+import { listUserLists } from "@/services/lists";
+import { ListsManager } from "@/components/account/ListsManager";
 import { posterUrl } from "@/lib/tmdb/images";
 import { SITE_URL } from "@/lib/brand";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -39,11 +41,20 @@ export default async function AccountPage() {
     );
   }
 
-  const [watchlist, favourites, epg] = await Promise.all([
+  const [watchlist, favourites, epg, userLists] = await Promise.all([
     listWatchlist(profile.id),
     listFavourites(profile.id),
     getEpg(profile.id),
+    listUserLists(profile.id),
   ]);
+  const listVMs = userLists.map((l) => ({
+    id: l.id,
+    title: l.title,
+    subtitle: l.subtitle,
+    slug: l.slug,
+    published: l.published,
+    itemCount: l.itemCount,
+  }));
 
   // Private calendar feed — the profile UUID is the unguessable token.
   const feedPath = `/api/calendar/${profile.id}.ics`;
@@ -74,6 +85,11 @@ export default async function AccountPage() {
       content: (
         <UpcomingEpg entries={epg} icsUrl={icsUrl} webcalUrl={webcalUrl} googleUrl={googleUrl} hideHeading />
       ),
+    },
+    {
+      id: "lists",
+      label: "Lists",
+      content: <ListsManager initial={listVMs} siteOrigin={SITE_URL} />,
     },
     {
       id: "watchlist",

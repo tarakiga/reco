@@ -142,6 +142,33 @@ export type WatchlistItemRow = typeof watchlistItems.$inferSelect;
 export type RatingRow = typeof ratings.$inferSelect;
 export type FavouriteRow = typeof favourites.$inferSelect;
 
+// User-created shareable lists (e.g. "My Top Ten Mind Movies").
+export const lists = pgTable("lists", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  subtitle: text("subtitle"),
+  slug: text("slug").notNull(),
+  published: boolean("published").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const listItems = pgTable(
+  "list_items",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    listId: uuid("list_id").notNull().references(() => lists.id, { onDelete: "cascade" }),
+    titleId: uuid("title_id").notNull().references(() => titles.id, { onDelete: "cascade" }),
+    position: integer("position").notNull().default(0),
+    addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique("list_items_list_title").on(t.listId, t.titleId)],
+);
+
+export type ListRow = typeof lists.$inferSelect;
+export type ListItemRow = typeof listItems.$inferSelect;
+
 const vec = vector(EMBEDDING_DIM);
 
 export const titleEmbeddings = pgTable("title_embeddings", {
