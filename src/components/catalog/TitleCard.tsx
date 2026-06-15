@@ -1,20 +1,20 @@
 import Link from "next/link";
-import { upcomingLabel } from "@/lib/release";
 
 export function TitleCard({
   href,
   title,
   year,
   posterUrl,
-  releaseDate,
+  upcoming,
 }: {
   href: string;
   title: string;
   year: number | null;
   posterUrl: string | null;
-  releaseDate?: string | null;
+  /** Pre-computed "upcoming" date label (e.g. "Aug 15, 2026"); computed by the
+   *  page since it depends on the current time (not allowed in prerendered cards). */
+  upcoming?: string | null;
 }) {
-  const upcoming = upcomingLabel(releaseDate);
   return (
     <Link href={href} className="group block w-full">
       <div className="relative aspect-2/3 overflow-hidden rounded-md border border-border bg-surface-overlay">

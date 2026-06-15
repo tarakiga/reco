@@ -254,7 +254,7 @@ export default async function TitlePage({
             <Rail title="More like this">
               {recs.map((r) => (
                 <div key={`${r.mediaType}-${r.tmdbId}`} className="w-28 shrink-0">
-                  <TitleCard href={r.href} title={r.title} year={r.year} posterUrl={r.posterUrl} releaseDate={r.releaseDate} />
+                  <TitleCard href={r.href} title={r.title} year={r.year} posterUrl={r.posterUrl} />
                 </div>
               ))}
             </Rail>

@@ -3,6 +3,7 @@ import { tmdb } from "@/lib/tmdb/client";
 import { toSearchResults, type TitleResult, type PersonResult } from "@/lib/tmdb/transform";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { PersonCard } from "@/components/catalog/PersonCard";
+import { upcomingLabel } from "@/lib/release";
 import { PosterGridSkeleton } from "@/components/catalog/Skeletons";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -85,7 +86,7 @@ async function SearchResults({ query }: { query: string }) {
                 title={t.title}
                 year={t.year}
                 posterUrl={t.posterUrl}
-                releaseDate={t.releaseDate}
+                upcoming={upcomingLabel(t.releaseDate)}
               />
             ))}
           </div>

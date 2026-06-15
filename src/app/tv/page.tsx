@@ -3,6 +3,7 @@ import { buildDiscoverParams, toBrowseResults } from "@/lib/tmdb/discover";
 import { FilterBar } from "@/components/catalog/FilterBar";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { upcomingLabel } from "@/lib/release";
 
 export const metadata = {
   title: "TV Shows",
@@ -38,7 +39,7 @@ export default async function TvPage({
       ) : (
         <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
           {results.map((t) => (
-            <TitleCard key={t.tmdbId} href={t.href} title={t.title} year={t.year} posterUrl={t.posterUrl} releaseDate={t.releaseDate} />
+            <TitleCard key={t.tmdbId} href={t.href} title={t.title} year={t.year} posterUrl={t.posterUrl} upcoming={upcomingLabel(t.releaseDate)} />
           ))}
         </div>
       )}
