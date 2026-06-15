@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import sharp from "sharp";
 import { getOrCreateTitle } from "@/services/catalog";
 import { parseIdSlug, pickTrailerKey } from "@/lib/tmdb/detail";
 import { backdropUrl } from "@/lib/tmdb/images";
@@ -48,7 +49,7 @@ export async function GET(
 
   const titleSize = title.length > 40 ? 54 : title.length > 24 ? 70 : 90;
 
-  return new ImageResponse(
+  const image = new ImageResponse(
     (
       <div
         style={{
@@ -127,4 +128,15 @@ export async function GET(
     ),
     { ...SIZE },
   );
+
+  // ImageResponse is PNG-only (~1MB+ for a photo backdrop, which WhatsApp may
+  // skip). Re-encode as JPEG (~150-250KB) so the preview shows reliably.
+  const png = Buffer.from(await image.arrayBuffer());
+  const jpeg = await sharp(png).jpeg({ quality: 82, mozjpeg: true }).toBuffer();
+  return new Response(new Uint8Array(jpeg), {
+    headers: {
+      "Content-Type": "image/jpeg",
+      "Cache-Control": "public, max-age=86400, s-maxage=86400",
+    },
+  });
 }

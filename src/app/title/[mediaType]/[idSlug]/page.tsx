@@ -55,6 +55,7 @@ export async function generateMetadata({
       width: 1200,
       height: 630,
       alt: row.title,
+      type: "image/jpeg",
     };
     return {
       title: row.title,
