@@ -109,6 +109,15 @@ export function ListsManager({ initial, siteOrigin }: { initial: ListSummaryVM[]
                   Edit
                 </Link>
                 {l.published && (
+                  <Link
+                    href={`/list/${l.id}-${l.slug}`}
+                    target="_blank"
+                    className="rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-text hover:bg-surface-overlay"
+                  >
+                    View
+                  </Link>
+                )}
+                {l.published && (
                   <button
                     type="button"
                     onClick={() => share(l)}
