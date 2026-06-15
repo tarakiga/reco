@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { CardFavouriteButton } from "./CardFavouriteButton";
+import type { CardFavourite } from "@/lib/favourite";
 
 export function TitleCard({
   href,
@@ -6,6 +8,7 @@ export function TitleCard({
   year,
   posterUrl,
   upcoming,
+  favourite,
 }: {
   href: string;
   title: string;
@@ -14,10 +17,13 @@ export function TitleCard({
   /** Pre-computed "upcoming" date label (e.g. "Aug 15, 2026"); computed by the
    *  page since it depends on the current time (not allowed in prerendered cards). */
   upcoming?: string | null;
+  /** When provided, shows a heart to favourite the title without opening it. */
+  favourite?: CardFavourite;
 }) {
   return (
     <Link href={href} className="group block w-full">
       <div className="relative aspect-2/3 overflow-hidden rounded-md border border-border bg-surface-overlay">
+        {favourite && <CardFavouriteButton {...favourite} />}
         {upcoming && (
           <span className="absolute left-1 top-1 z-10 rounded bg-black/75 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white shadow-sm backdrop-blur-sm">
             {upcoming}

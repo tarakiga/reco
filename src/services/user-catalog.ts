@@ -111,6 +111,17 @@ export async function listFavourites(userId: string): Promise<FavouriteEntry[]> 
     .orderBy(desc(favourites.addedAt));
 }
 
+/** Membership keys ("movie:603") of a user's favourites — one query to mark a
+ *  whole grid of cards, instead of one request per card. */
+export async function listFavouriteKeys(userId: string): Promise<string[]> {
+  const rows = await db
+    .select({ mediaType: titles.mediaType, tmdbId: titles.tmdbId })
+    .from(favourites)
+    .innerJoin(titles, eq(favourites.titleId, titles.id))
+    .where(eq(favourites.userId, userId));
+  return rows.map((r) => `${r.mediaType}:${r.tmdbId}`);
+}
+
 export async function getTitleState(
   userId: string,
   titleId: string,

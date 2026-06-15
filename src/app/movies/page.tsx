@@ -4,6 +4,7 @@ import { FilterBar } from "@/components/catalog/FilterBar";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { upcomingLabel } from "@/lib/release";
+import { favouriteContext, favouriteProp } from "@/services/favourites";
 
 export const metadata = {
   title: "Movies",
@@ -16,6 +17,7 @@ export default async function MoviesPage({
   searchParams: Promise<{ genre?: string; year?: string }>;
 }) {
   const filters = await searchParams;
+  const fav = await favouriteContext();
   let genres: { id: number; name: string }[] = [];
   let results: ReturnType<typeof toBrowseResults> = [];
   try {
@@ -39,7 +41,7 @@ export default async function MoviesPage({
       ) : (
         <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
           {results.map((t) => (
-            <TitleCard key={t.tmdbId} href={t.href} title={t.title} year={t.year} posterUrl={t.posterUrl} upcoming={upcomingLabel(t.releaseDate)} />
+            <TitleCard key={t.tmdbId} href={t.href} title={t.title} year={t.year} posterUrl={t.posterUrl} upcoming={upcomingLabel(t.releaseDate)} favourite={favouriteProp(fav, "movie", t.tmdbId)} />
           ))}
         </div>
       )}
