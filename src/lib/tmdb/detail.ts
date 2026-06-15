@@ -43,30 +43,44 @@ export function topCast(cast: TmdbCastMember[] | undefined, limit = 12): CastEnt
     }));
 }
 
+export interface CrewPerson {
+  id: number;
+  name: string;
+  href: string;
+}
 export interface KeyCrew {
   role: string;
-  names: string[];
+  people: CrewPerson[];
+}
+
+/** Dedupe a crew list by person id, mapping to linkable people. */
+function toCrewPeople(list: { id: number; name: string }[]): CrewPerson[] {
+  const seen = new Set<number>();
+  const out: CrewPerson[] = [];
+  for (const p of list) {
+    if (seen.has(p.id)) continue;
+    seen.add(p.id);
+    out.push({ id: p.id, name: p.name, href: `/person/${p.id}-${slugify(p.name)}` });
+  }
+  return out;
 }
 
 /** Director/Writers for movies, Creator(s) for TV — pulled from credits.crew / created_by. */
 export function keyCrew(meta: TmdbTitleDetail, mediaType: MediaType): KeyCrew[] {
-  const dedupe = (a: string[]) => [...new Set(a)];
   if (mediaType === "tv") {
-    const creators = dedupe((meta.created_by ?? []).map((c) => c.name));
+    const creators = toCrewPeople(meta.created_by ?? []);
     return creators.length
-      ? [{ role: creators.length > 1 ? "Creators" : "Creator", names: creators }]
+      ? [{ role: creators.length > 1 ? "Creators" : "Creator", people: creators }]
       : [];
   }
   const crew = meta.credits?.crew ?? [];
-  const directors = dedupe(crew.filter((c) => c.job === "Director").map((c) => c.name));
-  const writers = dedupe(
-    crew
-      .filter((c) => c.job === "Writer" || c.job === "Screenplay" || c.job === "Story")
-      .map((c) => c.name),
+  const directors = toCrewPeople(crew.filter((c) => c.job === "Director"));
+  const writers = toCrewPeople(
+    crew.filter((c) => c.job === "Writer" || c.job === "Screenplay" || c.job === "Story"),
   ).slice(0, 3);
   const out: KeyCrew[] = [];
-  if (directors.length) out.push({ role: directors.length > 1 ? "Directors" : "Director", names: directors });
-  if (writers.length) out.push({ role: writers.length > 1 ? "Writers" : "Writer", names: writers });
+  if (directors.length) out.push({ role: directors.length > 1 ? "Directors" : "Director", people: directors });
+  if (writers.length) out.push({ role: writers.length > 1 ? "Writers" : "Writer", people: writers });
   return out;
 }
 

@@ -58,14 +58,22 @@ test("keyCrew returns director + writers for movies, deduped", () => {
   };
   const crew = keyCrew(meta, "movie");
   expect(crew).toEqual([
-    { role: "Director", names: ["Nolan"] },
-    { role: "Writers", names: ["Nolan", "Bird"] },
+    { role: "Director", people: [{ id: 1, name: "Nolan", href: "/person/1-nolan" }] },
+    {
+      role: "Writers",
+      people: [
+        { id: 1, name: "Nolan", href: "/person/1-nolan" },
+        { id: 2, name: "Bird", href: "/person/2-bird" },
+      ],
+    },
   ]);
 });
 
 test("keyCrew uses created_by for TV", () => {
   const meta: TmdbTitleDetail = { id: 1, created_by: [{ id: 9, name: "Gilligan" }] };
-  expect(keyCrew(meta, "tv")).toEqual([{ role: "Creator", names: ["Gilligan"] }]);
+  expect(keyCrew(meta, "tv")).toEqual([
+    { role: "Creator", people: [{ id: 9, name: "Gilligan", href: "/person/9-gilligan" }] },
+  ]);
 });
 
 test("certification reads US movie rating and TV rating", () => {

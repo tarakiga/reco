@@ -16,7 +16,7 @@ export function buildTasteDescriptor(meta: TmdbTitleDetail, mediaType: MediaType
     .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
     .slice(0, 6)
     .map((c) => c.name);
-  const crew = keyCrew(meta, mediaType).flatMap((c) => c.names);
+  const crew = keyCrew(meta, mediaType).flatMap((c) => c.people.map((p) => p.name));
 
   const parts = [
     `${mediaType === "tv" ? "TV series" : "Movie"}: ${name}`,

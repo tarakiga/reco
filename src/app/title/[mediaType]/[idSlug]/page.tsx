@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
 import { getOrCreateTitle } from "@/services/catalog";
@@ -185,7 +186,19 @@ export default async function TitlePage({
                 {crew.map((c) => (
                   <span key={c.role}>
                     <span className="text-text-muted">{c.role}</span>{" "}
-                    <span className="text-text">{c.names.join(", ")}</span>
+                    <span className="text-text">
+                      {c.people.map((p, i) => (
+                        <span key={p.id}>
+                          {i > 0 && ", "}
+                          <Link
+                            href={p.href}
+                            className="underline-offset-2 transition-colors hover:text-accent hover:underline"
+                          >
+                            {p.name}
+                          </Link>
+                        </span>
+                      ))}
+                    </span>
                   </span>
                 ))}
               </div>
