@@ -1,3 +1,4 @@
+import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { parseListId, getListForView } from "@/services/lists";
@@ -19,6 +20,8 @@ export async function generateMetadata({ params }: { params: Promise<{ idSlug: s
 }
 
 export default async function ListPage({ params }: { params: Promise<{ idSlug: string }> }) {
+  // Force dynamic so an unpublished list reliably 404s (no prerendered 200 shell).
+  await connection();
   const { idSlug } = await params;
   const id = parseListId(idSlug);
   if (!id) notFound();

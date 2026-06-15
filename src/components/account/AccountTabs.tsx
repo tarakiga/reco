@@ -15,7 +15,25 @@ export interface AccountTab {
 export function AccountTabs({ tabs }: { tabs: AccountTab[] }) {
   const [active, setActive] = useState(tabs[0]?.id ?? "");
   const [open, setOpen] = useState(false);
+  const [pinged, setPinged] = useState(false); // has the user discovered the FAB?
   const current = tabs.find((t) => t.id === active) ?? tabs[0];
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem("account-fab-seen")) setPinged(true);
+    } catch {
+      /* no storage */
+    }
+  }, []);
+
+  function dismissPing() {
+    setPinged(true);
+    try {
+      localStorage.setItem("account-fab-seen", "1");
+    } catch {
+      /* no storage */
+    }
+  }
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -73,19 +91,30 @@ export function AccountTabs({ tabs }: { tabs: AccountTab[] }) {
         </div>
       ))}
 
-      {/* Mobile FAB — reveals the section drawer */}
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="Switch section"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        className="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-accent text-white shadow-overlay transition-transform hover:scale-105 active:scale-95 md:hidden"
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-6" aria-hidden="true">
-          <path d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
+      {/* Mobile FAB — reveals the section drawer; radar pulse until discovered */}
+      <div className="fixed bottom-5 right-5 z-40 h-14 w-14 md:hidden">
+        {!pinged && (
+          <>
+            <span className="absolute inset-0 animate-ping rounded-full bg-accent/40" />
+            <span className="absolute inset-0 animate-ping rounded-full bg-accent/25 [animation-delay:0.7s]" />
+          </>
+        )}
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(true);
+            dismissPing();
+          }}
+          aria-label="Switch section"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          className="relative flex h-14 w-14 items-center justify-center rounded-full bg-accent text-white shadow-overlay transition-transform hover:scale-105 active:scale-95"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-6" aria-hidden="true">
+            <path d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
 
       {/* Mobile drawer */}
       <div className={`fixed inset-0 z-50 md:hidden ${open ? "" : "pointer-events-none"}`} aria-hidden={!open}>

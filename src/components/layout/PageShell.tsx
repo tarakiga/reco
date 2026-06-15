@@ -1,5 +1,9 @@
 import Link from "next/link";
+import { Show } from "@clerk/nextjs";
 import { MobileMenu } from "./MobileMenu";
+
+const navLinkClass =
+  "rounded-md px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-surface-raised hover:text-text";
 
 export interface NavLink {
   href: string;
@@ -31,14 +35,15 @@ export function PageShell({
           {/* Desktop nav + search */}
           <nav className="hidden gap-1 sm:flex" aria-label="Primary">
             {navLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="rounded-md px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-surface-raised hover:text-text"
-              >
+              <Link key={link.href} href={link.href} className={navLinkClass}>
                 {link.label}
               </Link>
             ))}
+            <Show when="signed-in">
+              <Link href="/account" className={navLinkClass}>
+                Account
+              </Link>
+            </Show>
           </nav>
           {search && <div className="hidden flex-1 items-center sm:flex">{search}</div>}
           {!search && <div className="hidden flex-1 sm:block" />}

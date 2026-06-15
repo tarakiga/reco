@@ -2,6 +2,7 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { Show } from "@clerk/nextjs";
 import type { NavLink } from "./PageShell";
 
 /**
@@ -39,6 +40,15 @@ export function MobileMenu({ navLinks, search }: { navLinks: NavLink[]; search?:
                 {link.label}
               </Link>
             ))}
+            <Show when="signed-in">
+              <Link
+                href="/account"
+                onClick={() => setOpen(false)}
+                className="rounded-md px-3 py-2.5 text-sm font-medium text-text-muted transition-colors hover:bg-surface-raised hover:text-text"
+              >
+                Account
+              </Link>
+            </Show>
           </nav>
         </div>
       )}

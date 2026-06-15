@@ -11,8 +11,9 @@ const SURFACE = "#0b0d12";
 const TEXT = "#f2f4f8";
 const MUTED = "#9aa3b2";
 
-export default async function Image({ params }: { params: { idSlug: string } }) {
-  const id = parseListId(params.idSlug);
+export default async function Image({ params }: { params: Promise<{ idSlug: string }> }) {
+  const { idSlug } = await params;
+  const id = parseListId(idSlug);
   const list = id ? await getListMeta(id) : null;
   const title = list?.title ?? BRAND_NAME;
   const subtitle = list?.subtitle ?? "Find what to watch.";
