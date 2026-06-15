@@ -37,6 +37,7 @@ export async function getPersonShowCredit(personId: number, tvId: number): Promi
             episodeNumber: e.episodeNumber,
             name: e.name,
             year: e.airDate && e.airDate.length >= 4 ? Number(e.airDate.slice(0, 4)) : null,
+            character: e.cast.find((g) => g.id === personId)?.character ?? null,
           }));
       } catch {
         return [];

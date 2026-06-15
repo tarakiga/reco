@@ -12,6 +12,7 @@ const entry = (over: Partial<EpisodeIndexEntry>): EpisodeIndexEntry => ({
   voteAverage: null,
   cast: [],
   guestStars: [],
+  characters: [],
   crew: [],
   ...over,
 });
@@ -105,6 +106,17 @@ test("searchEpisodes finds an episode by guest star not in the overview", () => 
   expect(res).toHaveLength(1);
   expect(res[0].episodeNumber).toBe(9);
   expect(res[0].matchedOn).toBe("Guest: Brad Pitt");
+});
+
+test("searchEpisodes finds an episode by the character a guest played", () => {
+  const entries = [
+    entry({ seasonNumber: 3, episodeNumber: 19, name: "Knight in Retreat", overview: "Michael poses as a scientist.", guestStars: ["Ann Turkel"], characters: ["Bianca Morgan"] }),
+    entry({ seasonNumber: 1, episodeNumber: 1, name: "Knight of the Phoenix", overview: "Origin." }),
+  ];
+  const res = searchEpisodes(entries, "bianca");
+  expect(res).toHaveLength(1);
+  expect(res[0].episodeNumber).toBe(19);
+  expect(res[0].matchedOn).toBe("As Bianca Morgan");
 });
 
 test("searchEpisodes matches title/overview and ranks title hits first", () => {

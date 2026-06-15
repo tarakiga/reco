@@ -16,6 +16,8 @@ export interface PersonEpisode {
   episodeNumber: number;
   name: string;
   year: number | null;
+  /** The character they played in THIS episode (can differ across episodes). */
+  character: string | null;
 }
 /** How an actor appears in a TV show — series regular, or specific guest episodes. */
 export interface PersonShowCredit {

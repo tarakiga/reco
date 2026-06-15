@@ -85,6 +85,7 @@ export function FilmographyModal({
                         <li key={e.episodeNumber} className="text-sm text-text-muted">
                           <span className="tabular-nums">E{e.episodeNumber}</span> — {e.name}
                           {e.year ? ` (${e.year})` : ""}
+                          {e.character ? <span className="text-text"> · as {e.character}</span> : null}
                         </li>
                       ))}
                   </ul>

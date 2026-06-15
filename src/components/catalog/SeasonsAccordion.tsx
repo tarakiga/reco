@@ -30,11 +30,11 @@ function CastAvatar({ member }: { member: EpisodeCastMember }) {
           member.name.charAt(0)
         )}
       </div>
-      <p className="mt-1 line-clamp-2 text-[11px] font-medium leading-tight text-text group-hover:text-accent">
+      <p className="mt-1 text-[11px] font-medium leading-tight text-text group-hover:text-accent">
         {member.name}
       </p>
       {member.character && (
-        <p className="line-clamp-1 text-[10px] text-text-muted">{member.character}</p>
+        <p className="text-[10px] text-text-muted">{member.character}</p>
       )}
     </Link>
   );

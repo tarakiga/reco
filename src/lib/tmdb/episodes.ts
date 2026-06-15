@@ -67,6 +67,8 @@ export function toEpisodes(season: TmdbSeasonDetail): EpisodeVM[] {
 export interface EpisodeIndexEntry extends EpisodeVM {
   seasonNumber: number;
   guestStars: string[];
+  /** Characters played by guest stars in this episode (searchable by role). */
+  characters: string[];
   crew: string[];
 }
 
@@ -93,8 +95,9 @@ export function searchEpisodes(
   for (const e of entries) {
     const guestText = e.guestStars.join(" ").toLowerCase();
     const crewText = e.crew.join(" ").toLowerCase();
+    const charText = e.characters.join(" ").toLowerCase();
     const name = e.name.toLowerCase();
-    const hay = `${name} ${e.overview.toLowerCase()} ${guestText} ${crewText}`;
+    const hay = `${name} ${e.overview.toLowerCase()} ${guestText} ${charText} ${crewText}`;
     if (!words.every((w) => hay.includes(w))) continue;
 
     let score = 1;
@@ -103,10 +106,14 @@ export function searchEpisodes(
     const person =
       e.guestStars.find((g) => words.every((w) => g.toLowerCase().includes(w))) ??
       e.crew.find((c) => words.every((w) => c.toLowerCase().includes(w)));
+    const character = e.characters.find((c) => words.every((w) => c.toLowerCase().includes(w)));
     let matchedOn: string | null = null;
     if (person) {
       score += 3;
       matchedOn = e.guestStars.includes(person) ? `Guest: ${person}` : `Crew: ${person}`;
+    } else if (character) {
+      score += 2;
+      matchedOn = `As ${character}`;
     }
     scored.push({ entry: e, score, matchedOn });
   }
