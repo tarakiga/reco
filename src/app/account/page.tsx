@@ -12,6 +12,7 @@ import { AccountSettings } from "@/components/account/AccountSettings";
 import { WatchlistSections } from "@/components/account/WatchlistSections";
 import { FavouritesGrid, type FavouriteVM } from "@/components/account/FavouritesGrid";
 import { UpcomingEpg } from "@/components/account/UpcomingEpg";
+import { AccountTabs } from "@/components/account/AccountTabs";
 
 export const metadata = { title: "Your account" };
 
@@ -66,30 +67,19 @@ export default async function AccountPage() {
     profile.createdAt,
   );
 
-  return (
-    <div className="mx-auto max-w-6xl space-y-12 px-4 py-8">
-      <AccountHeader username={profile.username} memberSince={memberSince} />
-
-      <section>
-        <UpcomingEpg entries={epg} icsUrl={icsUrl} webcalUrl={webcalUrl} googleUrl={googleUrl} />
-      </section>
-
-      <section>
-        <h2 className="mb-4 text-xl font-bold text-text">Settings</h2>
-        <AccountSettings
-          initialRegion={profile.region}
-          initialGenres={profile.preferredGenres ?? []}
-        />
-      </section>
-
-      <section>
-        <h2 className="mb-4 text-xl font-bold text-text">Favourites</h2>
-        <FavouritesGrid initial={favouriteVMs} />
-      </section>
-
-      <section>
-        <h2 className="mb-4 text-xl font-bold text-text">Your watchlist</h2>
-        {watchlist.length === 0 ? (
+  const tabs = [
+    {
+      id: "coming-up",
+      label: "Coming up",
+      content: (
+        <UpcomingEpg entries={epg} icsUrl={icsUrl} webcalUrl={webcalUrl} googleUrl={googleUrl} hideHeading />
+      ),
+    },
+    {
+      id: "watchlist",
+      label: "Watchlist",
+      content:
+        watchlist.length === 0 ? (
           <EmptyState
             title="Your watchlist is empty"
             description="Add movies and shows you want to track and they'll show up here."
@@ -104,8 +94,26 @@ export default async function AccountPage() {
           />
         ) : (
           <WatchlistSections items={watchlist} />
-        )}
-      </section>
+        ),
+    },
+    {
+      id: "favourites",
+      label: "Favourites",
+      content: <FavouritesGrid initial={favouriteVMs} />,
+    },
+    {
+      id: "settings",
+      label: "Settings",
+      content: (
+        <AccountSettings initialRegion={profile.region} initialGenres={profile.preferredGenres ?? []} />
+      ),
+    },
+  ];
+
+  return (
+    <div className="mx-auto max-w-6xl space-y-8 px-4 py-8">
+      <AccountHeader username={profile.username} memberSince={memberSince} />
+      <AccountTabs tabs={tabs} />
     </div>
   );
 }

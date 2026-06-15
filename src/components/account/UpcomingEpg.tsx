@@ -33,18 +33,25 @@ export function UpcomingEpg({
   icsUrl,
   webcalUrl,
   googleUrl,
+  hideHeading = false,
 }: {
   entries: EpgEntry[];
   icsUrl: string;
   webcalUrl: string;
   googleUrl: string;
+  /** Drop the "Coming up" heading (e.g. when a tab already labels the section). */
+  hideHeading?: boolean;
 }) {
   const buckets = group(entries);
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-bold text-text">Coming up</h2>
+      <div
+        className={`mb-4 flex flex-wrap items-center gap-3 ${
+          hideHeading ? "justify-end" : "justify-between"
+        }`}
+      >
+        {!hideHeading && <h2 className="text-xl font-bold text-text">Coming up</h2>}
         {entries.length > 0 && (
           <CalendarSubscribe icsUrl={icsUrl} webcalUrl={webcalUrl} googleUrl={googleUrl} />
         )}
