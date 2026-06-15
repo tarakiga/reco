@@ -1,35 +1,53 @@
 import "server-only";
 import { getCurrentProfile } from "./profile";
-import { listFavouriteKeys } from "./user-catalog";
-import type { CardFavourite } from "@/lib/favourite";
+import { listFavouriteKeys, listWatchlistKeys } from "./user-catalog";
+import type { CardFavourite, CardWatchlist } from "@/lib/favourite";
 
-export interface FavouriteContext {
+export interface CardActionContext {
   signedIn: boolean;
-  keys: Set<string>;
+  favourites: Set<string>;
+  watchlist: Set<string>;
 }
 
 /**
- * The current user's favourite membership, for server-marking grid cards in one
- * query. Resolves Clerk auth, so it makes the calling page dynamic — only use it
- * in already-dynamic routes (those awaiting searchParams/params), never on
- * statically-prerendered pages.
+ * The current user's favourite + watchlist membership, for server-marking grid
+ * cards in one pass (two cheap queries). Resolves Clerk auth, so it makes the
+ * calling page dynamic — only use it in already-dynamic routes.
  */
-export async function favouriteContext(): Promise<FavouriteContext> {
+export async function cardActionContext(): Promise<CardActionContext> {
   const profile = await getCurrentProfile();
-  if (!profile) return { signedIn: false, keys: new Set() };
-  return { signedIn: true, keys: new Set(await listFavouriteKeys(profile.id)) };
+  if (!profile) return { signedIn: false, favourites: new Set(), watchlist: new Set() };
+  const [favourites, watchlist] = await Promise.all([
+    listFavouriteKeys(profile.id),
+    listWatchlistKeys(profile.id),
+  ]);
+  return { signedIn: true, favourites: new Set(favourites), watchlist: new Set(watchlist) };
 }
 
 /** Build the TitleCard `favourite` prop for one result. */
 export function favouriteProp(
-  ctx: FavouriteContext,
+  ctx: CardActionContext,
   mediaType: "movie" | "tv",
   tmdbId: number,
 ): CardFavourite {
   return {
     mediaType,
     tmdbId,
-    initial: ctx.keys.has(`${mediaType}:${tmdbId}`),
+    initial: ctx.favourites.has(`${mediaType}:${tmdbId}`),
+    signedIn: ctx.signedIn,
+  };
+}
+
+/** Build the TitleCard `watchlist` prop for one result. */
+export function watchlistProp(
+  ctx: CardActionContext,
+  mediaType: "movie" | "tv",
+  tmdbId: number,
+): CardWatchlist {
+  return {
+    mediaType,
+    tmdbId,
+    initial: ctx.watchlist.has(`${mediaType}:${tmdbId}`),
     signedIn: ctx.signedIn,
   };
 }

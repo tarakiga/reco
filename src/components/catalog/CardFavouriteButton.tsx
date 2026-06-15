@@ -46,7 +46,7 @@ export function CardFavouriteButton({ mediaType, tmdbId, initial, signedIn }: Ca
       aria-pressed={fav}
       aria-label={fav ? "Remove from favourites" : "Add to favourites"}
       title={fav ? "Remove from favourites" : "Add to favourites"}
-      className="absolute right-1.5 top-1.5 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-lg leading-none backdrop-blur-sm transition-colors hover:bg-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
+      className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-lg leading-none backdrop-blur-sm transition-colors hover:bg-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
     >
       <span aria-hidden className={fav ? "text-accent" : "text-white"}>
         {fav ? "♥" : "♡"}

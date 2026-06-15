@@ -122,6 +122,16 @@ export async function listFavouriteKeys(userId: string): Promise<string[]> {
   return rows.map((r) => `${r.mediaType}:${r.tmdbId}`);
 }
 
+/** Membership keys of a user's watchlist (any status) — same one-query pattern. */
+export async function listWatchlistKeys(userId: string): Promise<string[]> {
+  const rows = await db
+    .select({ mediaType: titles.mediaType, tmdbId: titles.tmdbId })
+    .from(watchlistItems)
+    .innerJoin(titles, eq(watchlistItems.titleId, titles.id))
+    .where(eq(watchlistItems.userId, userId));
+  return rows.map((r) => `${r.mediaType}:${r.tmdbId}`);
+}
+
 export async function getTitleState(
   userId: string,
   titleId: string,

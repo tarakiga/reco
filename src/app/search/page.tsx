@@ -8,7 +8,7 @@ import { PosterGridSkeleton } from "@/components/catalog/Skeletons";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { favouriteContext, favouriteProp } from "@/services/favourites";
+import { cardActionContext, favouriteProp, watchlistProp } from "@/services/favourites";
 
 export async function generateMetadata({
   searchParams,
@@ -73,7 +73,7 @@ async function SearchResults({ query }: { query: string }) {
 
   const titles = results.filter((r): r is TitleResult => r.kind === "title");
   const people = results.filter((r): r is PersonResult => r.kind === "person");
-  const fav = await favouriteContext();
+  const ctx = await cardActionContext();
 
   return (
     <div className="mt-8 space-y-10">
@@ -89,7 +89,8 @@ async function SearchResults({ query }: { query: string }) {
                 year={t.year}
                 posterUrl={t.posterUrl}
                 upcoming={upcomingLabel(t.releaseDate)}
-                favourite={favouriteProp(fav, t.mediaType, t.tmdbId)}
+                favourite={favouriteProp(ctx, t.mediaType, t.tmdbId)}
+                watchlist={watchlistProp(ctx, t.mediaType, t.tmdbId)}
               />
             ))}
           </div>

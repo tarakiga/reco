@@ -10,6 +10,7 @@ import { ToastProvider } from "@/components/ui/Toast";
 import { QueryProvider } from "@/components/providers/QueryProvider";
 import { BRAND_NAME, BRAND_TAGLINE, SITE_URL } from "@/lib/brand";
 import { getBrandName, getNavLinks } from "@/services/site-config";
+import { SearchAutocomplete } from "@/components/layout/SearchAutocomplete";
 
 const footerAttribution = (
   <div className="space-y-1">
@@ -35,23 +36,7 @@ const footerAttribution = (
   </div>
 );
 
-const headerSearch = (
-  <form action="/search" method="get" className="flex w-full max-w-sm items-center gap-2">
-    <input
-      name="q"
-      type="search"
-      aria-label="Search"
-      placeholder="Search movies &amp; shows…"
-      className="h-9 w-full rounded-md border border-border bg-surface-raised px-3 text-sm text-text placeholder:text-text-muted focus:outline-2 focus:outline-accent"
-    />
-    <button
-      type="submit"
-      className="h-9 rounded-md bg-accent px-3 text-sm font-medium text-white hover:bg-accent/90"
-    >
-      Search
-    </button>
-  </form>
-);
+const headerSearch = <SearchAutocomplete />;
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
