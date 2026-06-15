@@ -5,6 +5,7 @@ import { TitleCard } from "@/components/catalog/TitleCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { upcomingLabel } from "@/lib/release";
 import { cardActionContext, favouriteProp, watchlistProp } from "@/services/favourites";
+import { tvStatusBadges } from "@/services/tv-status";
 
 export const metadata = {
   title: "TV Shows",
@@ -30,6 +31,7 @@ export default async function TvPage({
   } catch {
     // TMDB error — render with empty results
   }
+  const statuses = await tvStatusBadges(results);
   return (
     <div>
       <h1 className="mb-4 text-2xl font-bold">TV Shows</h1>
@@ -41,7 +43,7 @@ export default async function TvPage({
       ) : (
         <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
           {results.map((t) => (
-            <TitleCard key={t.tmdbId} href={t.href} title={t.title} year={t.year} posterUrl={t.posterUrl} upcoming={upcomingLabel(t.releaseDate)} favourite={favouriteProp(ctx, "tv", t.tmdbId)} watchlist={watchlistProp(ctx, "tv", t.tmdbId)} />
+            <TitleCard key={t.tmdbId} href={t.href} title={t.title} year={t.year} posterUrl={t.posterUrl} upcoming={upcomingLabel(t.releaseDate)} status={statuses.get(t.tmdbId)} favourite={favouriteProp(ctx, "tv", t.tmdbId)} watchlist={watchlistProp(ctx, "tv", t.tmdbId)} />
           ))}
         </div>
       )}

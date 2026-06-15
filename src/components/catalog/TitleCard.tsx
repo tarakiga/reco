@@ -2,6 +2,7 @@ import Link from "next/link";
 import { CardFavouriteButton } from "./CardFavouriteButton";
 import { CardWatchlistButton } from "./CardWatchlistButton";
 import type { CardFavourite, CardWatchlist } from "@/lib/favourite";
+import type { StatusBadge } from "@/lib/tv-status";
 
 export function TitleCard({
   href,
@@ -9,6 +10,7 @@ export function TitleCard({
   year,
   posterUrl,
   upcoming,
+  status,
   favourite,
   watchlist,
 }: {
@@ -19,6 +21,8 @@ export function TitleCard({
   /** Pre-computed "upcoming" date label (e.g. "Aug 15, 2026"); computed by the
    *  page since it depends on the current time (not allowed in prerendered cards). */
   upcoming?: string | null;
+  /** TV production status badge (Ended / Cancelled) — only for terminal states. */
+  status?: StatusBadge | null;
   /** When provided, shows a heart to favourite the title without opening it. */
   favourite?: CardFavourite;
   /** When provided, shows a bookmark to add to the watchlist without opening it. */
@@ -33,10 +37,23 @@ export function TitleCard({
             {favourite && <CardFavouriteButton {...favourite} />}
           </div>
         )}
-        {upcoming && (
-          <span className="absolute left-1 top-1 z-10 rounded bg-black/75 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white shadow-sm backdrop-blur-sm">
-            {upcoming}
-          </span>
+        {(status || upcoming) && (
+          <div className="absolute left-1 top-1 z-10 flex flex-col items-start gap-1">
+            {status && (
+              <span
+                className={`rounded px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white shadow-sm backdrop-blur-sm ${
+                  status.tone === "danger" ? "bg-danger/90" : "bg-black/75"
+                }`}
+              >
+                {status.label}
+              </span>
+            )}
+            {upcoming && (
+              <span className="rounded bg-black/75 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white shadow-sm backdrop-blur-sm">
+                {upcoming}
+              </span>
+            )}
+          </div>
         )}
         {posterUrl ? (
           // eslint-disable-next-line @next/next/no-img-element

@@ -8,6 +8,7 @@ import { MatchBadge } from "@/components/catalog/MatchBadge";
 import { PosterGridSkeleton } from "@/components/catalog/Skeletons";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { cardActionContext, favouriteProp, watchlistProp } from "@/services/favourites";
+import { tvStatusBadges } from "@/services/tv-status";
 
 type FindParams = { q?: string; type?: string };
 type MediaOverride = "movie" | "tv" | "all" | undefined;
@@ -56,6 +57,7 @@ export default async function FindPage({ searchParams }: { searchParams: Promise
 async function SceneResults({ query, override }: { query: string; override: MediaOverride }) {
   const { results } = await sceneSearch(query, { limit: 24, override });
   const ctx = await cardActionContext();
+  const statuses = await tvStatusBadges(results);
 
   if (results.length === 0) {
     return (
@@ -75,7 +77,7 @@ async function SceneResults({ query, override }: { query: string; override: Medi
           <div className="absolute left-1.5 top-1.5 z-10">
             <MatchBadge match={r.match} />
           </div>
-          <TitleCard href={r.href} title={r.title} year={r.year} posterUrl={r.posterUrl} favourite={favouriteProp(ctx, r.mediaType, r.tmdbId)} watchlist={watchlistProp(ctx, r.mediaType, r.tmdbId)} />
+          <TitleCard href={r.href} title={r.title} year={r.year} posterUrl={r.posterUrl} status={statuses.get(r.tmdbId)} favourite={favouriteProp(ctx, r.mediaType, r.tmdbId)} watchlist={watchlistProp(ctx, r.mediaType, r.tmdbId)} />
         </div>
       ))}
     </div>
