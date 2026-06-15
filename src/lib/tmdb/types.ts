@@ -88,6 +88,13 @@ export interface TmdbReleaseDates {
 export interface TmdbContentRatings {
   results?: { iso_3166_1: string; rating?: string }[];
 }
+export interface TmdbEpisodeBrief {
+  air_date?: string | null;
+  episode_number?: number;
+  season_number?: number;
+  name?: string;
+  runtime?: number | null;
+}
 export interface TmdbTitleDetail {
   id: number;
   title?: string;
@@ -113,8 +120,8 @@ export interface TmdbTitleDetail {
   // tv-only
   number_of_seasons?: number;
   number_of_episodes?: number;
-  last_episode_to_air?: { runtime?: number | null } | null;
-  next_episode_to_air?: { runtime?: number | null } | null;
+  last_episode_to_air?: TmdbEpisodeBrief | null;
+  next_episode_to_air?: TmdbEpisodeBrief | null;
   seasons?: TmdbSeasonSummary[];
   created_by?: TmdbNamedRef[];
   networks?: TmdbNetwork[];

@@ -48,6 +48,8 @@ export const tmdb = {
     get<TmdbPersonDetail>(`/person/${id}`, { append_to_response: "combined_credits" }),
   season: (tvId: number, seasonNumber: number) =>
     get<TmdbSeasonDetail>(`/tv/${tvId}/season/${seasonNumber}`),
+  // Lightweight TV fetch for airing data (next_episode_to_air) — no append_to_response.
+  tvAiring: (id: number) => get<TmdbTitleDetail>(`/tv/${id}`),
   externalIds: (mediaType: "movie" | "tv", id: number) =>
     get<{ wikidata_id?: string | null; imdb_id?: string | null }>(`/${mediaType}/${id}/external_ids`),
   personExternalIds: (id: number) =>

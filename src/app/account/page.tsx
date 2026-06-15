@@ -2,12 +2,15 @@ import { connection } from "next/server";
 import Link from "next/link";
 import { getCurrentProfile } from "@/services/profile";
 import { listWatchlist, listFavourites } from "@/services/user-catalog";
+import { getEpg } from "@/services/epg";
 import { posterUrl } from "@/lib/tmdb/images";
+import { SITE_URL } from "@/lib/brand";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AccountHeader } from "@/components/account/AccountHeader";
 import { AccountSettings } from "@/components/account/AccountSettings";
 import { WatchlistSections } from "@/components/account/WatchlistSections";
 import { FavouritesGrid, type FavouriteVM } from "@/components/account/FavouritesGrid";
+import { UpcomingEpg } from "@/components/account/UpcomingEpg";
 
 export const metadata = { title: "Your account" };
 
@@ -34,10 +37,17 @@ export default async function AccountPage() {
     );
   }
 
-  const [watchlist, favourites] = await Promise.all([
+  const [watchlist, favourites, epg] = await Promise.all([
     listWatchlist(profile.id),
     listFavourites(profile.id),
+    getEpg(profile.id),
   ]);
+
+  // Private calendar feed — the profile UUID is the unguessable token.
+  const feedPath = `/api/calendar/${profile.id}.ics`;
+  const icsUrl = `${SITE_URL}${feedPath}`;
+  const webcalUrl = `webcal://${SITE_URL.replace(/^https?:\/\//, "")}${feedPath}`;
+  const googleUrl = `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(webcalUrl)}`;
 
   const favouriteVMs: FavouriteVM[] = favourites.map((f) => ({
     titleId: f.titleId,
@@ -56,6 +66,10 @@ export default async function AccountPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-12 px-4 py-8">
       <AccountHeader username={profile.username} memberSince={memberSince} />
+
+      <section>
+        <UpcomingEpg entries={epg} icsUrl={icsUrl} webcalUrl={webcalUrl} googleUrl={googleUrl} />
+      </section>
 
       <section>
         <h2 className="mb-4 text-xl font-bold text-text">Settings</h2>
