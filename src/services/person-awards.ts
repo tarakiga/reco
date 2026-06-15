@@ -2,12 +2,17 @@ import "server-only";
 import { cacheTag } from "next/cache";
 import { tmdb } from "@/lib/tmdb/client";
 
+export interface AwardGroup {
+  /** Awarding body, e.g. "Academy Award", "BAFTA Award", "Golden Globe Award". */
+  body: string;
+  /** Wins from this body. */
+  count: number;
+}
 export interface PersonAwards {
   wins: number;
   nominations: number;
-  oscars: number;
-  emmys: number;
-  goldenGlobes: number;
+  /** Wins grouped by awarding body, most-won first. */
+  groups: AwardGroup[];
 }
 
 const WD_HEADERS = {
@@ -66,12 +71,16 @@ export async function personAwards(personId: number): Promise<PersonAwards | nul
   }
 
   if (wins.length === 0 && noms.length === 0) return null;
-  const kw = (list: string[], k: string) => list.filter((l) => l.toLowerCase().includes(k)).length;
-  return {
-    wins: wins.length,
-    nominations: noms.length,
-    oscars: kw(wins, "academy award"),
-    emmys: kw(wins, "emmy"),
-    goldenGlobes: kw(wins, "golden globe"),
-  };
+
+  // Group wins by awarding body: "Academy Award for Best Picture" → "Academy Award".
+  const byBody = new Map<string, number>();
+  for (const w of wins) {
+    const body = w.split(/\s+for\s+/i)[0].trim();
+    byBody.set(body, (byBody.get(body) ?? 0) + 1);
+  }
+  const groups = [...byBody.entries()]
+    .map(([body, count]) => ({ body, count }))
+    .sort((a, b) => b.count - a.count || a.body.localeCompare(b.body));
+
+  return { wins: wins.length, nominations: noms.length, groups };
 }
