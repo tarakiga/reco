@@ -136,6 +136,6 @@ export interface TmdbPersonDetail {
   deathday?: string | null;
   place_of_birth?: string | null;
   combined_credits?: {
-    cast?: (TmdbSearchItem & { character?: string })[];
+    cast?: (TmdbSearchItem & { character?: string; episode_count?: number })[];
   };
 }

@@ -3,12 +3,32 @@ import { posterUrl } from "./images";
 import type { TitleResult } from "./transform";
 import type { TmdbPersonDetail } from "./types";
 
+export interface FilmographyCredit extends TitleResult {
+  /** The actor's role in this title (TMDB `character`). */
+  character: string | null;
+  /** Episodes the actor appeared in (TV only), per TMDB. */
+  episodeCount: number | null;
+}
+
+/** An actor's guest appearance in a single TV episode. */
+export interface PersonEpisode {
+  seasonNumber: number;
+  episodeNumber: number;
+  name: string;
+  year: number | null;
+}
+/** How an actor appears in a TV show — series regular, or specific guest episodes. */
+export interface PersonShowCredit {
+  mainCast: boolean;
+  episodes: PersonEpisode[];
+}
+
 export function filmography(
   credits: TmdbPersonDetail["combined_credits"] | undefined,
-): TitleResult[] {
+): FilmographyCredit[] {
   const cast = credits?.cast ?? [];
   const seen = new Set<number>();
-  const out: { result: TitleResult; date: string }[] = [];
+  const out: { result: FilmographyCredit; date: string }[] = [];
   for (const c of cast) {
     if (c.media_type !== "movie" && c.media_type !== "tv") continue;
     if (seen.has(c.id)) continue;
@@ -27,6 +47,8 @@ export function filmography(
         releaseDate: date || null,
         posterUrl: posterUrl(c.poster_path),
         href: `/title/${c.media_type}/${c.id}-${titleSlug(name, date || null)}`,
+        character: c.character || null,
+        episodeCount: c.episode_count ?? null,
       },
     });
   }

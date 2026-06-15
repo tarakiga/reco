@@ -5,7 +5,7 @@ import { parseIdSlug } from "@/lib/tmdb/detail";
 import { profileUrl } from "@/lib/tmdb/images";
 import { filmography, personFacts } from "@/lib/tmdb/person";
 import type { TmdbPersonDetail } from "@/lib/tmdb/types";
-import { TitleCard } from "@/components/catalog/TitleCard";
+import { FilmographyGrid } from "@/components/person/FilmographyGrid";
 import { HeroBackdrop } from "@/components/catalog/HeroBackdrop";
 import { AmbientBackground } from "@/components/catalog/AmbientBackground";
 import { FactsPanel } from "@/components/catalog/FactsPanel";
@@ -124,17 +124,7 @@ export default async function PersonPage({
           <section>
             <h2 className="mb-4 text-lg font-semibold text-text">Filmography</h2>
             {credits.length > 0 ? (
-              <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
-                {credits.map((t) => (
-                  <TitleCard
-                    key={`${t.mediaType}-${t.tmdbId}`}
-                    href={t.href}
-                    title={t.title}
-                    year={t.year}
-                    posterUrl={t.posterUrl}
-                  />
-                ))}
-              </div>
+              <FilmographyGrid personId={id} credits={credits} />
             ) : (
               <p className="text-sm text-text-muted">No known titles.</p>
             )}
