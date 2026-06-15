@@ -18,27 +18,39 @@ export interface ForYouItem {
   match: number;
 }
 
+const EXCLUDE_BUFFER = 5;
+
 export async function forYou(userId: string, limit = 24, offset = 0): Promise<ForYouItem[]> {
   const [taste] = await db.select().from(userTaste).where(sql`${userTaste.userId} = ${userId}`);
   if (!taste) return [];
   const vec = toVectorLiteral(taste.embedding);
 
-  // cosine similarity = 1 - cosine distance (<=>). Exclude titles the user already rated or watchlisted.
+  // Titles the user already rated or watchlisted. Fetched separately (not as a
+  // NOT IN subquery) so the vector query below can use the cosine index — a
+  // join-table filter would force a full brute-force scan. Excluded in app code.
+  const exResult = await db.execute(sql`
+    SELECT title_id FROM ${ratings} WHERE user_id = ${userId}
+    UNION
+    SELECT title_id FROM ${watchlistItems} WHERE user_id = ${userId}
+  `);
+  const exRows = ((exResult as { rows?: Record<string, unknown>[] }).rows ?? exResult) as Record<string, unknown>[];
+  const excluded = new Set(exRows.map((r) => r.title_id as string));
+
+  // Over-fetch nearest neighbours so offset+limit still remain after excluding.
+  // cosine similarity = 1 - cosine distance (<=>); ORDER BY <=> LIMIT uses the index.
+  const fetchLimit = offset + limit + excluded.size + EXCLUDE_BUFFER;
   const result = await db.execute(sql`
     SELECT t.id, t.tmdb_id, t.media_type, t.title, t.release_year, t.poster_path,
            1 - (te.embedding <=> ${vec}::vector) AS cos
     FROM ${titleEmbeddings} te
     JOIN ${titles} t ON t.id = te.title_id
-    WHERE t.id NOT IN (
-      SELECT title_id FROM ${ratings} WHERE user_id = ${userId}
-      UNION
-      SELECT title_id FROM ${watchlistItems} WHERE user_id = ${userId}
-    )
     ORDER BY te.embedding <=> ${vec}::vector
-    LIMIT ${limit} OFFSET ${offset}
+    LIMIT ${fetchLimit}
   `);
 
-  const rows = ((result as { rows?: Record<string, unknown>[] }).rows ?? result) as Record<string, unknown>[];
+  const rows = (((result as { rows?: Record<string, unknown>[] }).rows ?? result) as Record<string, unknown>[])
+    .filter((r) => !excluded.has(r.id as string))
+    .slice(offset, offset + limit);
 
   return rows.map((r) => {
     const title = r.title as string;

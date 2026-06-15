@@ -47,21 +47,26 @@ export async function searchByScene(
     return []; // embedding provider failure → graceful empty
   }
   const vec = toVectorLiteral(qvec);
-  const mediaFilter = opts.mediaType ? sql`AND t.media_type = ${opts.mediaType}` : sql``;
+
+  // When filtering by media type, over-fetch and filter in app so the cosine
+  // index is still used — a join-table filter (t.media_type) would force a
+  // brute-force scan. Near-exact for discovery; cheap (indexed) regardless.
+  const fetchLimit = opts.mediaType ? Math.min(limit * 8, 200) : limit;
 
   const result = await db.execute(sql`
     SELECT t.id, t.tmdb_id, t.media_type, t.title, t.release_year, t.poster_path,
            1 - (te.embedding <=> ${vec}::vector) AS cos
     FROM ${titleEmbeddings} te
     JOIN ${titles} t ON t.id = te.title_id
-    WHERE 1 = 1 ${mediaFilter}
     ORDER BY te.embedding <=> ${vec}::vector
-    LIMIT ${limit}
+    LIMIT ${fetchLimit}
   `);
   const rows = ((result as { rows?: Record<string, unknown>[] }).rows ?? result) as Record<string, unknown>[];
 
   return rows
     .filter((r) => (r.cos as number) >= MIN_SIMILARITY)
+    .filter((r) => !opts.mediaType || r.media_type === opts.mediaType)
+    .slice(0, limit)
     .map((r) => {
       const title = r.title as string;
       const year = (r.release_year as number | null) ?? null;
