@@ -22,6 +22,7 @@ import { PersonCard } from "@/components/catalog/PersonCard";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { TrailerEmbed } from "@/components/catalog/TrailerEmbed";
 import { WhereToWatchClient } from "@/components/catalog/WhereToWatchClient";
+import { AffiliateLinks } from "@/components/catalog/AffiliateLinks";
 import { TitleActions } from "@/components/catalog/TitleActions";
 import { HeroBackdrop } from "@/components/catalog/HeroBackdrop";
 import { AmbientBackground } from "@/components/catalog/AmbientBackground";
@@ -104,6 +105,14 @@ export default async function TitlePage({
   const poster = posterUrl(title.posterPath);
   const colorSrc = posterUrlSmall(title.posterPath);
   const backdrop = backdropUrl(title.backdropPath);
+
+  // In cinemas ~ released within the last 90 days (or up to 14 days out). This
+  // route is dynamic (awaits params), so reading the current time is allowed.
+  let inTheaters = false;
+  if (mediaType === "movie" && meta.release_date) {
+    const days = (Date.now() - new Date(meta.release_date).getTime()) / 86_400_000;
+    inTheaters = days >= -14 && days <= 90;
+  }
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -209,6 +218,16 @@ export default async function TitlePage({
 
           {/* Where to watch — client island resolves user's region (US default) */}
           <WhereToWatchClient watch={meta["watch/providers"]} />
+
+          {/* Affiliate "ways to watch" — renders only when an id is configured */}
+          <Suspense fallback={null}>
+            <AffiliateLinks
+              title={title.title}
+              year={title.releaseYear ?? null}
+              mediaType={mediaType}
+              inTheaters={inTheaters}
+            />
+          </Suspense>
 
           {seasons.length > 0 && (
             <section className="mb-8">
