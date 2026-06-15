@@ -7,6 +7,7 @@ import { profileUrl } from "@/lib/tmdb/images";
 import { filmography, personFacts } from "@/lib/tmdb/person";
 import type { TmdbPersonDetail } from "@/lib/tmdb/types";
 import { FilmographyGrid } from "@/components/person/FilmographyGrid";
+import { ShareButton } from "@/components/catalog/ShareButton";
 import { PersonAwards } from "@/components/person/PersonAwards";
 import { HeroBackdrop } from "@/components/catalog/HeroBackdrop";
 import { AmbientBackground } from "@/components/catalog/AmbientBackground";
@@ -116,6 +117,10 @@ export default async function PersonPage({
                 <span className="font-medium text-text">{credits.length}</span> titles
               </p>
             )}
+
+            <div className="mt-4">
+              <ShareButton title={person.name} />
+            </div>
           </div>
         </div>
       </HeroBackdrop>

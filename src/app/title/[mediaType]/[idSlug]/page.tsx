@@ -23,6 +23,7 @@ import { TitleCard } from "@/components/catalog/TitleCard";
 import { TrailerEmbed } from "@/components/catalog/TrailerEmbed";
 import { WhereToWatchClient } from "@/components/catalog/WhereToWatchClient";
 import { AffiliateLinks } from "@/components/catalog/AffiliateLinks";
+import { ShareButton } from "@/components/catalog/ShareButton";
 import { TitleActions } from "@/components/catalog/TitleActions";
 import { HeroBackdrop } from "@/components/catalog/HeroBackdrop";
 import { AmbientBackground } from "@/components/catalog/AmbientBackground";
@@ -189,6 +190,10 @@ export default async function TitlePage({
                 ))}
               </div>
             )}
+
+            <div className="mt-4">
+              <ShareButton title={title.title} />
+            </div>
           </div>
         </div>
       </HeroBackdrop>
