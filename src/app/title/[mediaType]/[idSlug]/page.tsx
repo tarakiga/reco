@@ -49,18 +49,23 @@ export async function generateMetadata({
   try {
     const row = await getOrCreateTitle(mediaType, id);
     const description = row.overview ? row.overview.slice(0, 200) : undefined;
-    const images = [backdropUrl(row.backdropPath), posterUrl(row.posterPath)].filter(
-      (u): u is string => Boolean(u),
-    );
+    // Dynamic share card: backdrop + play button (rendered by ./og).
+    const ogImage = {
+      url: `/title/${mediaType}/${idSlug}/og`,
+      width: 1200,
+      height: 630,
+      alt: row.title,
+    };
     return {
       title: row.title,
       description,
       openGraph: {
         title: row.title,
         description,
-        images,
+        images: [ogImage],
         type: "video.other",
       },
+      twitter: { card: "summary_large_image", images: [ogImage.url] },
     };
   } catch {
     return {};
