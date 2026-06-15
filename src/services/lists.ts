@@ -212,6 +212,12 @@ export interface ViewListItem {
   overview: string | null;
   trailerKey: string | null;
   href: string;
+  /** TMDB vote average (null when unrated). */
+  rating: number | null;
+  /** Movie runtime in minutes (null for TV). */
+  runtime: number | null;
+  /** TV season count (null for movies). */
+  seasons: number | null;
 }
 export interface ViewList {
   id: string;
@@ -272,6 +278,9 @@ export async function getListForView(listId: string): Promise<ViewList | null> {
         overview: r.overview ?? meta.overview ?? null,
         trailerKey: pickTrailerKey(meta.videos?.results),
         href: `/title/${r.mediaType}/${r.tmdbId}-${r.slug}`,
+        rating: meta.vote_average && meta.vote_average > 0 ? meta.vote_average : null,
+        runtime: r.mediaType === "movie" ? meta.runtime ?? null : null,
+        seasons: r.mediaType === "tv" ? meta.number_of_seasons ?? null : null,
       };
     }),
   };

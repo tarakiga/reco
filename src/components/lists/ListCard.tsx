@@ -13,12 +13,28 @@ export interface ListCardItem {
   overview: string | null;
   trailerKey: string | null;
   href: string;
+  rating: number | null;
+  runtime: number | null;
+  seasons: number | null;
+}
+
+function fmtRuntime(min: number): string {
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  if (h && m) return `${h}h ${m}m`;
+  return h ? `${h}h` : `${m}m`;
 }
 
 /** Rich list-item card: poster, genre, year, synopsis, trailer (lightbox) and a
  *  link to the detail page. */
 export function ListCard({ item, index }: { item: ListCardItem; index: number }) {
   const [trailer, setTrailer] = useState(false);
+
+  const facts = [
+    item.runtime ? fmtRuntime(item.runtime) : null,
+    item.seasons ? `${item.seasons} season${item.seasons === 1 ? "" : "s"}` : null,
+    ...item.genres,
+  ].filter(Boolean).join(" · ");
 
   useEffect(() => {
     if (!trailer) return;
@@ -52,8 +68,14 @@ export function ListCard({ item, index }: { item: ListCardItem; index: number })
           </Link>
           {item.year && <span className="text-sm text-text-muted">{item.year}</span>}
         </div>
-        {item.genres.length > 0 && (
-          <p className="mt-0.5 text-xs text-text-muted">{item.genres.join(" · ")}</p>
+        {(item.rating || facts) && (
+          <p className="mt-0.5 text-xs text-text-muted">
+            {item.rating != null && (
+              <span className="font-medium text-warning">★ {item.rating.toFixed(1)}</span>
+            )}
+            {item.rating != null && facts ? " · " : ""}
+            {facts}
+          </p>
         )}
         {item.overview && <p className="mt-2 line-clamp-3 text-sm text-text-muted">{item.overview}</p>}
 
