@@ -21,7 +21,7 @@ function fmtRuntime(min: number | null): string | null {
 
 function CastAvatar({ member }: { member: EpisodeCastMember }) {
   return (
-    <Link href={member.href} className="group w-16 text-center">
+    <Link href={member.href} className="group w-full text-center">
       <div className="mx-auto flex size-14 items-center justify-center overflow-hidden rounded-full border border-border bg-surface-overlay text-sm text-text-muted transition-colors group-hover:border-accent">
         {member.profileUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -44,44 +44,45 @@ function EpisodeRow({ ep }: { ep: EpisodeVM }) {
   const [showCast, setShowCast] = useState(false);
   const meta = [fmtDate(ep.airDate), fmtRuntime(ep.runtime)].filter(Boolean).join(" · ");
   return (
-    <li className="flex gap-3">
-      <div className="aspect-video w-28 shrink-0 overflow-hidden rounded-md border border-border bg-surface-overlay">
-        {ep.stillUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={ep.stillUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
-        ) : null}
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline justify-between gap-2">
-          <h4 className="truncate text-sm font-medium text-text">
-            {ep.episodeNumber}. {ep.name}
-          </h4>
-          {ep.voteAverage ? (
-            <span className="shrink-0 text-xs font-medium text-warning">★ {ep.voteAverage.toFixed(1)}</span>
+    <li>
+      <div className="flex gap-3">
+        <div className="aspect-video w-28 shrink-0 self-start overflow-hidden rounded-md border border-border bg-surface-overlay">
+          {ep.stillUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={ep.stillUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
           ) : null}
         </div>
-        {meta && <p className="mt-0.5 text-xs text-text-muted">{meta}</p>}
-        {ep.overview && <p className="mt-1 line-clamp-2 text-sm text-text-muted">{ep.overview}</p>}
-        {ep.cast.length > 0 && (
-          <div className="mt-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <h4 className="truncate text-sm font-medium text-text">
+              {ep.episodeNumber}. {ep.name}
+            </h4>
+            {ep.voteAverage ? (
+              <span className="shrink-0 text-xs font-medium text-warning">★ {ep.voteAverage.toFixed(1)}</span>
+            ) : null}
+          </div>
+          {meta && <p className="mt-0.5 text-xs text-text-muted">{meta}</p>}
+          {ep.overview && <p className="mt-1 line-clamp-2 text-sm text-text-muted">{ep.overview}</p>}
+          {ep.cast.length > 0 && (
             <button
               type="button"
               onClick={() => setShowCast((s) => !s)}
               aria-expanded={showCast}
-              className="text-xs font-medium text-accent transition-colors hover:text-accent-hover"
+              className="mt-2 text-xs font-medium text-accent transition-colors hover:text-accent-hover"
             >
               {showCast ? "Hide episode cast" : `Show episode cast (${ep.cast.length})`}
             </button>
-            {showCast && (
-              <div className="mt-3 flex flex-wrap gap-3">
-                {ep.cast.map((m) => (
-                  <CastAvatar key={m.id} member={m} />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
+      {/* Expanded cast spans the full row so it isn't cramped into the text column. */}
+      {ep.cast.length > 0 && showCast && (
+        <div className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8">
+          {ep.cast.map((m) => (
+            <CastAvatar key={m.id} member={m} />
+          ))}
+        </div>
+      )}
     </li>
   );
 }
