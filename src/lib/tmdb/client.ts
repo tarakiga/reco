@@ -61,6 +61,8 @@ export const tmdb = {
   trending: () => get<{ results: TmdbSearchItem[] }>("/trending/all/week"),
   popular: (mediaType: "movie" | "tv", page = 1) =>
     get<{ results: TmdbSearchItem[] }>(`/${mediaType}/popular`, { page: String(page) }),
+  nowPlaying: (page = 1) =>
+    get<{ results: TmdbSearchItem[] }>("/movie/now_playing", { page: String(page) }),
   discover: (mediaType: "movie" | "tv", params: Record<string, string>) =>
     get<{ results: TmdbSearchItem[]; total_pages: number }>(`/discover/${mediaType}`, params),
   genres: (mediaType: "movie" | "tv") =>

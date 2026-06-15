@@ -30,6 +30,16 @@ async function getPopular(mediaType: "movie" | "tv"): Promise<TitleResult[]> {
   }
 }
 
+async function getNowPlaying(): Promise<TitleResult[]> {
+  "use cache";
+  try {
+    const data = await tmdb.nowPlaying();
+    return toBrowseResults("movie", data.results);
+  } catch {
+    return [];
+  }
+}
+
 function PosterRail({ title, items }: { title: string; items: TitleResult[] }) {
   if (items.length === 0) return null;
   return (
@@ -44,8 +54,9 @@ function PosterRail({ title, items }: { title: string; items: TitleResult[] }) {
 }
 
 export default async function Home() {
-  const [trending, popularMovies, popularTv] = await Promise.all([
+  const [trending, nowPlaying, popularMovies, popularTv] = await Promise.all([
     getTrending(),
+    getNowPlaying(),
     getPopular("movie"),
     getPopular("tv"),
   ]);
@@ -118,6 +129,8 @@ export default async function Home() {
       ) : (
         <p className="text-center text-text-muted">Trending titles unavailable right now.</p>
       )}
+
+      <PosterRail title="In cinemas this week" items={nowPlaying} />
 
       <PosterRail title="Popular movies" items={popularMovies} />
       <PosterRail title="Popular TV shows" items={popularTv} />
