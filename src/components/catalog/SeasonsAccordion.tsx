@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import type { SeasonSummary, EpisodeVM, EpisodeCastMember } from "@/lib/tmdb/episodes";
@@ -42,7 +42,16 @@ function CastAvatar({ member }: { member: EpisodeCastMember }) {
 
 function EpisodeRow({ ep }: { ep: EpisodeVM }) {
   const [showCast, setShowCast] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [clamped, setClamped] = useState(false);
+  const overviewRef = useRef<HTMLParagraphElement>(null);
   const meta = [fmtDate(ep.airDate), fmtRuntime(ep.runtime)].filter(Boolean).join(" · ");
+
+  // Only offer "View more" when the 2-line clamp actually hides text.
+  useEffect(() => {
+    const el = overviewRef.current;
+    if (el) setClamped(el.scrollHeight > el.clientHeight + 1);
+  }, []);
   return (
     <li>
       <div className="flex gap-3">
@@ -62,7 +71,26 @@ function EpisodeRow({ ep }: { ep: EpisodeVM }) {
             ) : null}
           </div>
           {meta && <p className="mt-0.5 text-xs text-text-muted">{meta}</p>}
-          {ep.overview && <p className="mt-1 line-clamp-2 text-sm text-text-muted">{ep.overview}</p>}
+          {ep.overview && (
+            <div className="mt-1">
+              <p
+                ref={overviewRef}
+                className={`text-sm text-text-muted ${expanded ? "" : "line-clamp-2"}`}
+              >
+                {ep.overview}
+              </p>
+              {(clamped || expanded) && (
+                <button
+                  type="button"
+                  onClick={() => setExpanded((v) => !v)}
+                  aria-expanded={expanded}
+                  className="mt-0.5 text-xs font-medium text-text-muted underline underline-offset-2 transition-colors hover:text-text"
+                >
+                  {expanded ? "View less" : "View more"}
+                </button>
+              )}
+            </div>
+          )}
           {ep.cast.length > 0 && (
             <button
               type="button"
