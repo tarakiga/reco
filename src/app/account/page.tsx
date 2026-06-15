@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getCurrentProfile } from "@/services/profile";
 import { listWatchlist, listFavourites } from "@/services/user-catalog";
 import { getEpg } from "@/services/epg";
+import { tvStatusBadges } from "@/services/tv-status";
 import { posterUrl } from "@/lib/tmdb/images";
 import { SITE_URL } from "@/lib/brand";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -49,6 +50,7 @@ export default async function AccountPage() {
   const webcalUrl = `webcal://${SITE_URL.replace(/^https?:\/\//, "")}${feedPath}`;
   const googleUrl = `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(webcalUrl)}`;
 
+  const favStatuses = await tvStatusBadges(favourites);
   const favouriteVMs: FavouriteVM[] = favourites.map((f) => ({
     titleId: f.titleId,
     tmdbId: f.tmdbId,
@@ -57,6 +59,7 @@ export default async function AccountPage() {
     title: f.title,
     year: f.releaseYear,
     posterUrl: posterUrl(f.posterPath),
+    status: favStatuses.get(f.tmdbId) ?? null,
   }));
 
   const memberSince = new Intl.DateTimeFormat("en", { month: "long", year: "numeric" }).format(

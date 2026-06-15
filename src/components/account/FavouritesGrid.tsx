@@ -5,6 +5,7 @@ import { TitleCard } from "@/components/catalog/TitleCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { useToast } from "@/components/ui/Toast";
 import { useToggleFavourite } from "@/components/catalog/useTitleState";
+import type { StatusBadge } from "@/lib/tv-status";
 
 export interface FavouriteVM {
   titleId: string;
@@ -14,6 +15,7 @@ export interface FavouriteVM {
   title: string;
   year: number | null;
   posterUrl: string | null;
+  status?: StatusBadge | null;
 }
 
 function FavouriteCard({ item, onRemoved }: { item: FavouriteVM; onRemoved: (titleId: string) => void }) {
@@ -41,7 +43,7 @@ function FavouriteCard({ item, onRemoved }: { item: FavouriteVM; onRemoved: (tit
       >
         <span aria-hidden>♥</span>
       </button>
-      <TitleCard href={item.href} title={item.title} year={item.year} posterUrl={item.posterUrl} />
+      <TitleCard href={item.href} title={item.title} year={item.year} posterUrl={item.posterUrl} status={item.status} />
     </div>
   );
 }
