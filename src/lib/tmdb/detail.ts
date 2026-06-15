@@ -96,6 +96,7 @@ export function recommendations(meta: TmdbTitleDetail, limit = 12): TitleResult[
       tmdbId: it.id,
       title: name,
       year: Number.isFinite(year) ? year : null,
+      releaseDate: date || null,
       posterUrl: posterUrl(it.poster_path),
       href: `/title/${it.media_type}/${it.id}-${titleSlug(name, date || null)}`,
     });

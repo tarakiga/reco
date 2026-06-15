@@ -132,6 +132,7 @@ export default async function PersonPage({
                     title={t.title}
                     year={t.year}
                     posterUrl={t.posterUrl}
+                    releaseDate={t.releaseDate}
                   />
                 ))}
               </div>

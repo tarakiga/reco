@@ -17,6 +17,7 @@ export function toBrowseResults(
       tmdbId: it.id,
       title: name,
       year: Number.isFinite(year) ? year : null,
+      releaseDate: date,
       posterUrl: posterUrl(it.poster_path),
       href: `/title/${mediaType}/${it.id}-${titleSlug(name, date)}`,
     };

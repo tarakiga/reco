@@ -1,19 +1,28 @@
 import Link from "next/link";
+import { upcomingLabel } from "@/lib/release";
 
 export function TitleCard({
   href,
   title,
   year,
   posterUrl,
+  releaseDate,
 }: {
   href: string;
   title: string;
   year: number | null;
   posterUrl: string | null;
+  releaseDate?: string | null;
 }) {
+  const upcoming = upcomingLabel(releaseDate);
   return (
     <Link href={href} className="group block w-full">
-      <div className="aspect-2/3 overflow-hidden rounded-md border border-border bg-surface-overlay">
+      <div className="relative aspect-2/3 overflow-hidden rounded-md border border-border bg-surface-overlay">
+        {upcoming && (
+          <span className="absolute left-1 top-1 z-10 rounded bg-black/75 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white shadow-sm backdrop-blur-sm">
+            {upcoming}
+          </span>
+        )}
         {posterUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img

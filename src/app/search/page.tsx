@@ -85,6 +85,7 @@ async function SearchResults({ query }: { query: string }) {
                 title={t.title}
                 year={t.year}
                 posterUrl={t.posterUrl}
+                releaseDate={t.releaseDate}
               />
             ))}
           </div>

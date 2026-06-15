@@ -8,6 +8,7 @@ export interface TitleResult {
   tmdbId: number;
   title: string;
   year: number | null;
+  releaseDate: string | null;
   posterUrl: string | null;
   href: string;
 }
@@ -33,6 +34,7 @@ export function toSearchResults(items: TmdbSearchItem[]): SearchResult[] {
         tmdbId: it.id,
         title: name,
         year: Number.isFinite(year) ? year : null,
+        releaseDate: date,
         posterUrl: posterUrl(it.poster_path),
         href: `/title/${it.media_type}/${it.id}-${titleSlug(name, date)}`,
       });

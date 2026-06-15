@@ -38,7 +38,7 @@ export default async function TvPage({
       ) : (
         <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
           {results.map((t) => (
-            <TitleCard key={t.tmdbId} href={t.href} title={t.title} year={t.year} posterUrl={t.posterUrl} />
+            <TitleCard key={t.tmdbId} href={t.href} title={t.title} year={t.year} posterUrl={t.posterUrl} releaseDate={t.releaseDate} />
           ))}
         </div>
       )}

@@ -24,6 +24,7 @@ export function filmography(
         tmdbId: c.id,
         title: name,
         year: Number.isFinite(year) ? year : null,
+        releaseDate: date || null,
         posterUrl: posterUrl(c.poster_path),
         href: `/title/${c.media_type}/${c.id}-${titleSlug(name, date || null)}`,
       },
