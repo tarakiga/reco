@@ -108,6 +108,17 @@ test("searchEpisodes finds an episode by guest star not in the overview", () => 
   expect(res[0].matchedOn).toBe("Guest: Brad Pitt");
 });
 
+test("searchEpisodes ignores filler words in natural phrasing", () => {
+  const entries = [
+    entry({ seasonNumber: 8, episodeNumber: 9, name: "The One with the Rumor", overview: "Monica hosts Thanksgiving.", guestStars: ["Brad Pitt"] }),
+    entry({ seasonNumber: 1, episodeNumber: 1, name: "The Pilot", overview: "Rachel arrives." }),
+  ];
+  const res = searchEpisodes(entries, "the episode with brad pitt");
+  expect(res).toHaveLength(1);
+  expect(res[0].episodeNumber).toBe(9);
+  expect(res[0].matchedOn).toBe("Guest: Brad Pitt");
+});
+
 test("searchEpisodes finds an episode by the character a guest played", () => {
   const entries = [
     entry({ seasonNumber: 3, episodeNumber: 19, name: "Knight in Retreat", overview: "Michael poses as a scientist.", guestStars: ["Ann Turkel"], characters: ["Bianca Morgan"] }),
