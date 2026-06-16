@@ -1,17 +1,16 @@
 "use client";
-import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 
-/** Header avatar that links straight to the account hub (no popover menu). */
+/** Header avatar — a signed-in indicator. Account lives in the primary nav now,
+ *  so this is no longer a link (was redundant). */
 export function AccountAvatar() {
   const { user } = useUser();
   const initial = (user?.username ?? user?.firstName ?? "?").charAt(0).toUpperCase();
 
   return (
-    <Link
-      href="/account"
-      aria-label="Your account"
-      className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-border bg-surface-raised text-sm font-medium text-text-muted transition hover:border-accent focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+    <span
+      aria-label="Signed in"
+      className="inline-flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-border bg-surface-raised text-sm font-medium text-text-muted"
     >
       {user?.imageUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
@@ -19,6 +18,6 @@ export function AccountAvatar() {
       ) : (
         initial
       )}
-    </Link>
+    </span>
   );
 }

@@ -68,7 +68,7 @@ export function ListsManager({ initial, siteOrigin }: { initial: ListSummaryVM[]
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-text-muted">Create lists and share them as a page.</p>
         <Button onClick={() => setOpen((v) => !v)}>{open ? "Cancel" : "New list"}</Button>
       </div>
@@ -78,7 +78,7 @@ export function ListsManager({ initial, siteOrigin }: { initial: ListSummaryVM[]
           <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="My Top Ten Mind Movies" required />
           <Input label="Subtitle (optional)" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} placeholder="A list of movies I think you'll like" />
           <div className="flex justify-end">
-            <Button type="submit" loading={busy}>Create &amp; add titles</Button>
+            <Button type="submit" loading={busy}>Create list</Button>
           </div>
         </form>
       )}
@@ -88,7 +88,7 @@ export function ListsManager({ initial, siteOrigin }: { initial: ListSummaryVM[]
       ) : (
         <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface-raised">
           {lists.map((l) => (
-            <li key={l.id} className="flex items-center gap-3 px-4 py-3">
+            <li key={l.id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <Link href={`/account/lists/${l.id}`} className="truncate font-medium text-text hover:text-accent">
@@ -101,7 +101,7 @@ export function ListsManager({ initial, siteOrigin }: { initial: ListSummaryVM[]
                   {l.subtitle ? ` · ${l.subtitle}` : ""}
                 </p>
               </div>
-              <div className="flex shrink-0 items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5 sm:shrink-0">
                 <Link
                   href={`/account/lists/${l.id}`}
                   className="rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-text hover:bg-surface-overlay"

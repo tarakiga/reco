@@ -12,6 +12,7 @@ export interface EpgEntry {
   seasonNumber: number;
   episodeNumber: number;
   episodeName: string | null;
+  episodeOverview: string | null;
   /** YYYY-MM-DD (TMDB air date). */
   airDate: string;
 }
@@ -20,6 +21,7 @@ interface NextEp {
   seasonNumber: number;
   episodeNumber: number;
   name: string | null;
+  overview: string | null;
   airDate: string;
 }
 
@@ -36,6 +38,7 @@ async function nextEpisode(tvId: number): Promise<NextEp | null> {
       seasonNumber: n.season_number ?? 0,
       episodeNumber: n.episode_number ?? 0,
       name: n.name ?? null,
+      overview: n.overview?.trim() ? n.overview.trim() : null,
       airDate: n.air_date,
     };
   } catch {
@@ -61,6 +64,7 @@ export async function getEpg(userId: string): Promise<EpgEntry[]> {
         seasonNumber: ne.seasonNumber,
         episodeNumber: ne.episodeNumber,
         episodeName: ne.name,
+        episodeOverview: ne.overview,
         airDate: ne.airDate,
       };
     }),

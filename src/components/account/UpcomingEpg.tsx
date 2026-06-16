@@ -72,30 +72,52 @@ export function UpcomingEpg({
               <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface-raised">
                 {b.entries.map((e) => (
                   <li key={`${e.tvId}-${e.seasonNumber}-${e.episodeNumber}`}>
-                    <Link
-                      href={e.href}
-                      className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-surface-overlay"
-                    >
-                      <div className="aspect-2/3 w-10 shrink-0 overflow-hidden rounded border border-border bg-surface-overlay">
-                        {e.posterUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img src={e.posterUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
-                        ) : null}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-text">{e.showTitle}</p>
-                        <p className="truncate text-xs text-text-muted">
-                          S{String(e.seasonNumber).padStart(2, "0")}E{String(e.episodeNumber).padStart(2, "0")}
-                          {e.episodeName ? ` · ${e.episodeName}` : ""}
+                    <details className="group">
+                      <summary className="flex cursor-pointer list-none items-center gap-3 px-3 py-2.5 transition-colors hover:bg-surface-overlay [&::-webkit-details-marker]:hidden">
+                        <div className="aspect-2/3 w-10 shrink-0 overflow-hidden rounded border border-border bg-surface-overlay">
+                          {e.posterUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={e.posterUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+                          ) : null}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-text">{e.showTitle}</p>
+                          <p className="truncate text-xs text-text-muted">
+                            S{String(e.seasonNumber).padStart(2, "0")}E{String(e.episodeNumber).padStart(2, "0")}
+                            {e.episodeName ? ` · ${e.episodeName}` : ""}
+                          </p>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-xs font-medium text-text">{fmt.format(new Date(`${e.airDate}T00:00:00`))}</p>
+                          <p className={`text-[11px] ${e.today ? "font-semibold text-accent" : "text-text-muted"}`}>
+                            {e.rel}
+                          </p>
+                        </div>
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden
+                          className="size-4 shrink-0 text-text-muted transition-transform group-open:rotate-90"
+                        >
+                          <path d="m9 18 6-6-6-6" />
+                        </svg>
+                      </summary>
+                      <div className="px-3 pb-3 pl-[3.25rem] pr-3">
+                        <p className="text-sm leading-relaxed text-text-muted">
+                          {e.episodeOverview ?? "No synopsis available yet for this episode."}
                         </p>
+                        <Link
+                          href={e.href}
+                          className="mt-2 inline-block text-sm font-medium text-accent hover:underline"
+                        >
+                          View show →
+                        </Link>
                       </div>
-                      <div className="shrink-0 text-right">
-                        <p className="text-xs font-medium text-text">{fmt.format(new Date(`${e.airDate}T00:00:00`))}</p>
-                        <p className={`text-[11px] ${e.today ? "font-semibold text-accent" : "text-text-muted"}`}>
-                          {e.rel}
-                        </p>
-                      </div>
-                    </Link>
+                    </details>
                   </li>
                 ))}
               </ul>

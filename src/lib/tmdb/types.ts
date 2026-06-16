@@ -110,6 +110,7 @@ export interface TmdbEpisodeBrief {
   episode_number?: number;
   season_number?: number;
   name?: string;
+  overview?: string;
   runtime?: number | null;
 }
 export interface TmdbTitleDetail {
