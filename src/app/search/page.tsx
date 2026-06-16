@@ -1,6 +1,6 @@
 import { Suspense } from "react";
-import { tmdb } from "@/lib/tmdb/client";
-import { toSearchResults, type TitleResult, type PersonResult } from "@/lib/tmdb/transform";
+import { type TitleResult, type PersonResult } from "@/lib/tmdb/transform";
+import { searchWithCorrection } from "@/services/title-search";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { PersonCard } from "@/components/catalog/PersonCard";
 import { upcomingLabel } from "@/lib/release";
@@ -53,9 +53,11 @@ export default async function SearchPage({
 
 async function SearchResults({ query }: { query: string }) {
   let results;
+  let corrected: string | null = null;
   try {
-    const data = await tmdb.searchMulti(query);
-    results = toSearchResults(data.results);
+    const outcome = await searchWithCorrection(query);
+    results = outcome.results;
+    corrected = outcome.corrected;
   } catch {
     return (
       <div className="mt-8">
@@ -79,6 +81,12 @@ async function SearchResults({ query }: { query: string }) {
 
   return (
     <div className="mt-8 space-y-10">
+      {corrected && (
+        <p className="-mb-6 text-sm text-text-muted">
+          No matches for &ldquo;{query}&rdquo; — showing results for{" "}
+          <span className="font-medium text-text">{corrected}</span>
+        </p>
+      )}
       {titles.length > 0 && (
         <section>
           <h2 className="mb-4 text-lg font-semibold text-text">Titles</h2>

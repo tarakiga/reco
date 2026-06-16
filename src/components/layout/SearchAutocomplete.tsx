@@ -33,6 +33,7 @@ export function SearchAutocomplete() {
 
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Result[]>([]);
+  const [corrected, setCorrected] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const boxRef = useRef<HTMLDivElement>(null);
@@ -54,6 +55,7 @@ export function SearchAutocomplete() {
         });
         const data = await res.json();
         setResults((data.results ?? []).slice(0, 8));
+        setCorrected(data.corrected ?? null);
       } catch {
         /* aborted or network error */
       } finally {
@@ -126,6 +128,11 @@ export function SearchAutocomplete() {
             <p className="px-3 py-3 text-sm text-text-muted">No matches</p>
           ) : (
             <div className="max-h-[70vh] overflow-y-auto py-1">
+              {corrected && (
+                <p className="px-3 pb-1 pt-1.5 text-xs text-text-muted">
+                  Showing results for <span className="font-medium text-text">{corrected}</span>
+                </p>
+              )}
               {titles.map((t) => (
                 <div
                   key={`t-${t.tmdbId}`}
