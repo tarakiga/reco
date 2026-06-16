@@ -7,6 +7,7 @@ import { cardActionContext, favouriteProp, watchlistProp } from "@/services/favo
 import { tvStatusBadges } from "@/services/tv-status";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { TagToListButton } from "@/components/tags/TagToListButton";
 
 export const metadata = { title: "Tag" };
 
@@ -43,7 +44,10 @@ export default async function TagPage({ params }: { params: Promise<{ slug: stri
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <p className="text-sm font-medium uppercase tracking-wide text-text-muted">Your tag</p>
-      <h1 className="mb-6 text-2xl font-bold text-text sm:text-3xl">#{collection.name}</h1>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold text-text sm:text-3xl">#{collection.name}</h1>
+        {collection.items.length > 0 && <TagToListButton slug={collection.slug} />}
+      </div>
       {collection.items.length === 0 ? (
         <EmptyState title="Nothing tagged yet" description="Tag titles from their detail page and they'll collect here." />
       ) : (

@@ -1,7 +1,7 @@
 import "server-only";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { lists, listItems, titles, profiles } from "@/db/schema";
+import { lists, listItems, titles, profiles, tags, titleTags } from "@/db/schema";
 import { slugify } from "@/lib/slug";
 import { posterUrl } from "@/lib/tmdb/images";
 import { pickTrailerKey } from "@/lib/tmdb/detail";
@@ -61,6 +61,40 @@ export async function createList(
     })
     .returning({ id: lists.id, slug: lists.slug });
   return row;
+}
+
+/**
+ * Create a draft list from one of the user's tags — tag name becomes the title,
+ * the tagged titles become the items (preserving the tag's order). Returns the
+ * new list id, or null if the tag doesn't exist. A fresh list each call.
+ */
+export async function createListFromTag(
+  userId: string,
+  slug: string,
+): Promise<{ id: string } | null> {
+  const [tag] = await db
+    .select({ id: tags.id, name: tags.name })
+    .from(tags)
+    .where(and(eq(tags.userId, userId), eq(tags.slug, slug)));
+  if (!tag) return null;
+
+  const tagged = await db
+    .select({ titleId: titleTags.titleId })
+    .from(titleTags)
+    .where(eq(titleTags.tagId, tag.id))
+    .orderBy(desc(titleTags.addedAt));
+
+  const [list] = await db
+    .insert(lists)
+    .values({ userId, title: tag.name, subtitle: null, slug: slugify(tag.name) || "list" })
+    .returning({ id: lists.id });
+
+  if (tagged.length > 0) {
+    await db
+      .insert(listItems)
+      .values(tagged.map((t, i) => ({ listId: list.id, titleId: t.titleId, position: i })));
+  }
+  return { id: list.id };
 }
 
 export async function updateList(

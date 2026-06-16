@@ -5,6 +5,10 @@ export const createListInput = z.object({
   subtitle: z.string().trim().max(200).optional(),
 });
 
+export const fromTagInput = z.object({
+  slug: z.string().trim().min(1).max(120),
+});
+
 export const updateListInput = z.object({
   title: z.string().trim().min(1).max(120).optional(),
   subtitle: z.string().trim().max(200).nullable().optional(),
