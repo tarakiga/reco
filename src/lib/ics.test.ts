@@ -9,6 +9,7 @@ const entry = (over: Partial<EpgEntry>): EpgEntry => ({
   seasonNumber: 5,
   episodeNumber: 9,
   episodeName: "Blood Money",
+  episodeOverview: null,
   airDate: "2026-06-20",
   ...over,
 });

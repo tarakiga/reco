@@ -26,6 +26,7 @@ import { WhereToWatchClient } from "@/components/catalog/WhereToWatchClient";
 import { AffiliateLinks } from "@/components/catalog/AffiliateLinks";
 import { ShareButton } from "@/components/catalog/ShareButton";
 import { TitleActions } from "@/components/catalog/TitleActions";
+import { TitleTags } from "@/components/catalog/TitleTags";
 import { HeroBackdrop } from "@/components/catalog/HeroBackdrop";
 import { AmbientBackground } from "@/components/catalog/AmbientBackground";
 import { FactsPanel } from "@/components/catalog/FactsPanel";
@@ -227,9 +228,10 @@ export default async function TitlePage({
       {/* Body: main column + facts sidebar */}
       <div className="grid gap-8 lg:grid-cols-[1fr_220px]">
         <div className="min-w-0">
-          {/* Watchlist + rating (client island) */}
-          <div className="mb-8">
+          {/* Watchlist + rating + personal tags (client islands) */}
+          <div className="mb-8 space-y-3">
             <TitleActions mediaType={mediaType} tmdbId={id} />
+            <TitleTags mediaType={mediaType} tmdbId={id} />
           </div>
 
           {title.overview && (

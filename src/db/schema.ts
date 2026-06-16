@@ -170,6 +170,32 @@ export const listItems = pgTable(
 export type ListRow = typeof lists.$inferSelect;
 export type ListItemRow = typeof listItems.$inferSelect;
 
+// Personal, private tags a user applies to titles (e.g. "Shark shows").
+export const tags = pgTable(
+  "tags",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique("tags_user_slug").on(t.userId, t.slug)],
+);
+
+export const titleTags = pgTable(
+  "title_tags",
+  {
+    tagId: uuid("tag_id").notNull().references(() => tags.id, { onDelete: "cascade" }),
+    titleId: uuid("title_id").notNull().references(() => titles.id, { onDelete: "cascade" }),
+    addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.tagId, t.titleId] })],
+);
+
+export type TagRow = typeof tags.$inferSelect;
+export type TitleTagRow = typeof titleTags.$inferSelect;
+
 const vec = vector(EMBEDDING_DIM);
 
 export const titleEmbeddings = pgTable("title_embeddings", {

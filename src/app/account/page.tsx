@@ -6,6 +6,8 @@ import { getEpg } from "@/services/epg";
 import { tvStatusBadges } from "@/services/tv-status";
 import { listUserLists } from "@/services/lists";
 import { ListsManager } from "@/components/account/ListsManager";
+import { listUserTags } from "@/services/tags";
+import { TagsManager } from "@/components/account/TagsManager";
 import { posterUrl } from "@/lib/tmdb/images";
 import { SITE_URL } from "@/lib/brand";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -41,11 +43,12 @@ export default async function AccountPage() {
     );
   }
 
-  const [watchlist, favourites, epg, userLists] = await Promise.all([
+  const [watchlist, favourites, epg, userLists, userTags] = await Promise.all([
     listWatchlist(profile.id),
     listFavourites(profile.id),
     getEpg(profile.id),
     listUserLists(profile.id),
+    listUserTags(profile.id),
   ]);
   const listVMs = userLists.map((l) => ({
     id: l.id,
@@ -90,6 +93,11 @@ export default async function AccountPage() {
       id: "lists",
       label: "Lists",
       content: <ListsManager initial={listVMs} siteOrigin={SITE_URL} />,
+    },
+    {
+      id: "tags",
+      label: "Tags",
+      content: <TagsManager initial={userTags} />,
     },
     {
       id: "watchlist",
