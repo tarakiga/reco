@@ -55,7 +55,7 @@ export default async function FindPage({ searchParams }: { searchParams: Promise
 }
 
 async function SceneResults({ query, override }: { query: string; override: MediaOverride }) {
-  const { results } = await sceneSearch(query, { limit: 24, override });
+  const { results, mode, summary } = await sceneSearch(query, { limit: 24, override });
   const ctx = await cardActionContext();
   const statuses = await tvStatusBadges(results);
 
@@ -71,15 +71,22 @@ async function SceneResults({ query, override }: { query: string; override: Medi
   }
 
   return (
-    <div className="mt-8 grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
-      {results.map((r) => (
+    <>
+      {mode === "discover" && (
+        <p className="mt-6 text-sm text-text-muted">
+          Recognised a filter — showing{summary ? <span className="font-medium text-text"> {summary}</span> : ""} from the catalog, ranked by acclaim.
+        </p>
+      )}
+      <div className="mt-4 grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
+        {results.map((r) => (
         <div key={r.titleId} className="relative">
           <div className="absolute left-1.5 top-1.5 z-10">
             <MatchBadge match={r.match} />
           </div>
           <TitleCard href={r.href} title={r.title} year={r.year} posterUrl={r.posterUrl} status={statuses.get(r.tmdbId)} favourite={favouriteProp(ctx, r.mediaType, r.tmdbId)} watchlist={watchlistProp(ctx, r.mediaType, r.tmdbId)} />
         </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </>
   );
 }

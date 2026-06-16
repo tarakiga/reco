@@ -1,4 +1,4 @@
-export function MatchBadge({ match }: { match: number | undefined }) {
+export function MatchBadge({ match }: { match: number | null | undefined }) {
   if (match == null) return null;
   const tone = match >= 75 ? "text-success" : match >= 50 ? "text-warning" : "text-text-muted";
   return (

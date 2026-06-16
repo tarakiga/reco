@@ -8,7 +8,9 @@ import { titleSlug } from "@/lib/slug";
 import { posterUrl } from "@/lib/tmdb/images";
 import { defaultEmbedder, type Embedder } from "@/lib/taste/embedder";
 import { parseMediaIntent, type SceneMediaType } from "@/lib/scene/intent";
+import { parseQueryFilters } from "@/lib/scene/filters";
 import { expandSceneQuery } from "@/lib/scene/expand";
+import { discoverSearch } from "./discover-search";
 
 export interface SceneResult {
   titleId: string;
@@ -18,7 +20,8 @@ export interface SceneResult {
   year: number | null;
   posterUrl: string | null;
   href: string;
-  match: number;
+  /** Cosine match % for semantic results; null for structured (Discover) results. */
+  match: number | null;
 }
 
 const MIN_WORDS = 3;
@@ -91,6 +94,10 @@ export interface SceneSearchOutcome {
   mediaType: SceneMediaType | null;
   /** Media type auto-detected from the raw query text, if any. */
   detected: SceneMediaType | null;
+  /** How the results were produced: structured Discover vs semantic vectors. */
+  mode: "discover" | "semantic";
+  /** Filter summary for the UI when mode = discover (e.g. "1980s · cult"). */
+  summary: string | null;
 }
 
 /**
@@ -102,10 +109,24 @@ export async function sceneSearch(
   rawQuery: string,
   opts: { limit?: number; override?: SceneMediaType | "all" } = {},
 ): Promise<SceneSearchOutcome> {
+  const overrideMt = opts.override === "movie" || opts.override === "tv" ? opts.override : null;
+
+  // Catalog/filter queries ("cult classics from the 80s") → structured Discover
+  // with a quality sort + vote floor, which beats vector similarity here.
+  const filters = parseQueryFilters(rawQuery);
+  if (filters.isCatalog) {
+    const mt = overrideMt ?? filters.mediaType;
+    const discovered = await discoverSearch({ ...filters, mediaType: mt }, opts.limit ?? 20);
+    if (discovered.length > 0) {
+      return { results: discovered, mediaType: mt, detected: filters.detectedMedia, mode: "discover", summary: filters.summary };
+    }
+    // fall through to semantic if Discover came back empty
+  }
+
   const { mediaType: detected, cleaned } = parseMediaIntent(rawQuery);
   const mediaType: SceneMediaType | null =
     opts.override === undefined ? detected : opts.override === "all" ? null : opts.override;
   const expanded = await expandSceneQuery(cleaned);
   const results = await searchByScene(expanded, { limit: opts.limit, mediaType: mediaType ?? undefined });
-  return { results, mediaType, detected };
+  return { results, mediaType, detected, mode: "semantic", summary: null };
 }
