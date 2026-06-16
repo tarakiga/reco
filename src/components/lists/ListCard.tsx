@@ -106,7 +106,7 @@ export function ListCard({ item, index }: { item: ListCardItem; index: number })
 
       {/* Curator's note — the reason this pick is on the list */}
       {item.note && (
-        <div className="mt-3 flex gap-2 rounded-md border-l-4 border-accent bg-accent/5 px-3 py-2.5">
+        <div className="mt-3 flex gap-2 rounded-md bg-accent/5 px-3 py-2.5">
           <svg viewBox="0 0 24 24" className="mt-0.5 size-4 shrink-0 text-accent" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
           </svg>
