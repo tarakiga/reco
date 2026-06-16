@@ -89,12 +89,27 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
       });
       setItems((xs) => [
         ...xs,
-        { titleId, tmdbId: r.tmdbId, mediaType: r.mediaType, title: r.title, year: r.year, posterUrl: r.posterUrl, href: r.href },
+        { titleId, tmdbId: r.tmdbId, mediaType: r.mediaType, title: r.title, year: r.year, posterUrl: r.posterUrl, href: r.href, note: null },
       ]);
       setQ("");
       setResults([]);
     } catch (err) {
       toast({ title: err instanceof Error ? err.message : "Couldn't add", variant: "danger" });
+    }
+  }
+
+  function onNoteChange(titleId: string, note: string) {
+    setItems((xs) => xs.map((i) => (i.titleId === titleId ? { ...i, note } : i)));
+  }
+
+  async function saveNote(titleId: string, note: string) {
+    try {
+      await meFetch(`/api/v1/me/lists/${initial.id}/items`, {
+        method: "PATCH",
+        body: { titleId, note: note.trim() || null },
+      });
+    } catch (err) {
+      toast({ title: err instanceof Error ? err.message : "Couldn't save note", variant: "danger" });
     }
   }
 
@@ -218,22 +233,33 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
         ) : (
           <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface-raised">
             {items.map((it, i) => (
-              <li key={it.titleId} className="flex items-center gap-3 px-3 py-2">
-                <div className="aspect-2/3 w-9 shrink-0 overflow-hidden rounded border border-border bg-surface-overlay">
-                  {it.posterUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={it.posterUrl} alt="" className="h-full w-full object-cover" />
-                  ) : null}
+              <li key={it.titleId} className="px-3 py-2.5">
+                <div className="flex items-center gap-3">
+                  <div className="aspect-2/3 w-9 shrink-0 overflow-hidden rounded border border-border bg-surface-overlay">
+                    {it.posterUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={it.posterUrl} alt="" className="h-full w-full object-cover" />
+                    ) : null}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <Link href={it.href} className="truncate text-sm font-medium text-text hover:text-accent">{it.title}</Link>
+                    {it.year && <span className="ml-1 text-xs text-text-muted">{it.year}</span>}
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button type="button" aria-label="Move up" disabled={i === 0} onClick={() => move(i, -1)} className="rounded px-2 py-1 text-text-muted hover:text-text disabled:opacity-30">↑</button>
+                    <button type="button" aria-label="Move down" disabled={i === items.length - 1} onClick={() => move(i, 1)} className="rounded px-2 py-1 text-text-muted hover:text-text disabled:opacity-30">↓</button>
+                    <button type="button" aria-label="Remove" onClick={() => removeItem(it.titleId)} className="rounded px-2 py-1 text-danger hover:text-danger/80">✕</button>
+                  </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <Link href={it.href} className="truncate text-sm font-medium text-text hover:text-accent">{it.title}</Link>
-                  {it.year && <span className="ml-1 text-xs text-text-muted">{it.year}</span>}
-                </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <button type="button" aria-label="Move up" disabled={i === 0} onClick={() => move(i, -1)} className="rounded px-2 py-1 text-text-muted hover:text-text disabled:opacity-30">↑</button>
-                  <button type="button" aria-label="Move down" disabled={i === items.length - 1} onClick={() => move(i, 1)} className="rounded px-2 py-1 text-text-muted hover:text-text disabled:opacity-30">↓</button>
-                  <button type="button" aria-label="Remove" onClick={() => removeItem(it.titleId)} className="rounded px-2 py-1 text-danger hover:text-danger/80">✕</button>
-                </div>
+                <textarea
+                  value={it.note ?? ""}
+                  onChange={(e) => onNoteChange(it.titleId, e.target.value)}
+                  onBlur={(e) => saveNote(it.titleId, e.target.value)}
+                  maxLength={500}
+                  rows={2}
+                  placeholder="Add a note for this pick (optional) — why it's here, where it ranks…"
+                  className="mt-2 w-full resize-y rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs text-text placeholder:text-text-muted focus:outline-2 focus:outline-accent"
+                />
               </li>
             ))}
           </ul>

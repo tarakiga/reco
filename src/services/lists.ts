@@ -150,6 +150,7 @@ export interface OwnerListItem {
   year: number | null;
   posterUrl: string | null;
   href: string;
+  note: string | null;
 }
 export interface OwnerList {
   id: string;
@@ -175,6 +176,7 @@ export async function getListForOwner(userId: string, listId: string): Promise<O
       year: titles.releaseYear,
       posterPath: titles.posterPath,
       slug: titles.slug,
+      note: listItems.note,
     })
     .from(listItems)
     .innerJoin(titles, eq(titles.id, listItems.titleId))
@@ -194,8 +196,25 @@ export async function getListForOwner(userId: string, listId: string): Promise<O
       year: r.year,
       posterUrl: posterUrl(r.posterPath),
       href: `/title/${r.mediaType}/${r.tmdbId}-${r.slug}`,
+      note: r.note ?? null,
     })),
   };
+}
+
+/** Set (or clear) the curator's note for one item. */
+export async function setListItemNote(
+  userId: string,
+  listId: string,
+  titleId: string,
+  note: string | null,
+): Promise<boolean> {
+  if (!(await ownsList(userId, listId))) return false;
+  await db
+    .update(listItems)
+    .set({ note: note && note.trim() ? note.trim() : null })
+    .where(and(eq(listItems.listId, listId), eq(listItems.titleId, titleId)));
+  await touch(listId);
+  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -212,6 +231,8 @@ export interface ViewListItem {
   overview: string | null;
   trailerKey: string | null;
   href: string;
+  /** Curator's note for this item (shown at the foot of the card). */
+  note: string | null;
   /** TMDB vote average (null when unrated). */
   rating: number | null;
   /** Movie runtime in minutes (null for TV). */
@@ -254,6 +275,7 @@ export async function getListForView(listId: string): Promise<ViewList | null> {
       overview: titles.overview,
       slug: titles.slug,
       metadata: titles.metadata,
+      note: listItems.note,
     })
     .from(listItems)
     .innerJoin(titles, eq(titles.id, listItems.titleId))
@@ -278,6 +300,7 @@ export async function getListForView(listId: string): Promise<ViewList | null> {
         overview: r.overview ?? meta.overview ?? null,
         trailerKey: pickTrailerKey(meta.videos?.results),
         href: `/title/${r.mediaType}/${r.tmdbId}-${r.slug}`,
+        note: r.note ?? null,
         rating: meta.vote_average && meta.vote_average > 0 ? meta.vote_average : null,
         runtime: r.mediaType === "movie" ? meta.runtime ?? null : null,
         seasons: r.mediaType === "tv" ? meta.number_of_seasons ?? null : null,

@@ -19,5 +19,10 @@ export const removeItemInput = z.object({
   titleId: z.string().uuid(),
 });
 
+export const setItemNoteInput = z.object({
+  titleId: z.string().uuid(),
+  note: z.string().max(500).nullable(),
+});
+
 export type CreateListInput = z.infer<typeof createListInput>;
 export type UpdateListInput = z.infer<typeof updateListInput>;

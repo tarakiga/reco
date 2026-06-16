@@ -161,6 +161,7 @@ export const listItems = pgTable(
     listId: uuid("list_id").notNull().references(() => lists.id, { onDelete: "cascade" }),
     titleId: uuid("title_id").notNull().references(() => titles.id, { onDelete: "cascade" }),
     position: integer("position").notNull().default(0),
+    note: text("note"),
     addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [unique("list_items_list_title").on(t.listId, t.titleId)],

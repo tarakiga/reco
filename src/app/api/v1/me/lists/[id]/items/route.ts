@@ -2,9 +2,9 @@ import { connection, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { getCurrentProfile } from "@/services/profile";
 import { getOrCreateTitle } from "@/services/catalog";
-import { addListItem, removeListItem, reorderListItems } from "@/services/lists";
+import { addListItem, removeListItem, reorderListItems, setListItemNote } from "@/services/lists";
 import { titleRef } from "@/lib/contracts/me";
-import { reorderItemsInput, removeItemInput } from "@/lib/contracts/lists";
+import { reorderItemsInput, removeItemInput, setItemNoteInput } from "@/lib/contracts/lists";
 import { jsonError } from "@/lib/api";
 
 async function requireProfile() {
@@ -38,6 +38,23 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   try {
     const input = removeItemInput.parse(await req.json());
     const ok = await removeListItem(profile.id, id, input.titleId);
+    if (!ok) return jsonError(404, "List not found");
+    return NextResponse.json({ ok: true });
+  } catch (err) {
+    if (err instanceof ZodError) return jsonError(400, "Validation failed", err.issues);
+    return jsonError(400, "Invalid request");
+  }
+}
+
+/** Set/clear a curator's note for one item. */
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  await connection();
+  const profile = await requireProfile();
+  if (!profile) return jsonError(401, "Sign in required");
+  const { id } = await params;
+  try {
+    const input = setItemNoteInput.parse(await req.json());
+    const ok = await setListItemNote(profile.id, id, input.titleId, input.note);
     if (!ok) return jsonError(404, "List not found");
     return NextResponse.json({ ok: true });
   } catch (err) {
