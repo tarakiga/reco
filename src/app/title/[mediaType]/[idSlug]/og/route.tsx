@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import sharp from "sharp";
 import { getOrCreateTitle } from "@/services/catalog";
-import { parseIdSlug, pickTrailerKey } from "@/lib/tmdb/detail";
+import { parseIdSlug } from "@/lib/tmdb/detail";
 import { backdropUrl } from "@/lib/tmdb/images";
 import type { TmdbTitleDetail } from "@/lib/tmdb/types";
 import { BRAND_NAME } from "@/lib/brand";
@@ -23,17 +23,15 @@ export async function GET(
   const id = parseIdSlug(idSlug);
 
   let title = BRAND_NAME;
-  let backdrop: string | null = null;
+  let backdropSrc: string | null = null;
   let metaLine = "";
-  let hasTrailer = false;
 
   if (id && (mediaType === "movie" || mediaType === "tv")) {
     try {
       const row = await getOrCreateTitle(mediaType, id);
       const meta = (row.metadata ?? {}) as TmdbTitleDetail;
       title = row.title;
-      backdrop = backdropUrl(row.backdropPath);
-      hasTrailer = Boolean(pickTrailerKey(meta.videos?.results));
+      backdropSrc = backdropUrl(row.backdropPath);
       const rating = meta.vote_average && meta.vote_average > 0 ? meta.vote_average.toFixed(1) : null;
       metaLine = [
         mediaType === "tv" ? "TV Series" : "Movie",
@@ -44,6 +42,21 @@ export async function GET(
         .join("   ·   ");
     } catch {
       /* fall back to brand card */
+    }
+  }
+
+  // Fetch the backdrop ourselves and embed it — Satori's own image fetch is
+  // flaky (which is why some cards came out blank).
+  let backdrop: string | null = null;
+  if (backdropSrc) {
+    try {
+      const res = await fetch(backdropSrc);
+      if (res.ok) {
+        const buf = Buffer.from(await res.arrayBuffer());
+        backdrop = `data:${res.headers.get("content-type") ?? "image/jpeg"};base64,${buf.toString("base64")}`;
+      }
+    } catch {
+      /* no backdrop — branded fallback */
     }
   }
 
@@ -67,62 +80,38 @@ export async function GET(
             src={backdrop}
             width={1200}
             height={630}
-            style={{ position: "absolute", inset: 0, width: 1200, height: 630, objectFit: "cover" }}
+            style={{ position: "absolute", top: 0, left: 0, width: 1200, height: 630, objectFit: "cover" }}
           />
         ) : null}
 
-        {/* Legibility wash */}
+        {/* Foreground: flex column over the backdrop (Satori handles flex, not inset) */}
         <div
           style={{
-            position: "absolute",
-            inset: 0,
             display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            width: 1200,
+            height: 630,
+            padding: "48px 64px",
             backgroundImage:
-              "linear-gradient(to top, rgba(11,13,18,0.96) 8%, rgba(11,13,18,0.30) 55%, rgba(11,13,18,0.70) 100%)",
+              "linear-gradient(to top, rgba(11,13,18,0.96) 8%, rgba(11,13,18,0.22) 52%, rgba(11,13,18,0.72) 100%)",
           }}
-        />
-
-        {/* Play button (only when a trailer exists) */}
-        {hasTrailer && (
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: 144,
-                height: 144,
-                borderRadius: 72,
-                backgroundColor: "rgba(230,57,70,0.92)",
-                boxShadow: "0 10px 40px rgba(0,0,0,0.55)",
-              }}
-            >
-              <svg width="58" height="66" viewBox="0 0 58 66">
-                <polygon points="6,4 56,33 6,62" fill="#ffffff" />
-              </svg>
-            </div>
+        >
+          {/* Brand */}
+          <div style={{ display: "flex", fontSize: 30, fontWeight: 700, color: TEXT }}>
+            {BRAND_NAME}
+            <span style={{ color: ACCENT, display: "flex" }}>.</span>
           </div>
-        )}
 
-        {/* Brand */}
-        <div style={{ position: "absolute", top: 48, left: 64, display: "flex", fontSize: 30, fontWeight: 700, color: TEXT }}>
-          {BRAND_NAME}
-          <span style={{ color: ACCENT, display: "flex" }}>.</span>
-        </div>
-
-        {/* Title block */}
-        <div style={{ position: "absolute", left: 64, right: 64, bottom: 56, display: "flex", flexDirection: "column" }}>
-          <div style={{ display: "flex", fontSize: titleSize, fontWeight: 800, lineHeight: 1.05, letterSpacing: -1, color: TEXT }}>
-            {title}
-          </div>
-          {metaLine && (
-            <div style={{ display: "flex", marginTop: 16, fontSize: 30, color: MUTED }}>{metaLine}</div>
-          )}
-          {hasTrailer && (
-            <div style={{ display: "flex", marginTop: 8, fontSize: 26, fontWeight: 700, color: ACCENT }}>
-              Watch the trailer
+          {/* Title block (pinned to the bottom via space-between) */}
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", fontSize: titleSize, fontWeight: 800, lineHeight: 1.05, letterSpacing: -1, color: TEXT }}>
+              {title}
             </div>
-          )}
+            {metaLine ? (
+              <div style={{ display: "flex", marginTop: 14, fontSize: 30, color: MUTED }}>{metaLine}</div>
+            ) : null}
+          </div>
         </div>
       </div>
     ),
