@@ -12,6 +12,9 @@ export interface QueryFilters {
   yearGte: number | null;
   yearLte: number | null;
   genreIds: number[];
+  /** Genres to exclude (Documentary/Music) so acclaimed concert films + docs
+   *  don't dominate "best/cult/classic" lists — unless explicitly requested. */
+  excludeGenreIds: number[];
   sort: string; // TMDB sort_by
   voteFloor: number;
   voteCeil: number | null;
@@ -157,12 +160,18 @@ export function parseQueryFilters(raw: string): QueryFilters {
   const isCatalog =
     (yearGte != null || genreIds.length > 0 || hasReputation) && leftover.length <= 1;
 
+  // Keep Documentary (99) + Music (10402) out of acclaim-ranked lists unless the
+  // user asked for them — otherwise concert films/docs top a "cult classics" list.
+  const excludeGenreIds =
+    genreIds.includes(99) || genreIds.includes(10402) ? [] : [99, 10402];
+
   return {
     mediaType,
     detectedMedia,
     yearGte,
     yearLte,
     genreIds,
+    excludeGenreIds,
     sort,
     voteFloor,
     voteCeil,

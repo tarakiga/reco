@@ -30,6 +30,17 @@ test("decade word + tv genre maps to the TV id", () => {
   expect(f.yearGte).toBe(1980);
 });
 
+test("cult/classic lists exclude Documentary + Music genres", () => {
+  const f = parseQueryFilters("cult classics from the 80s");
+  expect(f.excludeGenreIds).toEqual([99, 10402]);
+});
+
+test("explicitly asking for documentaries does NOT exclude them", () => {
+  const f = parseQueryFilters("best 80s documentaries");
+  expect(f.genreIds).toContain(99);
+  expect(f.excludeGenreIds).toEqual([]);
+});
+
 test("a descriptive scene query is NOT treated as catalog", () => {
   const f = parseQueryFilters("a giant squid attacks a cruise ship");
   expect(f.isCatalog).toBe(false);

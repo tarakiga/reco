@@ -19,6 +19,7 @@ export async function discoverSearch(f: QueryFilters, limit: number): Promise<Sc
   };
   if (f.voteCeil != null) params["vote_count.lte"] = String(f.voteCeil);
   if (f.genreIds.length) params.with_genres = f.genreIds.join(",");
+  if (f.excludeGenreIds.length) params.without_genres = f.excludeGenreIds.join(",");
   if (f.yearGte != null) {
     params[mt === "movie" ? "primary_release_date.gte" : "first_air_date.gte"] = `${f.yearGte}-01-01`;
   }
