@@ -1,5 +1,5 @@
 import "server-only";
-import type { TmdbPersonDetail, TmdbTitleDetail, TmdbSearchItem, TmdbSeasonDetail } from "./types";
+import type { TmdbPersonDetail, TmdbTitleDetail, TmdbSearchItem, TmdbSeasonDetail, TmdbAggregateCredits } from "./types";
 
 const BASE = "https://api.themoviedb.org/3";
 
@@ -50,6 +50,8 @@ export const tmdb = {
     get<TmdbSeasonDetail>(`/tv/${tvId}/season/${seasonNumber}`),
   // Lightweight TV fetch for airing data (next_episode_to_air) — no append_to_response.
   tvAiring: (id: number) => get<TmdbTitleDetail>(`/tv/${id}`),
+  // Full series cast across all seasons (regulars who left early aren't in `credits`).
+  tvAggregateCredits: (id: number) => get<TmdbAggregateCredits>(`/tv/${id}/aggregate_credits`),
   externalIds: (mediaType: "movie" | "tv", id: number) =>
     get<{ wikidata_id?: string | null; imdb_id?: string | null }>(`/${mediaType}/${id}/external_ids`),
   personExternalIds: (id: number) =>

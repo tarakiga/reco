@@ -23,6 +23,9 @@ export interface PersonEpisode {
 export interface PersonShowCredit {
   mainCast: boolean;
   episodes: PersonEpisode[];
+  /** For regulars (from aggregate_credits): total episodes + role. */
+  episodeCount?: number | null;
+  character?: string | null;
 }
 
 export function filmography(

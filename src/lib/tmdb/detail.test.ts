@@ -9,6 +9,7 @@ import {
   formatMoney,
   formatBinge,
   titleFacts,
+  aggregateCast,
 } from "./detail";
 import type { TmdbTitleDetail } from "./types";
 
@@ -16,6 +17,16 @@ test("parseIdSlug extracts leading integer id", () => {
   expect(parseIdSlug("603-the-matrix-1999")).toBe(603);
   expect(parseIdSlug("42")).toBe(42);
   expect(parseIdSlug("not-a-number")).toBeNull();
+});
+
+test("aggregateCast orders by billing and reads the first role's character", () => {
+  const cast = aggregateCast([
+    { id: 2, name: "Jill Marie Jones", order: 4, total_episode_count: 137, roles: [{ character: "Toni Childs-Garrett" }] },
+    { id: 1, name: "Tracee Ellis Ross", order: 0, total_episode_count: 172, roles: [{ character: "Joan Clayton" }] },
+  ]);
+  expect(cast.map((c) => c.name)).toEqual(["Tracee Ellis Ross", "Jill Marie Jones"]);
+  expect(cast[1]).toMatchObject({ tmdbId: 2, character: "Toni Childs-Garrett" });
+  expect(cast[1].href).toBe("/person/2-jill-marie-jones");
 });
 
 test("pickTrailerKey prefers official YouTube Trailer", () => {

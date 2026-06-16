@@ -36,6 +36,7 @@ import { MovieCollection } from "@/components/catalog/MovieCollection";
 import { TitleExtras } from "@/components/catalog/TitleExtras";
 import { seasonSummaries } from "@/lib/tmdb/episodes";
 import { TitleMatch } from "@/components/catalog/TitleMatch";
+import { seriesCast } from "@/services/series-cast";
 
 export async function generateMetadata({
   params,
@@ -103,7 +104,13 @@ export default async function TitlePage({
   );
   const cert = certification(meta, mediaType);
   const crew = keyCrew(meta, mediaType);
-  const cast = topCast(meta.credits?.cast);
+  // TV: full-series cast (aggregate) so regulars who left early still show;
+  // fall back to current-season credits if aggregate is unavailable.
+  let cast = topCast(meta.credits?.cast);
+  if (mediaType === "tv") {
+    const full = await seriesCast(id);
+    if (full.length > 0) cast = full;
+  }
   const trailerKey = pickTrailerKey(meta.videos?.results);
   const recs = recommendations(meta);
   const seasons = mediaType === "tv" ? seasonSummaries(meta) : [];

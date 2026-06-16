@@ -57,8 +57,13 @@ export function FilmographyModal({
           {credit.year != null && <p className="text-sm text-text-muted">{credit.year}</p>}
           {isTv && data?.mainCast && (
             <span className="mt-2 inline-flex rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">
-              Main cast
+              Main cast{data.episodeCount ? ` · ${data.episodeCount} episodes` : ""}
             </span>
+          )}
+          {isTv && data?.mainCast && !credit.character && data.character && (
+            <p className="mt-1 text-sm text-text-muted">
+              as <span className="font-medium text-text">{data.character}</span>
+            </p>
           )}
           <div className="mt-3">
             <Link href={credit.href} className="text-sm font-medium text-accent hover:underline">

@@ -1,7 +1,7 @@
 import { slugify, titleSlug } from "@/lib/slug";
 import { profileUrl, posterUrl, logoUrl } from "./images";
 import type { TitleResult } from "./transform";
-import type { TmdbTitleDetail, TmdbCastMember, TmdbVideo } from "./types";
+import type { TmdbTitleDetail, TmdbCastMember, TmdbVideo, TmdbAggregateCastMember } from "./types";
 
 export type MediaType = "movie" | "tv";
 
@@ -38,6 +38,25 @@ export function topCast(cast: TmdbCastMember[] | undefined, limit = 12): CastEnt
       tmdbId: c.id,
       name: c.name,
       character: c.character ?? null,
+      profileUrl: profileUrl(c.profile_path),
+      href: `/person/${c.id}-${slugify(c.name)}`,
+    }));
+}
+
+/** Full-series cast from /tv aggregate_credits (includes regulars who left
+ *  before the final season, e.g. someone billed across seasons 1–4 of 8). */
+export function aggregateCast(
+  cast: TmdbAggregateCastMember[] | undefined,
+  limit = 18,
+): CastEntry[] {
+  if (!cast) return [];
+  return [...cast]
+    .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
+    .slice(0, limit)
+    .map((c) => ({
+      tmdbId: c.id,
+      name: c.name,
+      character: c.roles?.[0]?.character ?? null,
       profileUrl: profileUrl(c.profile_path),
       href: `/person/${c.id}-${slugify(c.name)}`,
     }));

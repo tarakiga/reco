@@ -23,6 +23,23 @@ export interface TmdbCrewMember {
   job?: string;
   department?: string;
 }
+/** /tv/{id}/aggregate_credits — the full series cast across all seasons (with
+ *  per-person roles + episode counts), unlike `credits` which is current-season. */
+export interface TmdbAggregateRole {
+  character?: string;
+  episode_count?: number;
+}
+export interface TmdbAggregateCastMember {
+  id: number;
+  name: string;
+  profile_path?: string | null;
+  order?: number;
+  total_episode_count?: number;
+  roles?: TmdbAggregateRole[];
+}
+export interface TmdbAggregateCredits {
+  cast?: TmdbAggregateCastMember[];
+}
 export interface TmdbVideo {
   key: string;
   site: string; // "YouTube"
