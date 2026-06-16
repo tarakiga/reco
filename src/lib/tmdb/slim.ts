@@ -1,4 +1,47 @@
-import type { TmdbTitleDetail } from "./types";
+import type { TmdbTitleDetail, TmdbPersonDetail } from "./types";
+
+const MAX_PERSON_CREDITS = 500; // guard pathological filmographies (1000+ credits)
+
+/**
+ * Slim a person payload before storing it. The raw TMDB person includes the full
+ * combined_credits (every credit with its overview/backdrop/etc.) which is the
+ * single biggest storage hog — keep only the fields the person page renders
+ * (bio, photo, facts, and the per-credit data the filmography needs).
+ */
+export function slimPersonMetadata(meta: TmdbPersonDetail): TmdbPersonDetail {
+  const slim: TmdbPersonDetail = {
+    id: meta.id,
+    name: meta.name,
+    biography: meta.biography,
+    profile_path: meta.profile_path,
+    known_for_department: meta.known_for_department,
+    birthday: meta.birthday,
+    deathday: meta.deathday,
+    place_of_birth: meta.place_of_birth,
+  };
+  const cast = meta.combined_credits?.cast;
+  if (cast && cast.length) {
+    slim.combined_credits = {
+      cast: [...cast]
+        .sort((a, b) =>
+          (b.release_date ?? b.first_air_date ?? "").localeCompare(a.release_date ?? a.first_air_date ?? ""),
+        )
+        .slice(0, MAX_PERSON_CREDITS)
+        .map((c) => ({
+          id: c.id,
+          media_type: c.media_type,
+          title: c.title,
+          name: c.name,
+          poster_path: c.poster_path,
+          release_date: c.release_date,
+          first_air_date: c.first_air_date,
+          character: c.character,
+          episode_count: c.episode_count,
+        })),
+    };
+  }
+  return slim;
+}
 
 /** Regions we keep watch-provider + certification data for. Covers our account
  *  region options plus the major entertainment markets; everything else is

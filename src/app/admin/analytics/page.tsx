@@ -15,13 +15,14 @@ export default async function AdminAnalyticsPage() {
       <h1 className="mb-1 text-2xl font-bold">Analytics</h1>
       <p className="mb-6 text-sm text-text-muted">Aggregate activity across all users. Updates live on each load.</p>
 
-      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
         <StatCard label="Users" value={a.users.total} sub={`${a.users.rated} rated · ${a.users.onboarded} onboarded`} />
         <StatCard label="Ratings" value={a.totals.ratings} />
         <StatCard label="Watchlist" value={a.totals.watchlist} />
         <StatCard label="Favourites" value={a.totals.favourites} />
-        <StatCard label="Catalog" value={a.catalog.titles.toLocaleString()} sub="titles" />
+        <StatCard label="Catalog" value={a.catalog.titles.toLocaleString()} sub={`titles · ${a.catalog.people.toLocaleString()} people`} />
         <StatCard label="Embedded" value={`${a.catalog.coveragePct}%`} sub={`${a.catalog.embeddings.toLocaleString()} vectors`} />
+        <StatCard label="DB storage" value={`~${a.catalog.estStorageGb} GB`} sub="est. metadata + vectors" />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">

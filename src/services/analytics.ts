@@ -21,7 +21,7 @@ export interface TitleStat {
 export interface Analytics {
   users: { total: number; rated: number; watchlisted: number; onboarded: number };
   totals: { ratings: number; watchlist: number; favourites: number };
-  catalog: { titles: number; embeddings: number; coveragePct: number };
+  catalog: { titles: number; people: number; embeddings: number; coveragePct: number; estStorageGb: number };
   ratingDist: Bucket[];
   watchlistStatus: Bucket[];
   signups: Bucket[];
@@ -55,7 +55,7 @@ export async function getAnalytics(): Promise<Analytics> {
   const [
     usersTotal, usersRated, usersWatchlisted, usersOnboarded,
     totRatings, totWatchlist, totFav,
-    catTitles, catEmb,
+    catSizeQ,
     ratingDistQ, watchStatusQ, signupsQ, activityQ, topRatedQ, mostRatedQ, genresQ,
   ] = await Promise.all([
     db.execute(sql`SELECT count(*)::int n FROM profiles`),
@@ -65,8 +65,15 @@ export async function getAnalytics(): Promise<Analytics> {
     db.execute(sql`SELECT count(*)::int n FROM ratings`),
     db.execute(sql`SELECT count(*)::int n FROM watchlist_items`),
     db.execute(sql`SELECT count(*)::int n FROM favourites`),
-    db.execute(sql`SELECT count(*)::int n FROM titles`),
-    db.execute(sql`SELECT count(*)::int n FROM title_embeddings`),
+    db.execute(sql`SELECT
+        (SELECT count(*)::int FROM titles) AS titles,
+        (SELECT count(*)::int FROM people) AS people,
+        (SELECT count(*)::int FROM title_embeddings) AS embeddings,
+        (
+          (SELECT count(*) FROM titles) * (SELECT COALESCE(avg(octet_length(metadata::text)), 0) FROM (SELECT metadata FROM titles WHERE metadata IS NOT NULL LIMIT 2000) a)
+          + (SELECT count(*) FROM people) * (SELECT COALESCE(avg(octet_length(metadata::text)), 0) FROM (SELECT metadata FROM people WHERE metadata IS NOT NULL LIMIT 2000) b)
+          + (SELECT count(*) FROM title_embeddings) * 4096
+        )::float8 AS est_bytes`),
     db.execute(sql`SELECT score::text AS label, count(*)::int n FROM ratings GROUP BY score ORDER BY score DESC`),
     db.execute(sql`SELECT status AS label, count(*)::int n FROM watchlist_items GROUP BY status`),
     db.execute(sql`SELECT to_char(date_trunc('week', created_at), 'Mon DD') AS label, count(*)::int n
@@ -89,8 +96,11 @@ export async function getAnalytics(): Promise<Analytics> {
                    WHERE r.score >= 4 GROUP BY 1 ORDER BY n DESC LIMIT 10`),
   ]);
 
-  const titles = one(catTitles);
-  const embeddings = one(catEmb);
+  const cat = rows(catSizeQ)[0] ?? {};
+  const titles = n(cat.titles);
+  const people = n(cat.people);
+  const embeddings = n(cat.embeddings);
+  const estStorageGb = Math.round((Number(cat.est_bytes ?? 0) / 1e9) * 100) / 100;
 
   return {
     users: {
@@ -100,7 +110,13 @@ export async function getAnalytics(): Promise<Analytics> {
       onboarded: one(usersOnboarded),
     },
     totals: { ratings: one(totRatings), watchlist: one(totWatchlist), favourites: one(totFav) },
-    catalog: { titles, embeddings, coveragePct: titles ? Math.round((embeddings / titles) * 100) : 0 },
+    catalog: {
+      titles,
+      people,
+      embeddings,
+      coveragePct: titles ? Math.round((embeddings / titles) * 100) : 0,
+      estStorageGb,
+    },
     ratingDist: rows(ratingDistQ).map((r) => ({ label: `${r.label}★`, value: n(r.n) })),
     watchlistStatus: rows(watchStatusQ).map((r) => ({ label: STATUS_LABEL[r.label as string] ?? (r.label as string), value: n(r.n) })),
     signups: rows(signupsQ).map((r) => ({ label: r.label as string, value: n(r.n) })).reverse(),

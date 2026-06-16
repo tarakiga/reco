@@ -3,7 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { titles, people, type TitleRow, type PersonRow } from "@/db/schema";
 import { tmdb } from "@/lib/tmdb/client";
-import { slimTitleMetadata } from "@/lib/tmdb/slim";
+import { slimTitleMetadata, slimPersonMetadata } from "@/lib/tmdb/slim";
 import { titleSlug, slugify } from "@/lib/slug";
 
 const STALE_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
@@ -56,7 +56,7 @@ export async function getOrCreatePerson(tmdbId: number): Promise<PersonRow> {
     slug: slugify(data.name),
     name: data.name,
     profilePath: data.profile_path ?? null,
-    metadata: data,
+    metadata: slimPersonMetadata(data),
     refreshedAt: new Date(),
   };
   const [row] = await db
