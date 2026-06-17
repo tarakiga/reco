@@ -1,17 +1,14 @@
-import { getCurrentProfile } from "@/services/profile";
-import { personSets, watchedTitleKeys, progressFor } from "@/services/completion";
+import { personSets, progressFor } from "@/services/completion";
 import { CompletionBar } from "@/components/completion/CompletionBar";
 
 /**
  * Per-user "how much of this person have I watched" — acting, directing and
- * writing bodies of work. Dynamic island (resolves the signed-in user), so the
- * person page renders it inside a <Suspense>. Hidden for signed-out visitors.
+ * writing bodies of work. Streams in a <Suspense> island because `personSets`
+ * fetches the person's full crew credits from TMDB. The page passes the user's
+ * watched keys in (and only renders this for signed-in visitors).
  */
-export async function PersonCompletion({ personId }: { personId: number }) {
-  const profile = await getCurrentProfile();
-  if (!profile) return null;
-
-  const [sets, watched] = await Promise.all([personSets(personId), watchedTitleKeys(profile.id)]);
+export async function PersonCompletion({ personId, watched }: { personId: number; watched: Set<string> }) {
+  const sets = await personSets(personId);
   const rows = (
     [
       { label: "Films & shows seen", items: sets.acted },

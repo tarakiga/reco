@@ -1,6 +1,8 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getOrCreatePerson } from "@/services/catalog";
+import { getCurrentProfile } from "@/services/profile";
+import { watchedTitleKeys } from "@/services/completion";
 import { TmdbError } from "@/lib/tmdb/client";
 import { parseIdSlug } from "@/lib/tmdb/detail";
 import { profileUrl } from "@/lib/tmdb/images";
@@ -62,6 +64,10 @@ export default async function PersonPage({
   const meta = (person.metadata ?? {}) as TmdbPersonDetail;
   const credits = filmography(meta.combined_credits);
   const facts = personFacts(meta);
+
+  // Per-user "seen" markers for the filmography + completion bars.
+  const profile = await getCurrentProfile();
+  const watched = profile ? await watchedTitleKeys(profile.id) : new Set<string>();
   const years = credits.map((c) => c.year).filter((y): y is number => y != null);
   if (years.length > 0) {
     const min = Math.min(...years);
@@ -135,14 +141,16 @@ export default async function PersonPage({
             <p className="mb-8 text-sm text-text-muted">No biography available.</p>
           )}
 
-          <Suspense fallback={null}>
-            <PersonCompletion personId={id} />
-          </Suspense>
+          {profile && (
+            <Suspense fallback={null}>
+              <PersonCompletion personId={id} watched={watched} />
+            </Suspense>
+          )}
 
           <section>
             <h2 className="mb-4 text-lg font-semibold text-text">Filmography</h2>
             {credits.length > 0 ? (
-              <FilmographyGrid personId={id} credits={credits} />
+              <FilmographyGrid personId={id} credits={credits} watchedKeys={[...watched]} />
             ) : (
               <p className="text-sm text-text-muted">No known titles.</p>
             )}
