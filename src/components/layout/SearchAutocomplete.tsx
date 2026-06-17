@@ -109,7 +109,7 @@ export function SearchAutocomplete() {
           onFocus={() => setOpen(true)}
           type="search"
           aria-label="Search"
-          placeholder="Search movies &amp; shows…"
+          placeholder="The episode with…"
           className="h-9 w-full rounded-md border border-border bg-surface-raised px-3 text-sm text-text placeholder:text-text-muted focus:outline-2 focus:outline-accent"
         />
         <button
