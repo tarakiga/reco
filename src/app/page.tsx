@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { tmdb } from "@/lib/tmdb/client";
 import { toSearchResults } from "@/lib/tmdb/transform";
@@ -7,6 +8,7 @@ import { TitleCard } from "@/components/catalog/TitleCard";
 import { Rail } from "@/components/catalog/Rail";
 import { ForYouPreview } from "@/components/home/ForYouPreview";
 import { GenreTiles } from "@/components/home/GenreTiles";
+import { MoodRails } from "@/components/home/MoodRails";
 import { SceneSearchBar } from "@/components/search/SceneSearchBar";
 
 async function getTrending(): Promise<TitleResult[]> {
@@ -159,6 +161,10 @@ export default async function Home() {
           </div>
         </div>
       </section>
+
+      <Suspense fallback={null}>
+        <MoodRails />
+      </Suspense>
 
       <PosterRail title="Popular movies" items={popularMovies} />
       <PosterRail title="Popular TV shows" items={popularTv} />
