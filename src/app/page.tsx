@@ -85,6 +85,12 @@ export default async function Home() {
             Browse TV
           </Link>
         </div>
+        <p className="mt-5 text-sm text-text-muted">
+          New here?{" "}
+          <Link href="/what-can-i-do" className="font-medium text-accent hover:underline">
+            See everything you can do →
+          </Link>
+        </p>
       </section>
 
       {/* Shuffle call-to-action — prominent so impatient visitors can't miss it. */}

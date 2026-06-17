@@ -4,4 +4,5 @@ export const NAV_LINKS: { href: string; label: string }[] = [
   { href: "/for-you", label: "For you" },
   { href: "/calendar", label: "Calendar" },
   { href: "/moods", label: "Moods" },
+  { href: "/what-can-i-do", label: "What can I do?" },
 ];
