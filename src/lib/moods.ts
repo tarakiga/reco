@@ -36,7 +36,7 @@ export const MOODS: Mood[] = [
     emoji: "🛋️",
     blurb: "Warm, comforting watches for a quiet evening.",
     kind: "mood",
-    query: { withGenres: "35|10749|10751", voteAverageGte: 6.7, voteCountGte: 300 },
+    query: { withGenres: "35|10749|10751", withoutGenres: "27,53", voteAverageGte: 6.7, voteCountGte: 300 },
   },
   {
     slug: "edge-of-your-seat",
@@ -52,7 +52,7 @@ export const MOODS: Mood[] = [
     emoji: "😂",
     blurb: "Comedies to reset your mood.",
     kind: "mood",
-    query: { withGenres: "35", voteAverageGte: 6.5, voteCountGte: 400 },
+    query: { withGenres: "35", withoutGenres: "27,53", voteAverageGte: 6.5, voteCountGte: 400 },
   },
   {
     slug: "a-good-cry",
@@ -76,7 +76,7 @@ export const MOODS: Mood[] = [
     emoji: "❤️",
     blurb: "Crowd-pleasers for two.",
     kind: "mood",
-    query: { withGenres: "10749|35", voteAverageGte: 6.5, voteCountGte: 400 },
+    query: { withGenres: "10749|35", withoutGenres: "27,53", voteAverageGte: 6.5, voteCountGte: 400 },
   },
   {
     slug: "adrenaline-rush",
