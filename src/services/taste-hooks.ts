@@ -5,13 +5,15 @@ import { recomputeTaste } from "@/services/taste";
 import { defaultEmbedder } from "@/lib/taste/embedder";
 import type { TmdbSearchItem } from "@/lib/tmdb/types";
 
-/** Embed a title after it's been viewed (safe to call in `after()`). */
-export async function onTitleViewed(titleId: string): Promise<void> {
-  try {
-    await embedTitle(titleId, defaultEmbedder());
-  } catch {
-    /* embeddings are best-effort */
-  }
+/**
+ * No-op. This used to embed a title on every view, but that let crawlers
+ * walking /title/[id] by sequential id balloon the catalog + Voyage spend
+ * (an uncontrolled cost on anonymous page views). Embedding now happens only
+ * via the controlled cron/backfill (curated corpus) and on user signals
+ * (`onSignalChanged`). Kept as a no-op so existing call sites stay safe.
+ */
+export async function onTitleViewed(_titleId: string): Promise<void> {
+  /* intentionally does nothing — see comment above */
 }
 
 /** After a rating/watchlist change: embed the title + a few "similar", then recompute taste. */
