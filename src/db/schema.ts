@@ -1,4 +1,4 @@
-import { boolean, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uuid, unique } from "drizzle-orm/pg-core";
+import { boolean, date, integer, jsonb, pgEnum, pgTable, primaryKey, text, timestamp, uuid, unique } from "drizzle-orm/pg-core";
 import { vector, EMBEDDING_DIM } from "./vector";
 
 export const roleEnum = pgEnum("role", ["user", "editor", "admin"]);
@@ -195,6 +195,21 @@ export const titleTags = pgTable(
 
 export type TagRow = typeof tags.$inferSelect;
 export type TitleTagRow = typeof titleTags.$inferSelect;
+
+// Watch diary: a dated log of titles the user has seen (rewatches = multiple dates).
+export const diary = pgTable(
+  "diary",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+    titleId: uuid("title_id").notNull().references(() => titles.id, { onDelete: "cascade" }),
+    watchedOn: date("watched_on").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique("diary_user_title_date").on(t.userId, t.titleId, t.watchedOn)],
+);
+
+export type DiaryRow = typeof diary.$inferSelect;
 
 const vec = vector(EMBEDDING_DIM);
 

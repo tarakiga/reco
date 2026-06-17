@@ -90,10 +90,22 @@ export function TitleActions({ mediaType, tmdbId }: Props) {
 
         <div className="flex flex-col gap-1.5">
           <span className="text-sm font-medium text-text">Your rating</span>
-          <StarRating
-            value={data.score ?? 0}
-            onChange={handleRatingChange}
-          />
+          <div className="flex items-center gap-2">
+            <StarRating value={data.score ?? 0} onChange={handleRatingChange} />
+            {data.score ? (
+              <a
+                href={`/api/share/rating?mediaType=${mediaType}&tmdbId=${tmdbId}&score=${data.score}`}
+                download
+                aria-label="Download poster with your rating"
+                title="Download poster with your rating"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md border border-border bg-surface text-text-muted transition-colors hover:bg-surface-overlay hover:text-text focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden="true">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+                </svg>
+              </a>
+            ) : null}
+          </div>
         </div>
 
         <div className="flex flex-col gap-1.5">

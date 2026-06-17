@@ -27,6 +27,7 @@ import { AffiliateLinks } from "@/components/catalog/AffiliateLinks";
 import { ShareButton } from "@/components/catalog/ShareButton";
 import { TitleActions } from "@/components/catalog/TitleActions";
 import { TitleTags } from "@/components/catalog/TitleTags";
+import { DiaryButton } from "@/components/catalog/DiaryButton";
 import { HeroBackdrop } from "@/components/catalog/HeroBackdrop";
 import { AmbientBackground } from "@/components/catalog/AmbientBackground";
 import { FactsPanel } from "@/components/catalog/FactsPanel";
@@ -231,6 +232,7 @@ export default async function TitlePage({
           {/* Watchlist + rating + personal tags (client islands) */}
           <div className="mb-8 space-y-3">
             <TitleActions mediaType={mediaType} tmdbId={id} />
+            <DiaryButton mediaType={mediaType} tmdbId={id} />
             <TitleTags mediaType={mediaType} tmdbId={id} />
           </div>
 
