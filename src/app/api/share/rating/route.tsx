@@ -43,24 +43,29 @@ export async function GET(req: Request) {
           <img src={posterData} width={600} height={900} style={{ position: "absolute", top: 0, left: 0, width: 600, height: 900, objectFit: "cover" }} />
         ) : null}
         <div style={{ display: "flex", flexDirection: "column", justifyContent: "space-between", width: 600, height: 900, padding: 28 }}>
-          {/* Rating badge, top-right */}
+          {/* Rating badge, top-right: black rectangle, white border, star + bold N/10 */}
           <div style={{ display: "flex", justifyContent: "flex-end" }}>
             <div
               style={{
                 display: "flex",
-                flexDirection: "column",
                 alignItems: "center",
-                justifyContent: "center",
-                width: 152,
-                height: 152,
-                borderRadius: 76,
-                backgroundColor: "rgba(230,57,70,0.95)",
-                border: "5px solid #ffffff",
-                boxShadow: "0 8px 30px rgba(0,0,0,0.5)",
+                gap: 12,
+                backgroundColor: "rgba(0,0,0,0.82)",
+                border: "3px solid #ffffff",
+                borderRadius: 14,
+                padding: "14px 22px",
+                boxShadow: "0 8px 30px rgba(0,0,0,0.45)",
               }}
             >
-              <div style={{ display: "flex", fontSize: 80, fontWeight: 800, color: "#fff", lineHeight: 1 }}>{out10}</div>
-              <div style={{ display: "flex", fontSize: 26, fontWeight: 700, color: "#fff", lineHeight: 1, marginTop: 2 }}>/ 10</div>
+              <svg width="46" height="46" viewBox="0 0 24 24">
+                <polygon
+                  points="12,2 15.09,8.26 22,9.27 17,14.14 18.18,21.02 12,17.77 5.82,21.02 7,14.14 2,9.27 8.91,8.26"
+                  fill="#f4b740"
+                />
+              </svg>
+              <div style={{ display: "flex", fontSize: 58, fontWeight: 800, color: "#ffffff", lineHeight: 1 }}>
+                {out10}/10
+              </div>
             </div>
           </div>
           {/* Brand tag, bottom-left */}
