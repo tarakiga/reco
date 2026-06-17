@@ -87,7 +87,9 @@ export function TitleActions({ mediaType, tmdbId, unreleased }: Props) {
           <option value="">Not tracking</option>
           <option value="want_to_watch">Want to watch</option>
           <option value="watching">Watching</option>
-          <option value="watched">Watched</option>
+          {/* "Watched" lives in the diary now; only shown here if already set, so
+              existing watched items still display (not offered as a new choice). */}
+          {data.status === "watched" && <option value="watched">Watched</option>}
         </Select>
 
         {!unreleased && (
