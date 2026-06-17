@@ -66,9 +66,15 @@ export const MOODS: Mood[] = [
     slug: "mind-benders",
     label: "Mind-benders",
     emoji: "🤯",
-    blurb: "Acclaimed sci-fi and mysteries that mess with your head.",
+    blurb: "Twist endings, time loops and puzzle-box films that mess with your head.",
     kind: "mood",
-    query: { withGenres: "878|9648", voteCountGte: 800, sortBy: "vote_average.desc" },
+    // Not a genre. United by keywords: twist ending, nonlinear timeline, mind-bending,
+    // mind game, unreliable narrator, time loop, time paradox, paradox, loss of reality.
+    query: {
+      withKeywords: "326438|157171|362567|184312|174089|10854|208757|14779|1565",
+      voteCountGte: 400,
+      sortBy: "vote_average.desc",
+    },
   },
   {
     slug: "date-night",

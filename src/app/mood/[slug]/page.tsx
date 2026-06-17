@@ -20,7 +20,7 @@ export default async function MoodPage({ params }: { params: Promise<{ slug: str
   const mood = getMoodBySlug(slug);
   if (!mood) notFound();
 
-  const [items, ctx] = await Promise.all([getMoodTitles(slug, 2), cardActionContext()]);
+  const [items, ctx] = await Promise.all([getMoodTitles(slug, 3), cardActionContext()]);
 
   return (
     <div className="space-y-6">
