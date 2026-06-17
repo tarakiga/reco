@@ -149,15 +149,12 @@ export default async function Home() {
               </p>
             </div>
           </div>
-          <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+          <div className="flex shrink-0 sm:items-end">
             <Link
               href="/calendar"
               className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-success px-6 py-2.5 text-sm font-semibold text-surface shadow-lg shadow-success/20 transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-success sm:w-auto"
             >
-              Open the release calendar
-            </Link>
-            <Link href="/calendar" className="text-xs font-medium text-success hover:underline">
-              🆕 See what&apos;s new to streaming →
+              Open Calendar
             </Link>
           </div>
         </div>
