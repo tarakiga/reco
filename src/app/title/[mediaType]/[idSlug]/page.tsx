@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { after } from "next/server";
 import { getOrCreateTitle } from "@/services/catalog";
+import { getCurrentProfile } from "@/services/profile";
 import { onTitleViewed } from "@/services/taste-hooks";
 import { TmdbError } from "@/lib/tmdb/client";
 import {
@@ -51,7 +52,7 @@ export async function generateMetadata({
   if (!id) return {};
   if (mediaType !== "movie" && mediaType !== "tv") return {};
   try {
-    const row = await getOrCreateTitle(mediaType, id);
+    const row = await getOrCreateTitle(mediaType, id, false);
     const description = row.overview ? row.overview.slice(0, 200) : undefined;
     // Dynamic share card: backdrop + play button (rendered by ./og).
     const ogImage = {
@@ -89,9 +90,12 @@ export default async function TitlePage({
   const id = parseIdSlug(idSlug);
   if (!id) notFound();
 
+  // Only persist on signed-in views; anonymous renders (incl. crawlers walking
+  // ids) mirror read-only so they can't grow the catalog.
+  const viewer = await getCurrentProfile();
   let title;
   try {
-    title = await getOrCreateTitle(mediaType, id);
+    title = await getOrCreateTitle(mediaType, id, Boolean(viewer));
   } catch (e) {
     if (e instanceof TmdbError && e.status === 404) notFound();
     throw e;
@@ -181,7 +185,7 @@ export default async function TitlePage({
                   )}
                 </>
               )}
-              <TitleMatch titleId={title.id} />
+              {title.id && <TitleMatch titleId={title.id} />}
               {cert && (
                 <span className="rounded border border-border px-1.5 py-0.5 text-xs text-text-muted">
                   {cert}

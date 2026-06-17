@@ -25,7 +25,7 @@ export async function generateMetadata({
   const id = parseIdSlug(idSlug);
   if (id === null) return {};
   try {
-    const person = await getOrCreatePerson(id);
+    const person = await getOrCreatePerson(id, false);
     const meta = (person.metadata ?? {}) as TmdbPersonDetail;
     const description = meta.biography ? meta.biography.slice(0, 200) : undefined;
     const image = profileUrl(person.profilePath);
@@ -53,9 +53,12 @@ export default async function PersonPage({
   const id = parseIdSlug(idSlug);
   if (id === null) notFound();
 
+  // Only persist on signed-in views so an anonymous crawler walking /person/[id]
+  // can't grow the catalog. The same profile gates the "seen" markers below.
+  const profile = await getCurrentProfile();
   let person;
   try {
-    person = await getOrCreatePerson(id);
+    person = await getOrCreatePerson(id, Boolean(profile));
   } catch (e) {
     if (e instanceof TmdbError && e.status === 404) notFound();
     throw e;
@@ -66,7 +69,6 @@ export default async function PersonPage({
   const facts = personFacts(meta);
 
   // Per-user "seen" markers for the filmography + completion bars.
-  const profile = await getCurrentProfile();
   const watched = profile ? await watchedTitleKeys(profile.id) : new Set<string>();
   const years = credits.map((c) => c.year).filter((y): y is number => y != null);
   if (years.length > 0) {

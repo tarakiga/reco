@@ -28,7 +28,7 @@ export async function GET(
 
   if (id && (mediaType === "movie" || mediaType === "tv")) {
     try {
-      const row = await getOrCreateTitle(mediaType, id);
+      const row = await getOrCreateTitle(mediaType, id, false);
       const meta = (row.metadata ?? {}) as TmdbTitleDetail;
       title = row.title;
       backdropSrc = backdropUrl(row.backdropPath);

@@ -12,9 +12,16 @@ function isFresh(refreshedAt: Date): boolean {
   return Date.now() - new Date(refreshedAt).getTime() < STALE_MS;
 }
 
+/**
+ * Get a title, mirroring it from TMDB on miss. `persist` (default true) writes
+ * it to the catalog; pass `false` for anonymous page renders so a crawler
+ * walking /title/[id] by sequential id can't grow the DB. Non-persisted rows
+ * carry an empty `id` (fine for render — only signed-in features use it).
+ */
 export async function getOrCreateTitle(
   mediaType: "movie" | "tv",
   tmdbId: number,
+  persist = true,
 ): Promise<TitleRow> {
   const [existing] = await db
     .select()
@@ -38,6 +45,8 @@ export async function getOrCreateTitle(
     metadata: slimTitleMetadata(data),
     refreshedAt: new Date(),
   };
+  if (!persist) return { id: existing?.id ?? "", ...values } as TitleRow;
+
   const [row] = await db
     .insert(titles)
     .values(values)
@@ -46,7 +55,7 @@ export async function getOrCreateTitle(
   return row;
 }
 
-export async function getOrCreatePerson(tmdbId: number): Promise<PersonRow> {
+export async function getOrCreatePerson(tmdbId: number, persist = true): Promise<PersonRow> {
   const [existing] = await db.select().from(people).where(eq(people.tmdbId, tmdbId));
   if (existing && isFresh(existing.refreshedAt)) return existing;
 
@@ -59,6 +68,8 @@ export async function getOrCreatePerson(tmdbId: number): Promise<PersonRow> {
     metadata: slimPersonMetadata(data),
     refreshedAt: new Date(),
   };
+  if (!persist) return { id: existing?.id ?? "", ...values } as PersonRow;
+
   const [row] = await db
     .insert(people)
     .values(values)
