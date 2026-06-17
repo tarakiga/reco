@@ -2,6 +2,7 @@ import { connection, NextResponse } from "next/server";
 import { getCurrentProfile } from "@/services/profile";
 import { getTaste } from "@/services/taste";
 import { forYou } from "@/services/for-you";
+import { listFavouriteKeys, listWatchlistKeys } from "@/services/user-catalog";
 import { jsonError } from "@/lib/api";
 
 const COLD_START_MIN = 5;
@@ -17,6 +18,18 @@ export async function GET(req: Request) {
     return NextResponse.json({ needsMoreRatings: true, have: taste?.ratedCount ?? 0, need: COLD_START_MIN, items: [] });
   }
   const offset = Math.max(0, Math.floor(Number(new URL(req.url).searchParams.get("offset") ?? "0")) || 0);
-  const items = await forYou(profile.id, PAGE_SIZE, offset);
-  return NextResponse.json({ needsMoreRatings: false, items });
+  const [items, favKeys, watchKeys] = await Promise.all([
+    forYou(profile.id, PAGE_SIZE, offset),
+    listFavouriteKeys(profile.id),
+    listWatchlistKeys(profile.id),
+  ]);
+  const favSet = new Set(favKeys);
+  const watchSet = new Set(watchKeys);
+  // Seed each card's quick-action state so the heart/bookmark show as already set.
+  const enriched = items.map((it) => ({
+    ...it,
+    favourite: favSet.has(`${it.mediaType}:${it.tmdbId}`),
+    watchlist: watchSet.has(`${it.mediaType}:${it.tmdbId}`),
+  }));
+  return NextResponse.json({ needsMoreRatings: false, items: enriched });
 }

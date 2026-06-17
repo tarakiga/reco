@@ -8,9 +8,10 @@ import { TitleCard } from "@/components/catalog/TitleCard";
 import { MatchBadge } from "@/components/catalog/MatchBadge";
 import type { ForYouItem } from "@/services/for-you";
 
+type FeedItem = ForYouItem & { favourite?: boolean; watchlist?: boolean };
 interface FeedResponse {
   needsMoreRatings: boolean;
-  items: ForYouItem[];
+  items: FeedItem[];
 }
 
 /** A slim, personalized rail on the home page. Shows the top taste-matched picks
@@ -57,7 +58,14 @@ export function ForYouPreview() {
           <div className="absolute left-1.5 top-1.5 z-10">
             <MatchBadge match={item.match} />
           </div>
-          <TitleCard href={item.href} title={item.title} year={item.year} posterUrl={item.posterUrl} />
+          <TitleCard
+            href={item.href}
+            title={item.title}
+            year={item.year}
+            posterUrl={item.posterUrl}
+            favourite={{ mediaType: item.mediaType, tmdbId: item.tmdbId, initial: item.favourite ?? false, signedIn: true }}
+            watchlist={{ mediaType: item.mediaType, tmdbId: item.tmdbId, initial: item.watchlist ?? false, signedIn: true }}
+          />
         </div>
       ))}
     </Rail>

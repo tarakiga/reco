@@ -11,7 +11,8 @@ import { PosterGridSkeleton } from "@/components/catalog/Skeletons";
 import { TasteOnboarding } from "@/components/onboarding/TasteOnboarding";
 import type { ForYouItem } from "@/services/for-you";
 
-interface FeedResponse { needsMoreRatings: boolean; have?: number; need?: number; items: ForYouItem[] }
+type FeedItem = ForYouItem & { favourite?: boolean; watchlist?: boolean };
+interface FeedResponse { needsMoreRatings: boolean; have?: number; need?: number; items: FeedItem[] }
 const PAGE_SIZE = 24;
 
 export function ForYouGrid() {
@@ -55,7 +56,7 @@ export function ForYouGrid() {
 
   // Flatten pages, de-duping (offset paging can rarely repeat as the pool shifts).
   const seen = new Set<string>();
-  const items: ForYouItem[] = [];
+  const items: FeedItem[] = [];
   for (const page of data.pages) {
     for (const item of page.items) {
       if (!seen.has(item.titleId)) {
@@ -88,7 +89,14 @@ export function ForYouGrid() {
         {items.map((item) => (
           <div key={item.titleId} className="relative">
             <div className="absolute left-1.5 top-1.5 z-10"><MatchBadge match={item.match} /></div>
-            <TitleCard href={item.href} title={item.title} year={item.year} posterUrl={item.posterUrl} />
+            <TitleCard
+              href={item.href}
+              title={item.title}
+              year={item.year}
+              posterUrl={item.posterUrl}
+              favourite={{ mediaType: item.mediaType, tmdbId: item.tmdbId, initial: item.favourite ?? false, signedIn: true }}
+              watchlist={{ mediaType: item.mediaType, tmdbId: item.tmdbId, initial: item.watchlist ?? false, signedIn: true }}
+            />
           </div>
         ))}
       </div>
