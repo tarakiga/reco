@@ -61,12 +61,22 @@ export function PollsManager({ initial, siteOrigin }: { initial: PollSummary[]; 
     }
   }
 
-  function copy(slug: string) {
+  async function share(slug: string, pollTitle: string) {
     const url = `${siteOrigin}/vote/${slug}`;
-    navigator.clipboard?.writeText(url).then(
-      () => toast({ title: "Link copied", variant: "success" }),
-      () => toast({ title: "Couldn't copy", variant: "danger" }),
-    );
+    if (typeof navigator !== "undefined" && typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: `Vote: ${pollTitle}`, text: `Help pick what we watch — ${pollTitle}`, url });
+      } catch {
+        // share sheet dismissed — not an error
+      }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Link copied", variant: "success" });
+    } catch {
+      toast({ title: "Couldn't copy", variant: "danger" });
+    }
   }
 
   return (
@@ -134,10 +144,17 @@ export function PollsManager({ initial, siteOrigin }: { initial: PollSummary[]; 
               </div>
               <button
                 type="button"
-                onClick={() => copy(p.slug)}
-                className="shrink-0 rounded-md border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text hover:bg-surface-overlay"
+                onClick={() => share(p.slug, p.title)}
+                aria-label="Share vote link"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text hover:bg-surface-overlay"
               >
-                Copy link
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="size-3.5" aria-hidden="true">
+                  <circle cx="18" cy="5" r="3" />
+                  <circle cx="6" cy="12" r="3" />
+                  <circle cx="18" cy="19" r="3" />
+                  <path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98" />
+                </svg>
+                Share
               </button>
               <button
                 type="button"
