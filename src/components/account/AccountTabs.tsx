@@ -18,6 +18,29 @@ export function AccountTabs({ tabs }: { tabs: AccountTab[] }) {
   const [pinged, setPinged] = useState(false); // has the user discovered the FAB?
   const current = tabs.find((t) => t.id === active) ?? tabs[0];
 
+  // Deep link: open the tab named in ?tab=<id> on load (e.g. /account?tab=diary).
+  useEffect(() => {
+    try {
+      const t = new URLSearchParams(window.location.search).get("tab");
+      if (t && tabs.some((x) => x.id === t)) setActive(t);
+    } catch {
+      /* no search params */
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Switch tab and reflect it in the URL so it's shareable/back-navigable.
+  function selectTab(id: string) {
+    setActive(id);
+    try {
+      const u = new URL(window.location.href);
+      u.searchParams.set("tab", id);
+      window.history.replaceState(null, "", u.toString());
+    } catch {
+      /* history unavailable */
+    }
+  }
+
   useEffect(() => {
     try {
       if (localStorage.getItem("account-fab-seen")) setPinged(true);
@@ -63,7 +86,7 @@ export function AccountTabs({ tabs }: { tabs: AccountTab[] }) {
             type="button"
             aria-selected={active === t.id}
             aria-controls={`panel-${t.id}`}
-            onClick={() => setActive(t.id)}
+            onClick={() => selectTab(t.id)}
             className={`-mb-px border-b-2 px-4 py-2.5 text-sm font-medium transition-colors ${
               active === t.id
                 ? "border-accent text-text"
@@ -136,7 +159,7 @@ export function AccountTabs({ tabs }: { tabs: AccountTab[] }) {
               key={t.id}
               type="button"
               onClick={() => {
-                setActive(t.id);
+                selectTab(t.id);
                 setOpen(false);
               }}
               className={`rounded-md px-3 py-2.5 text-left text-sm font-medium transition-colors ${
