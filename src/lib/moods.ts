@@ -18,7 +18,10 @@ export interface Mood {
   emoji: string;
   blurb: string;
   kind: "mood" | "occasion";
-  query: MoodQuery;
+  /** TMDB Discover query. Omitted when the mood is a hand-picked `manual` list. */
+  query?: MoodQuery;
+  /** Hand-picked TMDB movie ids, in curated order. Takes precedence over `query`. */
+  manual?: number[];
   /** Months (1-12) an occasion is featured on the home page; omitted = evergreen. */
   season?: number[];
 }
@@ -68,13 +71,16 @@ export const MOODS: Mood[] = [
     emoji: "🤯",
     blurb: "Twist endings, time loops and puzzle-box films that mess with your head.",
     kind: "mood",
-    // Not a genre. United by keywords: twist ending, nonlinear timeline, mind-bending,
-    // mind game, unreliable narrator, time loop, time paradox, paradox, loss of reality.
-    query: {
-      withKeywords: "326438|157171|362567|184312|174089|10854|208757|14779|1565",
-      voteCountGte: 400,
-      sortBy: "vote_average.desc",
-    },
+    // Hand-picked: no genre or keyword query captures this well. Curated order.
+    // Memento, Mulholland Drive, Usual Suspects, Predestination, Triangle, Inception,
+    // The Prestige, Fight Club, Shutter Island, Donnie Darko, Primer, Coherence,
+    // Eternal Sunshine, 12 Monkeys, Source Code, Arrival, Enemy, Oldboy, Sixth Sense,
+    // Timecrimes, Mr. Nobody, Jacob's Ladder, Tenet, Dark City, The Machinist,
+    // Identity, Perfect Blue, Paprika, Vanilla Sky, Looper.
+    manual: [
+      77, 1018, 629, 206487, 26466, 27205, 1124, 550, 11324, 141, 14337, 220289, 38, 63, 45612,
+      329865, 181886, 670, 745, 14139, 31011, 2291, 577922, 2666, 4553, 2832, 10494, 4977, 1903, 59967,
+    ],
   },
   {
     slug: "date-night",

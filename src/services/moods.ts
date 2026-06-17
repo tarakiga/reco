@@ -2,6 +2,8 @@ import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { tmdb } from "@/lib/tmdb/client";
 import { toBrowseResults } from "@/lib/tmdb/discover";
+import { posterUrl } from "@/lib/tmdb/images";
+import { titleSlug } from "@/lib/slug";
 import type { TitleResult } from "@/lib/tmdb/transform";
 import { getMoodBySlug, type MoodQuery } from "@/lib/moods";
 
@@ -19,7 +21,27 @@ function buildParams(q: MoodQuery, page: number): Record<string, string> {
   return p;
 }
 
-/** Titles for a mood, fetched from TMDB Discover. Cached per mood (region-agnostic). */
+/** Build a card from a hand-picked TMDB movie id (lightweight fetch). */
+async function manualMovie(id: number): Promise<TitleResult | null> {
+  const b = await tmdb.titleBrief("movie", id).catch(() => null);
+  if (!b) return null;
+  const name = b.title ?? b.name ?? "Untitled";
+  const date = b.release_date ?? b.first_air_date ?? null;
+  const year = date && date.length >= 4 ? Number(date.slice(0, 4)) : null;
+  return {
+    kind: "title",
+    mediaType: "movie",
+    tmdbId: id,
+    title: name,
+    year: Number.isFinite(year) ? year : null,
+    releaseDate: date,
+    posterUrl: posterUrl(b.poster_path ?? null),
+    href: `/title/movie/${id}-${titleSlug(name, date)}`,
+  };
+}
+
+/** Titles for a mood. Hand-picked `manual` list if set, otherwise TMDB Discover.
+ *  Cached per mood (region-agnostic). */
 export async function getMoodTitles(slug: string, pages = 1): Promise<TitleResult[]> {
   "use cache";
   cacheLife("hours");
@@ -27,8 +49,15 @@ export async function getMoodTitles(slug: string, pages = 1): Promise<TitleResul
 
   const mood = getMoodBySlug(slug);
   if (!mood) return [];
-  const mt = mood.query.mediaType ?? "movie";
 
+  // Curated list — preserve the hand-picked order.
+  if (mood.manual?.length) {
+    const cards = await Promise.all(mood.manual.map(manualMovie));
+    return cards.filter((c): c is TitleResult => c !== null);
+  }
+
+  if (!mood.query) return [];
+  const mt = mood.query.mediaType ?? "movie";
   const seen = new Set<number>();
   const out: TitleResult[] = [];
   for (let page = 1; page <= pages; page++) {
