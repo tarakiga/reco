@@ -45,7 +45,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: BRAND_NAME,
-    template: `%s — ${BRAND_NAME}`,
+    template: `%s · ${BRAND_NAME}`,
   },
   description: `${BRAND_TAGLINE} Search, discover, and track movies and TV shows.`,
   openGraph: {
