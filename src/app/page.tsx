@@ -132,6 +132,12 @@ export default async function Home() {
 
       <PosterRail title="In cinemas this week" items={nowPlaying} />
 
+      <div className="mb-8 -mt-3">
+        <Link href="/calendar" className="text-sm font-medium text-accent hover:underline">
+          📅 See the full release calendar & what&apos;s new to streaming →
+        </Link>
+      </div>
+
       <PosterRail title="Popular movies" items={popularMovies} />
       <PosterRail title="Popular TV shows" items={popularTv} />
 
