@@ -6,6 +6,7 @@ import { polls, pollVotes, titles } from "@/db/schema";
 import { getOrCreateTitle } from "./catalog";
 import { posterUrl } from "@/lib/tmdb/images";
 import { computeSurvivors, topTierGenres, OTHER_GENRE } from "@/lib/poll-cull";
+import type { VoterIdentity } from "./voter";
 import type { TmdbTitleDetail } from "@/lib/tmdb/types";
 
 export class PollError extends Error {
@@ -71,19 +72,19 @@ async function loadTitles(ids: string[]): Promise<Map<string, TitleLite>> {
 // ---------------------------------------------------------------------------
 
 interface VoteLite {
-  userId: string;
+  voterKey: string;
   titleId: string;
 }
 
 async function roundVotes(pollId: string, round: number): Promise<VoteLite[]> {
   return db
-    .select({ userId: pollVotes.userId, titleId: pollVotes.titleId })
+    .select({ voterKey: pollVotes.voterKey, titleId: pollVotes.titleId })
     .from(pollVotes)
     .where(and(eq(pollVotes.pollId, pollId), eq(pollVotes.round, round)));
 }
 
 function distinctVoters(votes: VoteLite[]): number {
-  return new Set(votes.map((v) => v.userId)).size;
+  return new Set(votes.map((v) => v.voterKey)).size;
 }
 
 /** Close round 1: cull by genre, then either crown a sole survivor or open round 2. */
@@ -205,7 +206,7 @@ export async function deletePoll(userId: string, pollId: string): Promise<boolea
 
 export async function castVote(
   slug: string,
-  userId: string,
+  voter: VoterIdentity,
   mediaType: "movie" | "tv",
   tmdbId: number,
 ): Promise<PollViewState | null> {
@@ -218,15 +219,15 @@ export async function castVote(
 
   if (round === 1) {
     const votes = await roundVotes(poll.id, 1);
-    const voters = new Set(votes.map((v) => v.userId));
-    if (!voters.has(userId) && voters.size >= poll.expectedVoters) {
+    const voters = new Set(votes.map((v) => v.voterKey));
+    if (!voters.has(voter.voterKey) && voters.size >= poll.expectedVoters) {
       throw new PollError(409, "This vote is already full");
     }
   } else {
     const [mine] = await db
       .select({ id: pollVotes.id })
       .from(pollVotes)
-      .where(and(eq(pollVotes.pollId, poll.id), eq(pollVotes.userId, userId), eq(pollVotes.round, 1)));
+      .where(and(eq(pollVotes.pollId, poll.id), eq(pollVotes.voterKey, voter.voterKey), eq(pollVotes.round, 1)));
     if (!mine) throw new PollError(403, "Only round-1 voters can vote in round 2");
     if (!(poll.round2TitleIds ?? []).includes(title.id)) {
       throw new PollError(409, "That option was eliminated in round 1");
@@ -235,10 +236,10 @@ export async function castVote(
 
   await db
     .insert(pollVotes)
-    .values({ pollId: poll.id, userId, round, titleId: title.id })
+    .values({ pollId: poll.id, userId: voter.userId, voterKey: voter.voterKey, round, titleId: title.id })
     .onConflictDoUpdate({
-      target: [pollVotes.pollId, pollVotes.userId, pollVotes.round],
-      set: { titleId: title.id, createdAt: new Date() },
+      target: [pollVotes.pollId, pollVotes.voterKey, pollVotes.round],
+      set: { titleId: title.id, userId: voter.userId, createdAt: new Date() },
     });
 
   // Auto-advance when the round fills.
@@ -251,7 +252,7 @@ export async function castVote(
     if (distinctVoters(r2) >= distinctVoters(r1)) await closeRound2(poll.id);
   }
 
-  return getPollState(slug, userId);
+  return getPollState(slug, voter);
 }
 
 export async function closePoll(slug: string, userId: string): Promise<PollViewState | null> {
@@ -267,7 +268,7 @@ export async function closePoll(slug: string, userId: string): Promise<PollViewS
   if (votes.length === 0) throw new PollError(409, "There are no votes to close yet");
   if (round === 1) await closeRound1(poll.id);
   else await closeRound2(poll.id);
-  return getPollState(slug, userId);
+  return getPollState(slug, { userId, voterKey: `u:${userId}` });
 }
 
 // ---------------------------------------------------------------------------
@@ -307,7 +308,10 @@ export interface PollViewState {
   winner: { title: string; year: number | null; posterUrl: string | null; href: string } | null;
 }
 
-export async function getPollState(slug: string, userId: string | null): Promise<PollViewState | null> {
+export async function getPollState(
+  slug: string,
+  voter: VoterIdentity | null,
+): Promise<PollViewState | null> {
   const [poll] = await db.select().from(polls).where(eq(polls.slug, slug));
   if (!poll) return null;
 
@@ -324,21 +328,22 @@ export async function getPollState(slug: string, userId: string | null): Promise
   ]);
   const titleMap = await loadTitles([...referenced]);
 
-  const isCreator = Boolean(userId && poll.creatorId === userId);
+  const voterKey = voter?.voterKey ?? null;
+  const isCreator = Boolean(voter?.userId && poll.creatorId === voter.userId);
   const deadlinePassed = Boolean(poll.deadline && Date.now() > poll.deadline.getTime());
-  const myRound = poll.status === "round1" ? 1 : 2;
-  const myVote = userId
-    ? (poll.status === "round1" ? r1 : r2).find((v) => v.userId === userId) ?? null
+  const myVote = voterKey
+    ? (poll.status === "round1" ? r1 : r2).find((v) => v.voterKey === voterKey) ?? null
     : null;
   const myPickTitle = myVote ? titleMap.get(myVote.titleId) : null;
 
-  // Can this user still cast/change a vote in the active round?
+  // Can this voter still cast/change a vote in the active round? Guests count —
+  // a null voterKey just means "no vote yet", so capacity is what gates round 1.
   let canVote = false;
-  if (userId && poll.status === "round1") {
-    const voters = new Set(r1.map((v) => v.userId));
-    canVote = voters.has(userId) || voters.size < poll.expectedVoters;
-  } else if (userId && poll.status === "round2") {
-    canVote = r1.some((v) => v.userId === userId);
+  if (poll.status === "round1") {
+    const voters = new Set(r1.map((v) => v.voterKey));
+    canVote = (voterKey != null && voters.has(voterKey)) || voters.size < poll.expectedVoters;
+  } else if (poll.status === "round2") {
+    canVote = voterKey != null && r1.some((v) => v.voterKey === voterKey);
   }
 
   const canClose =
@@ -407,7 +412,7 @@ export async function getPollState(slug: string, userId: string | null): Promise
     deadline: poll.deadline ? poll.deadline.toISOString() : null,
     deadlinePassed,
     isCreator,
-    signedIn: Boolean(userId),
+    signedIn: Boolean(voter?.userId),
     canVote,
     canClose,
     votesIn: poll.status === "round1" ? r1Voters : r2Voters,

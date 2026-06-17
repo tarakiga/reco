@@ -235,12 +235,15 @@ export const pollVotes = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     pollId: uuid("poll_id").notNull().references(() => polls.id, { onDelete: "cascade" }),
-    userId: uuid("user_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+    // Voter identity: "u:<profileId>" for signed-in, "a:<token>" for guests.
+    voterKey: text("voter_key").notNull(),
+    // Set only for signed-in voters; null for cookie-tracked guests.
+    userId: uuid("user_id").references(() => profiles.id, { onDelete: "cascade" }),
     round: integer("round").notNull(), // 1 or 2
     titleId: uuid("title_id").notNull().references(() => titles.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [unique("poll_votes_poll_user_round").on(t.pollId, t.userId, t.round)],
+  (t) => [unique("poll_votes_poll_voter_round").on(t.pollId, t.voterKey, t.round)],
 );
 
 export type PollRow = typeof polls.$inferSelect;

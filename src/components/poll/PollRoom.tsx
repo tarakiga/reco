@@ -146,19 +146,13 @@ export function PollRoom({ initial, shareUrl }: { initial: PollViewState; shareU
         </div>
       )}
 
-      {!state.signedIn && (
-        <div className="rounded-lg border border-border bg-surface-raised p-4 text-sm text-text-muted">
-          <Link href="/sign-in" className="font-medium text-accent underline underline-offset-2">
-            Sign in
-          </Link>{" "}
-          to cast your vote.
-        </div>
-      )}
-
       {/* ---------------- Round 1 (blind pick) ---------------- */}
-      {state.status === "round1" && state.signedIn && (
+      {state.status === "round1" && (
         <section className="space-y-4 rounded-lg border border-border bg-surface-raised p-4">
           <ProgressBar now={state.votesIn} total={state.votesNeeded} />
+          {!state.signedIn && (
+            <p className="text-xs text-text-muted">No account needed — you&apos;re voting as a guest.</p>
+          )}
           {state.myPick ? (
             <div className="space-y-3">
               <div className="flex items-center gap-3">
@@ -215,7 +209,7 @@ export function PollRoom({ initial, shareUrl }: { initial: PollViewState; shareU
             <p className="text-xs text-text-muted">From the genres the group leaned toward. Blind until the round closes.</p>
           </div>
           <ProgressBar now={state.votesIn} total={state.votesNeeded} />
-          {!state.signedIn ? null : !state.canVote ? (
+          {!state.canVote ? (
             <p className="text-sm text-text-muted">Only round-1 voters take part in round 2.</p>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
