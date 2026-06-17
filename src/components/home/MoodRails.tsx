@@ -33,9 +33,12 @@ export async function MoodRails() {
 
   return (
     <section className="mb-4">
-      <div className="mb-3 flex items-baseline justify-between gap-4">
+      <div className="mb-3 flex items-center justify-between gap-4">
         <h2 className="text-lg font-semibold text-text">Browse by mood</h2>
-        <Link href="/moods" className="text-sm font-medium text-accent hover:underline">
+        <Link
+          href="/moods"
+          className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md bg-accent px-4 text-sm font-semibold text-text shadow-sm transition-colors hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+        >
           All moods →
         </Link>
       </div>
