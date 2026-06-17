@@ -132,11 +132,36 @@ export default async function Home() {
 
       <PosterRail title="In cinemas this week" items={nowPlaying} />
 
-      <div className="mb-8 -mt-3">
-        <Link href="/calendar" className="text-sm font-medium text-accent hover:underline">
-          📅 See the full release calendar & what&apos;s new to streaming →
-        </Link>
-      </div>
+      {/* Release calendar CTA — teal, to stand apart from the red Shuffle and
+          amber "describe a scene" cards above. */}
+      <section className="mb-10">
+        <div className="flex flex-col gap-5 rounded-2xl border border-success/30 bg-gradient-to-br from-success/15 via-surface-raised to-surface-raised p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+          <div className="flex items-start gap-4">
+            <span aria-hidden className="hidden text-4xl leading-none sm:block">📅</span>
+            <div className="max-w-xl">
+              <p className="text-sm font-semibold uppercase tracking-wide text-success">
+                Coming soon to a screen near you
+              </p>
+              <h2 className="mt-1 text-2xl font-bold text-text sm:text-3xl">What&apos;s coming out</h2>
+              <p className="mt-2 text-text-muted">
+                Browse the next two months of cinema and streaming releases — and catch what just
+                landed on your subscriptions.
+              </p>
+            </div>
+          </div>
+          <div className="flex shrink-0 flex-col items-start gap-2 sm:items-end">
+            <Link
+              href="/calendar"
+              className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-success px-6 py-2.5 text-sm font-semibold text-surface shadow-lg shadow-success/20 transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-success sm:w-auto"
+            >
+              Open the release calendar
+            </Link>
+            <Link href="/calendar" className="text-xs font-medium text-success hover:underline">
+              🆕 See what&apos;s new to streaming →
+            </Link>
+          </div>
+        </div>
+      </section>
 
       <PosterRail title="Popular movies" items={popularMovies} />
       <PosterRail title="Popular TV shows" items={popularTv} />
