@@ -7,6 +7,7 @@ import { profileUrl } from "@/lib/tmdb/images";
 import { filmography, personFacts } from "@/lib/tmdb/person";
 import type { TmdbPersonDetail } from "@/lib/tmdb/types";
 import { FilmographyGrid } from "@/components/person/FilmographyGrid";
+import { PersonCompletion } from "@/components/person/PersonCompletion";
 import { ShareButton } from "@/components/catalog/ShareButton";
 import { PersonAwards } from "@/components/person/PersonAwards";
 import { HeroBackdrop } from "@/components/catalog/HeroBackdrop";
@@ -133,6 +134,10 @@ export default async function PersonPage({
           ) : (
             <p className="mb-8 text-sm text-text-muted">No biography available.</p>
           )}
+
+          <Suspense fallback={null}>
+            <PersonCompletion personId={id} />
+          </Suspense>
 
           <section>
             <h2 className="mb-4 text-lg font-semibold text-text">Filmography</h2>

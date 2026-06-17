@@ -12,6 +12,9 @@ import { listDiary } from "@/services/diary";
 import { DiaryManager } from "@/components/account/DiaryManager";
 import { listUserPolls } from "@/services/polls";
 import { PollsManager } from "@/components/account/PollsManager";
+import { franchisesInProgress } from "@/services/completion";
+import { cardActionContext } from "@/services/favourites";
+import { FranchiseCompletion } from "@/components/account/FranchiseCompletion";
 import { posterUrl } from "@/lib/tmdb/images";
 import { SITE_URL } from "@/lib/brand";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -47,15 +50,18 @@ export default async function AccountPage() {
     );
   }
 
-  const [watchlist, favourites, epg, userLists, userTags, diaryEntries, userPolls] = await Promise.all([
-    listWatchlist(profile.id),
-    listFavourites(profile.id),
-    getEpg(profile.id),
-    listUserLists(profile.id),
-    listUserTags(profile.id),
-    listDiary(profile.id),
-    listUserPolls(profile.id),
-  ]);
+  const [watchlist, favourites, epg, userLists, userTags, diaryEntries, userPolls, franchiseData, cardCtx] =
+    await Promise.all([
+      listWatchlist(profile.id),
+      listFavourites(profile.id),
+      getEpg(profile.id),
+      listUserLists(profile.id),
+      listUserTags(profile.id),
+      listDiary(profile.id),
+      listUserPolls(profile.id),
+      franchisesInProgress(profile.id),
+      cardActionContext(),
+    ]);
   const listVMs = userLists.map((l) => ({
     id: l.id,
     title: l.title,
@@ -104,6 +110,11 @@ export default async function AccountPage() {
       id: "diary",
       label: "Diary",
       content: <DiaryManager initial={diaryEntries} />,
+    },
+    {
+      id: "completion",
+      label: "Completion",
+      content: <FranchiseCompletion data={franchiseData} ctx={cardCtx} />,
     },
     {
       id: "vote",

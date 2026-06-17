@@ -162,5 +162,6 @@ export interface TmdbPersonDetail {
   place_of_birth?: string | null;
   combined_credits?: {
     cast?: (TmdbSearchItem & { character?: string; episode_count?: number })[];
+    crew?: (TmdbSearchItem & { job?: string; department?: string })[];
   };
 }
