@@ -63,7 +63,7 @@ export function EpisodeFinder({ tvId }: { tvId: number }) {
           <Input
             name="episode-q"
             label="Find the episode"
-            placeholder="e.g. the episode with Brad Pitt"
+            placeholder="Search by episode title, character or guest star"
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />
