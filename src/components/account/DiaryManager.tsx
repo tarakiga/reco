@@ -4,6 +4,7 @@ import Link from "next/link";
 import { meFetch } from "@/lib/me-client";
 import { useToast } from "@/components/ui/Toast";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { DatePicker } from "@/components/ui/DatePicker";
 import type { DiaryEntry } from "@/services/diary";
 
 interface TitleResult {
@@ -88,16 +89,10 @@ export function DiaryManager({ initial }: { initial: DiaryEntry[] }) {
     <div className="flex flex-col gap-5">
       <div className="rounded-lg border border-border bg-surface-raised p-4">
         <div className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1 text-xs text-text-muted">
+          <div className="flex flex-col gap-1 text-xs text-text-muted">
             Date watched
-            <input
-              type="date"
-              max={today()}
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="h-9 rounded-md border border-border bg-surface px-3 text-sm text-text [color-scheme:dark]"
-            />
-          </label>
+            <DatePicker value={date} onChange={setDate} max={today()} />
+          </div>
           <div className="relative min-w-[220px] flex-1">
             <label className="flex flex-col gap-1 text-xs text-text-muted">
               Add a title you watched

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { meFetch } from "@/lib/me-client";
 import { useToast } from "@/components/ui/Toast";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { DatePicker } from "@/components/ui/DatePicker";
 import type { PollSummary } from "@/services/polls";
 
 const STATUS_LABEL: Record<PollSummary["status"], string> = {
@@ -104,15 +105,10 @@ export function PollsManager({ initial, siteOrigin }: { initial: PollSummary[]; 
               className="h-9 w-24 rounded-md border border-border bg-surface px-3 text-sm text-text"
             />
           </label>
-          <label className="flex flex-col gap-1 text-xs text-text-muted">
+          <div className="flex flex-col gap-1 text-xs text-text-muted">
             Deadline (optional)
-            <input
-              type="datetime-local"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              className="h-9 rounded-md border border-border bg-surface px-3 text-sm text-text [color-scheme:dark]"
-            />
-          </label>
+            <DatePicker value={deadline} onChange={setDeadline} withTime min={new Date().toLocaleDateString("en-CA")} placeholder="No deadline" />
+          </div>
           <button
             type="button"
             onClick={create}

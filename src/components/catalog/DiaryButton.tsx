@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useToast } from "@/components/ui/Toast";
+import { DatePicker } from "@/components/ui/DatePicker";
 
 interface DiaryDate {
   id: string;
@@ -19,7 +20,6 @@ export function DiaryButton({ mediaType, tmdbId }: { mediaType: "movie" | "tv"; 
   const [dates, setDates] = useState<DiaryDate[]>([]);
   const [picking, setPicking] = useState(false);
   const [ready, setReady] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -32,16 +32,6 @@ export function DiaryButton({ mediaType, tmdbId }: { mediaType: "movie" | "tv"; 
       .catch(() => {})
       .finally(() => setReady(true));
   }, [isSignedIn, mediaType, tmdbId]);
-
-  useEffect(() => {
-    if (picking && inputRef.current?.showPicker) {
-      try {
-        inputRef.current.showPicker();
-      } catch {
-        /* needs a tap on some browsers */
-      }
-    }
-  }, [picking]);
 
   async function log(date: string) {
     if (!date) return;
@@ -83,18 +73,8 @@ export function DiaryButton({ mediaType, tmdbId }: { mediaType: "movie" | "tv"; 
 
   if (!ready || !isSignedIn) return null;
 
-  const datePicker = (size: "sm" | "md") => (
-    <input
-      ref={inputRef}
-      type="date"
-      max={today()}
-      defaultValue={today()}
-      autoFocus
-      onChange={(e) => log(e.target.value)}
-      className={`rounded-md border border-border bg-surface px-2 text-text [color-scheme:dark] ${
-        size === "sm" ? "h-8 text-xs" : "h-9 text-sm px-3"
-      }`}
-    />
+  const datePicker = () => (
+    <DatePicker value="" onChange={(d) => log(d)} max={today()} defaultOpen placeholder="Pick a date watched" />
   );
 
   return (
@@ -111,7 +91,7 @@ export function DiaryButton({ mediaType, tmdbId }: { mediaType: "movie" | "tv"; 
             </span>
           ))}
           {picking ? (
-            datePicker("sm")
+            datePicker()
           ) : (
             <button
               type="button"
@@ -123,7 +103,7 @@ export function DiaryButton({ mediaType, tmdbId }: { mediaType: "movie" | "tv"; 
           )}
         </div>
       ) : picking ? (
-        datePicker("md")
+        datePicker()
       ) : (
         <button
           type="button"
