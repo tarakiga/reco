@@ -16,6 +16,7 @@ import {
   titleFacts,
 } from "@/lib/tmdb/detail";
 import { posterUrl, posterUrlSmall, backdropUrl } from "@/lib/tmdb/images";
+import { upcomingLabel } from "@/lib/release";
 import type { TmdbTitleDetail } from "@/lib/tmdb/types";
 import { Badge } from "@/components/ui/Badge";
 import { Rail } from "@/components/catalog/Rail";
@@ -131,6 +132,10 @@ export default async function TitlePage({
     inTheaters = days >= -14 && days <= 90;
   }
 
+  // Unreleased (release/air date still in the future): can't have rated or seen
+  // it yet, so the rating control and the "I have seen this" diary widget hide.
+  const unreleased = Boolean(upcomingLabel(meta.release_date ?? meta.first_air_date ?? null));
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       {/* Dynamic dominant-color wash across the page background */}
@@ -231,8 +236,8 @@ export default async function TitlePage({
         <div className="min-w-0">
           {/* Watchlist + rating + personal tags (client islands) */}
           <div className="mb-8 space-y-3">
-            <TitleActions mediaType={mediaType} tmdbId={id} />
-            <DiaryButton mediaType={mediaType} tmdbId={id} />
+            <TitleActions mediaType={mediaType} tmdbId={id} unreleased={unreleased} />
+            {!unreleased && <DiaryButton mediaType={mediaType} tmdbId={id} />}
             <TitleTags mediaType={mediaType} tmdbId={id} />
           </div>
 
