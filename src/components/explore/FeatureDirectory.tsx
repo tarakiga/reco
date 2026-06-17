@@ -4,11 +4,8 @@ import Link from "next/link";
 import { FEATURES, FEATURE_CATEGORIES, type Feature } from "@/lib/features";
 
 function FeatureCard({ f }: { f: Feature }) {
-  return (
-    <Link
-      href={f.href}
-      className="group flex flex-col gap-2 rounded-xl border border-border bg-surface-raised p-4 transition-colors hover:border-accent/40 hover:bg-surface-overlay focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-    >
+  const body = (
+    <>
       <div className="flex items-start justify-between gap-2">
         <span aria-hidden className="text-2xl">{f.emoji}</span>
         {f.isNew && (
@@ -17,12 +14,27 @@ function FeatureCard({ f }: { f: Feature }) {
           </span>
         )}
       </div>
-      <h3 className="font-semibold text-text group-hover:text-accent">{f.name}</h3>
+      <h3 className={`font-semibold text-text ${f.href ? "group-hover:text-accent" : ""}`}>{f.name}</h3>
       <p className="text-sm text-text-muted">{f.blurb}</p>
       <div className="mt-auto flex items-center justify-between gap-2 pt-1 text-xs">
         <span className="truncate text-text-muted">{f.where}</span>
-        <span className="shrink-0 font-medium text-accent">Go →</span>
+        {f.href && <span className="shrink-0 font-medium text-accent">Go →</span>}
       </div>
+    </>
+  );
+
+  // Informational cards (features on every title page) don't link anywhere.
+  if (!f.href) {
+    return (
+      <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface-raised p-4">{body}</div>
+    );
+  }
+  return (
+    <Link
+      href={f.href}
+      className="group flex flex-col gap-2 rounded-xl border border-border bg-surface-raised p-4 transition-colors hover:border-accent/40 hover:bg-surface-overlay focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+    >
+      {body}
     </Link>
   );
 }
