@@ -211,6 +211,41 @@ export const diary = pgTable(
 
 export type DiaryRow = typeof diary.$inferSelect;
 
+// "Vote to Watch": a two-round group movie poll. The creator sets the expected
+// voter count + an optional deadline, shares the slug; round 1 is a blind pick,
+// then a genre cull narrows the field for round 2's runoff.
+export const pollStatusEnum = pgEnum("poll_status", ["round1", "round2", "done"]);
+
+export const polls = pgTable("polls", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  creatorId: uuid("creator_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  slug: text("slug").notNull().unique(),
+  title: text("title").notNull(),
+  expectedVoters: integer("expected_voters").notNull(),
+  deadline: timestamp("deadline", { withTimezone: true }),
+  status: pollStatusEnum("status").notNull().default("round1"),
+  // Surviving title ids after the round-1 genre cull (round-2 ballot).
+  round2TitleIds: uuid("round2_title_ids").array(),
+  winnerTitleId: uuid("winner_title_id").references(() => titles.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const pollVotes = pgTable(
+  "poll_votes",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    pollId: uuid("poll_id").notNull().references(() => polls.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+    round: integer("round").notNull(), // 1 or 2
+    titleId: uuid("title_id").notNull().references(() => titles.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [unique("poll_votes_poll_user_round").on(t.pollId, t.userId, t.round)],
+);
+
+export type PollRow = typeof polls.$inferSelect;
+export type PollVoteRow = typeof pollVotes.$inferSelect;
+
 const vec = vector(EMBEDDING_DIM);
 
 export const titleEmbeddings = pgTable("title_embeddings", {

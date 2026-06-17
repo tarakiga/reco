@@ -10,6 +10,8 @@ import { listUserTags } from "@/services/tags";
 import { TagsManager } from "@/components/account/TagsManager";
 import { listDiary } from "@/services/diary";
 import { DiaryManager } from "@/components/account/DiaryManager";
+import { listUserPolls } from "@/services/polls";
+import { PollsManager } from "@/components/account/PollsManager";
 import { posterUrl } from "@/lib/tmdb/images";
 import { SITE_URL } from "@/lib/brand";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -45,13 +47,14 @@ export default async function AccountPage() {
     );
   }
 
-  const [watchlist, favourites, epg, userLists, userTags, diaryEntries] = await Promise.all([
+  const [watchlist, favourites, epg, userLists, userTags, diaryEntries, userPolls] = await Promise.all([
     listWatchlist(profile.id),
     listFavourites(profile.id),
     getEpg(profile.id),
     listUserLists(profile.id),
     listUserTags(profile.id),
     listDiary(profile.id),
+    listUserPolls(profile.id),
   ]);
   const listVMs = userLists.map((l) => ({
     id: l.id,
@@ -101,6 +104,11 @@ export default async function AccountPage() {
       id: "diary",
       label: "Diary",
       content: <DiaryManager initial={diaryEntries} />,
+    },
+    {
+      id: "vote",
+      label: "Vote",
+      content: <PollsManager initial={userPolls} siteOrigin={SITE_URL} />,
     },
     {
       id: "tags",
