@@ -144,7 +144,7 @@ export default async function Home() {
               </p>
               <h2 className="mt-1 text-2xl font-bold text-text sm:text-3xl">What&apos;s coming out</h2>
               <p className="mt-2 text-text-muted">
-                Browse the next two months of cinema and streaming releases — and catch what just
+                Browse the next two months of cinema and streaming releases, and catch what just
                 landed on your subscriptions.
               </p>
             </div>
