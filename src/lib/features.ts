@@ -62,4 +62,7 @@ export const FEATURES: Feature[] = [
   { category: "title", emoji: "🔭", name: "Episode finder", blurb: "Find any episode and read synopses season by season.", where: "Any TV show page (example: Breaking Bad)", href: "/title/tv/1396-breaking-bad" },
   { category: "title", emoji: "🧬", name: "Collections & related", blurb: "Jump to sequels, spinoffs, remakes and similar titles.", where: "Any title page (example: The Dark Knight)", href: "/title/movie/155-the-dark-knight" },
   { category: "title", emoji: "🥇", name: "Awards", blurb: "Oscars and Emmys on the people behind your favourites.", where: "Any person page (example: Meryl Streep)", href: "/person/5064-meryl-streep" },
+  { category: "title", emoji: "📍", name: "Filmed in", blurb: "See where a title was shot, then browse everything else filmed in the same place.", where: "Any title page, under Filmed in (example: New Zealand)", href: "/location/Q664" },
+  { category: "title", emoji: "🗺️", name: "Set in", blurb: "Find titles set in the same place, whether or not they were filmed there.", where: "Any title page, under Set in (example: New York)", href: "/location/Q60" },
+  { category: "title", emoji: "📖", name: "Based on", blurb: "Jump to the book, comic, or true story behind a title, and other adaptations of it.", where: "Any title page, under Based on (example: The Lord of the Rings)", href: "/title/movie/120-the-lord-of-the-rings-the-fellowship-of-the-ring" },
 ];
