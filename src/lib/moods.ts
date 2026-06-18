@@ -278,6 +278,18 @@ export const MOODS: Mood[] = [
     kind: "mood",
     query: { withKeywords: "9672", withoutGenres: "99", voteAverageGte: 6.8, voteCountGte: 300 },
   },
+  {
+    slug: "inspirational",
+    label: "Inspirational",
+    emoji: "🙏",
+    blurb: "Faith-based and uplifting films to lift your spirit.",
+    kind: "mood",
+    // Query-able (unlike the cult moods): TMDB's "christian film" keyword
+    // (#253695) is well-applied. No voteAverageGte, so lower-rated favourites
+    // (God's Not Dead) still appear; vote_count.desc surfaces the recognisable
+    // ones first.
+    query: { withKeywords: "253695", voteCountGte: 80, sortBy: "vote_count.desc" },
+  },
   // Occasions — only featured on the home page in their season.
   {
     slug: "spooky-season",
