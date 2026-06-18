@@ -52,7 +52,7 @@ export function DetailSkeleton({ backdrop = false }: { backdrop?: boolean }) {
       </div>
 
       {/* Body: main column + facts sidebar */}
-      <div className="grid gap-8 lg:grid-cols-[1fr_220px]">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_220px]">
         <div className="min-w-0">
           <Skeleton className="mb-8 h-16 w-full rounded-lg" />
           <Skeleton className="mb-2 h-4 w-full" />

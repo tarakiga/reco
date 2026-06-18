@@ -236,7 +236,7 @@ export default async function TitlePage({
       </HeroBackdrop>
 
       {/* Body: main column + facts sidebar */}
-      <div className="grid gap-8 lg:grid-cols-[1fr_220px]">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_220px]">
         <div className="min-w-0">
           {/* Watchlist + rating + personal tags (client islands) */}
           <div className="mb-8 space-y-3">

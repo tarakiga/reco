@@ -135,7 +135,7 @@ export default async function PersonPage({
       </HeroBackdrop>
 
       {/* Body: biography + filmography, facts sidebar */}
-      <div className="grid gap-8 lg:grid-cols-[1fr_220px]">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_220px]">
         <div className="min-w-0">
           {meta.biography ? (
             <p className="mb-8 leading-relaxed text-text-muted">{meta.biography}</p>
