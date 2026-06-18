@@ -195,6 +195,31 @@ export const MOODS: Mood[] = [
     ],
   },
   {
+    slug: "vhs-trash",
+    label: "VHS trash",
+    emoji: "🎞️",
+    blurb: "Grindhouse and exploitation: lo-fi, lurid and gleefully over the top.",
+    kind: "mood",
+    // Hand-picked: TMDB's grindhouse/exploitation keywords are sparse and the
+    // defining films (e.g. They Call Me Macho Woman) carry no keywords at all,
+    // so no Discover filter works. Curated across the exploitation tradition:
+    // vigilante/revenge, blaxploitation, women-with-guns, kung-fu, Troma,
+    // splatter, ozploitation and neo-grindhouse.
+    // They Call Me Macho Woman, Ms .45, I Spit on Your Grave, Switchblade
+    // Sisters, Coffy, Foxy Brown, Faster Pussycat, Death Wish, Vigilante,
+    // Thriller: A Cruel Picture, Class of Nuke 'Em High, Hobo with a Shotgun,
+    // Machete, Planet Terror, Death Proof, Riki-Oh, The Street Fighter, The Five
+    // Venoms, Black Dynamite, Dolemite, Shaft, Super Fly, Truck Turner,
+    // Razorback, Turkey Shoot, Last House on the Left, Maniac, Basket Case,
+    // Re-Animator, Maniac Cop, The Exterminator, Savage Streets, Lady Snowblood,
+    // Caged Heat.
+    manual: [
+      86682, 22171, 25239, 52633, 22021, 22048, 315, 13939, 23587, 15018, 26554, 49010, 23631, 1992,
+      1991, 17467, 40810, 13481, 24804, 19174, 482, 21968, 22121, 26178, 39899, 15516, 27346, 27813,
+      1694, 14240, 37835, 14673, 2487, 39775,
+    ],
+  },
+  {
     slug: "date-night",
     label: "Date night",
     emoji: "❤️",
