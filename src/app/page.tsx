@@ -3,11 +3,8 @@ import Link from "next/link";
 import { tmdb } from "@/lib/tmdb/client";
 import { toSearchResults } from "@/lib/tmdb/transform";
 import { toBrowseResults } from "@/lib/tmdb/discover";
-import { backdropUrl, posterUrl } from "@/lib/tmdb/images";
-import { boxOfficeNumberOneTitle } from "@/lib/boxoffice/mojo";
+import { resolveBoxOfficeHero } from "@/services/box-office-hero";
 import { cacheLife } from "next/cache";
-import type { TmdbSearchItem } from "@/lib/tmdb/types";
-import { titleSlug } from "@/lib/slug";
 import type { TitleResult } from "@/lib/tmdb/transform";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { Rail } from "@/components/catalog/Rail";
@@ -47,57 +44,17 @@ async function getNowPlaying(): Promise<TitleResult[]> {
   }
 }
 
-const normTitle = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-
-/** The current #1 at the box office, as the home hero background. */
-async function getBoxOfficeHero(): Promise<{
-  title: string;
-  image: string;
-  href: string;
-  source: "boxoffice" | "popular";
-} | null> {
+/**
+ * The current #1 at the box office, for the home hero. Cached daily: the US
+ * weekend chart changes about weekly, so one scrape per day keeps us within a
+ * day of a new chart while staying very light on Box Office Mojo.
+ */
+async function getBoxOfficeHero() {
   "use cache";
-  cacheLife("hours");
-  try {
-    const data = await tmdb.nowPlaying();
-    const playing = (data.results ?? []).filter((r) => !r.adult);
-
-    // TMDB has no real box-office figures, so for the genuine #1 we read the US
-    // weekend leader from Box Office Mojo, then resolve it to a TMDB record (for
-    // the backdrop + link): first within the in-cinema list, else via search.
-    let top: TmdbSearchItem | undefined;
-    let source: "boxoffice" | "popular" = "boxoffice";
-    const boTitle = await boxOfficeNumberOneTitle();
-    if (boTitle) {
-      const target = normTitle(boTitle);
-      top = playing.find((r) => normTitle(r.title ?? r.name ?? "") === target);
-      if (!top) {
-        const sr = await tmdb.searchMulti(boTitle);
-        const movies = (sr.results ?? []).filter((r) => r.media_type === "movie" && !r.adult);
-        top = movies.find((r) => normTitle(r.title ?? "") === target) ?? movies[0];
-      }
-    }
-
-    // Fallback when the scrape, match, or search yields nothing: the most
-    // popular in-cinema title. The caption below reflects this so we never
-    // label a popularity pick as the box-office #1.
-    if (!top) {
-      source = "popular";
-      top = [...playing].sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0))[0];
-    }
-    if (!top) return null;
-
-    // Prefer a wide backdrop; fall back to the leader's own poster so the image
-    // and the credit always refer to the same film. No image at all → no hero.
-    const image = backdropUrl(top.backdrop_path) ?? posterUrl(top.poster_path);
-    if (!image) return null;
-    const name = top.title ?? top.name ?? "Untitled";
-    const date = top.release_date ?? top.first_air_date ?? null;
-    const mediaType = top.media_type === "tv" ? "tv" : "movie";
-    return { title: name, image, source, href: `/title/${mediaType}/${top.id}-${titleSlug(name, date)}` };
-  } catch {
-    return null;
-  }
+  cacheLife("days");
+  const r = await resolveBoxOfficeHero();
+  if (!r.ok || !r.image || !r.href || !r.title) return null;
+  return { title: r.title, image: r.image, href: r.href, source: r.source };
 }
 
 function PosterRail({ title, items }: { title: string; items: TitleResult[] }) {
