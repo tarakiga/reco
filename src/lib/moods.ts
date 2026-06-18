@@ -195,10 +195,10 @@ export const MOODS: Mood[] = [
     ],
   },
   {
-    slug: "vhs-trash",
-    label: "VHS trash",
+    slug: "grindhouse",
+    label: "Grindhouse",
     emoji: "🎞️",
-    blurb: "Grindhouse and exploitation: lo-fi, lurid and gleefully over the top.",
+    blurb: "Lo-fi, lurid exploitation cinema, gleefully over the top.",
     kind: "mood",
     // Hand-picked: TMDB's grindhouse/exploitation keywords are sparse and the
     // defining films (e.g. They Call Me Macho Woman) carry no keywords at all,
