@@ -146,10 +146,12 @@ export function DiaryManager({ initial }: { initial: DiaryEntry[] }) {
                 ) : null}
               </Link>
               <div className="min-w-0 flex-1">
-                <Link href={e.href} className="truncate text-sm font-medium text-text hover:text-accent">
-                  {e.title}
-                </Link>
-                {e.year && <span className="ml-1 text-xs text-text-muted">{e.year}</span>}
+                <p className="truncate text-sm">
+                  <Link href={e.href} className="font-medium text-text hover:text-accent">
+                    {e.title}
+                  </Link>
+                  {e.year && <span className="ml-1 text-xs text-text-muted">{e.year}</span>}
+                </p>
               </div>
               <span className="shrink-0 text-xs text-text-muted">{fmt(e.watchedOn)}</span>
               <button
