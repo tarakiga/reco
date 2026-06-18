@@ -15,7 +15,7 @@
   --color-danger: #ef4444;
 
   /* Typography */
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-asap), ui-sans-serif, system-ui, sans-serif;
 
   /* Radii */
   --radius-sm: 0.25rem;
