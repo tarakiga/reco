@@ -4,7 +4,9 @@ import { tmdb } from "@/lib/tmdb/client";
 import { toSearchResults } from "@/lib/tmdb/transform";
 import { toBrowseResults } from "@/lib/tmdb/discover";
 import { backdropUrl, posterUrl } from "@/lib/tmdb/images";
+import { boxOfficeNumberOneTitle } from "@/lib/boxoffice/mojo";
 import { cacheLife } from "next/cache";
+import type { TmdbSearchItem } from "@/lib/tmdb/types";
 import { titleSlug } from "@/lib/slug";
 import type { TitleResult } from "@/lib/tmdb/transform";
 import { TitleCard } from "@/components/catalog/TitleCard";
@@ -45,26 +47,54 @@ async function getNowPlaying(): Promise<TitleResult[]> {
   }
 }
 
-/** The current #1 in cinemas, as the home hero background. */
-async function getBoxOfficeHero(): Promise<{ title: string; image: string; href: string } | null> {
+const normTitle = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+/** The current #1 at the box office, as the home hero background. */
+async function getBoxOfficeHero(): Promise<{
+  title: string;
+  image: string;
+  href: string;
+  source: "boxoffice" | "popular";
+} | null> {
   "use cache";
   cacheLife("hours");
   try {
     const data = await tmdb.nowPlaying();
-    // Rank in-cinema titles by popularity (TMDB's box-office proxy) and drop
-    // adult titles, so we pick the genuine #1 rather than trusting list order.
-    const top = (data.results ?? [])
-      .filter((r) => !r.adult)
-      .sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0))[0];
+    const playing = (data.results ?? []).filter((r) => !r.adult);
+
+    // TMDB has no real box-office figures, so for the genuine #1 we read the US
+    // weekend leader from Box Office Mojo, then resolve it to a TMDB record (for
+    // the backdrop + link): first within the in-cinema list, else via search.
+    let top: TmdbSearchItem | undefined;
+    let source: "boxoffice" | "popular" = "boxoffice";
+    const boTitle = await boxOfficeNumberOneTitle();
+    if (boTitle) {
+      const target = normTitle(boTitle);
+      top = playing.find((r) => normTitle(r.title ?? r.name ?? "") === target);
+      if (!top) {
+        const sr = await tmdb.searchMulti(boTitle);
+        const movies = (sr.results ?? []).filter((r) => r.media_type === "movie" && !r.adult);
+        top = movies.find((r) => normTitle(r.title ?? "") === target) ?? movies[0];
+      }
+    }
+
+    // Fallback when the scrape, match, or search yields nothing: the most
+    // popular in-cinema title. The caption below reflects this so we never
+    // label a popularity pick as the box-office #1.
+    if (!top) {
+      source = "popular";
+      top = [...playing].sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0))[0];
+    }
     if (!top) return null;
-    // Always show the actual leader. Prefer a wide backdrop; if it has none,
-    // fall back to its own poster so the image and the "#1" credit never
-    // disagree. We never substitute a lower-ranked film just to get a backdrop.
+
+    // Prefer a wide backdrop; fall back to the leader's own poster so the image
+    // and the credit always refer to the same film. No image at all → no hero.
     const image = backdropUrl(top.backdrop_path) ?? posterUrl(top.poster_path);
     if (!image) return null;
     const name = top.title ?? top.name ?? "Untitled";
     const date = top.release_date ?? top.first_air_date ?? null;
-    return { title: name, image, href: `/title/movie/${top.id}-${titleSlug(name, date)}` };
+    const mediaType = top.media_type === "tv" ? "tv" : "movie";
+    return { title: name, image, source, href: `/title/${mediaType}/${top.id}-${titleSlug(name, date)}` };
   } catch {
     return null;
   }
@@ -133,7 +163,8 @@ export default async function Home() {
             className="group absolute bottom-12 left-5 z-10 max-w-[85%] text-left sm:bottom-16 sm:left-10"
           >
             <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-accent drop-shadow sm:text-xs">
-              <span className="inline-block h-px w-6 bg-accent" aria-hidden /> Now #1 in cinemas
+              <span className="inline-block h-px w-6 bg-accent" aria-hidden />
+              {hero.source === "boxoffice" ? "Now #1 at the box office" : "Trending in cinemas"}
             </span>
             <span className="mt-1.5 block text-3xl font-bold leading-none text-white drop-shadow-lg transition-colors group-hover:text-accent sm:text-5xl">
               {hero.title}
