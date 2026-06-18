@@ -5,7 +5,7 @@ import { getCurrentProfile } from "@/services/profile";
 import { watchedTitleKeys } from "@/services/completion";
 import { TmdbError } from "@/lib/tmdb/client";
 import { parseIdSlug } from "@/lib/tmdb/detail";
-import { profileUrl } from "@/lib/tmdb/images";
+import { profileUrl, profileUrlSmall } from "@/lib/tmdb/images";
 import { filmography, personFacts } from "@/lib/tmdb/person";
 import type { TmdbPersonDetail } from "@/lib/tmdb/types";
 import { FilmographyGrid } from "@/components/person/FilmographyGrid";
@@ -81,7 +81,7 @@ export default async function PersonPage({
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       {/* Dynamic dominant-color wash sampled from the profile photo */}
-      <AmbientBackground colorSrc={photo} />
+      <AmbientBackground colorSrc={profileUrlSmall(person.profilePath)} />
       {/* Hero: photo + name (no backdrop image for people) */}
       <HeroBackdrop backdropUrl={null}>
         <div className="flex flex-col gap-6 pt-16 sm:flex-row sm:items-end sm:pt-24">

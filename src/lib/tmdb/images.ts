@@ -8,6 +8,9 @@ export const posterUrl = (p: string | null | undefined) => url("w500", p);
 export const posterUrlSmall = (p: string | null | undefined) => url("w154", p);
 export const backdropUrl = (p: string | null | undefined) => url("w1280", p);
 export const profileUrl = (p: string | null | undefined) => url("w185", p);
+/** Tiny profile, for dominant-color sampling (distinct size avoids a CORS cache
+ *  clash with the displayed w185 photo). */
+export const profileUrlSmall = (p: string | null | undefined) => url("w45", p);
 export const logoUrl = (p: string | null | undefined) => url("w92", p);
 /** Episode still image. */
 export const stillUrl = (p: string | null | undefined) => url("w300", p);
