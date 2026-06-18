@@ -3,7 +3,8 @@ import Link from "next/link";
 import { tmdb } from "@/lib/tmdb/client";
 import { toSearchResults } from "@/lib/tmdb/transform";
 import { toBrowseResults } from "@/lib/tmdb/discover";
-import { backdropUrl } from "@/lib/tmdb/images";
+import { backdropUrl, posterUrl } from "@/lib/tmdb/images";
+import { cacheLife } from "next/cache";
 import { titleSlug } from "@/lib/slug";
 import type { TitleResult } from "@/lib/tmdb/transform";
 import { TitleCard } from "@/components/catalog/TitleCard";
@@ -44,18 +45,26 @@ async function getNowPlaying(): Promise<TitleResult[]> {
   }
 }
 
-/** The current #1 in cinemas, with a wide backdrop for the home hero. */
-async function getBoxOfficeHero(): Promise<{ title: string; backdrop: string; href: string } | null> {
+/** The current #1 in cinemas, as the home hero background. */
+async function getBoxOfficeHero(): Promise<{ title: string; image: string; href: string } | null> {
   "use cache";
+  cacheLife("hours");
   try {
     const data = await tmdb.nowPlaying();
-    const results = data.results ?? [];
-    const top = results[0]?.backdrop_path ? results[0] : results.find((r) => r.backdrop_path);
-    const backdrop = backdropUrl(top?.backdrop_path);
-    if (!top || !backdrop) return null;
+    // Rank in-cinema titles by popularity (TMDB's box-office proxy) and drop
+    // adult titles, so we pick the genuine #1 rather than trusting list order.
+    const top = (data.results ?? [])
+      .filter((r) => !r.adult)
+      .sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0))[0];
+    if (!top) return null;
+    // Always show the actual leader. Prefer a wide backdrop; if it has none,
+    // fall back to its own poster so the image and the "#1" credit never
+    // disagree. We never substitute a lower-ranked film just to get a backdrop.
+    const image = backdropUrl(top.backdrop_path) ?? posterUrl(top.poster_path);
+    if (!image) return null;
     const name = top.title ?? top.name ?? "Untitled";
     const date = top.release_date ?? top.first_air_date ?? null;
-    return { title: name, backdrop, href: `/title/movie/${top.id}-${titleSlug(name, date)}` };
+    return { title: name, image, href: `/title/movie/${top.id}-${titleSlug(name, date)}` };
   } catch {
     return null;
   }
@@ -88,7 +97,7 @@ export default async function Home() {
       {hero ? (
         <section
           className="relative -mt-8 mb-10 mx-[calc(50%-50vw)] flex min-h-[calc(100svh-4rem)] w-screen flex-col items-center justify-center overflow-hidden bg-cover bg-center bg-fixed px-4 py-16 text-center"
-          style={{ backgroundImage: `url(${hero.backdrop})` }}
+          style={{ backgroundImage: `url(${hero.image})` }}
         >
           {/* Contrast overlay (whole hero) + top darkening (nav readability). */}
           <div className="pointer-events-none absolute inset-0 bg-black/55" />

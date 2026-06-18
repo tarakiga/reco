@@ -10,6 +10,8 @@ export interface TmdbSearchItem {
   profile_path?: string | null;
   overview?: string;
   known_for_department?: string;
+  popularity?: number;
+  adult?: boolean;
 }
 export interface TmdbCastMember {
   id: number;
