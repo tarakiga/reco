@@ -83,6 +83,29 @@ export const MOODS: Mood[] = [
     ],
   },
   {
+    slug: "so-bad-its-good",
+    label: "So bad they're good",
+    emoji: "📼",
+    blurb: "Gloriously terrible cult films and Z-movies that are a riot to watch.",
+    kind: "mood",
+    // Hand-picked like mind-benders: TMDB's "so bad it's good" keyword (#323812)
+    // is applied too sparsely to use as a Discover filter, so it misses the
+    // canon. Curated order.
+    // The Room, Troll 2, Birdemic, Plan 9 from Outer Space, Manos, Samurai Cop,
+    // Miami Connection, Sharknado, Mac and Me, Battlefield Earth, The Wicker Man
+    // (2006), Showgirls, Cool as Ice, Fateful Findings, Robot Monster, Santa
+    // Claus Conquers the Martians, Killer Klowns, Maximum Overdrive, The Toxic
+    // Avenger, Rubber, Tammy and the T-Rex, Reefer Madness, Hard Ticket to
+    // Hawaii, Deadly Prey, Dangerous Men, Street Trash, Mega Shark vs. Giant
+    // Octopus, Anaconda, Snakes on a Plane, Kung Fury, The VelociPastor, Double
+    // Down, Death Bed, Turkish Star Wars.
+    manual: [
+      17473, 26914, 40016, 10513, 22293, 65374, 59558, 205321, 20196, 5491, 9708, 10802, 1496,
+      197599, 43353, 32307, 16296, 9980, 15239, 45649, 55563, 37833, 26011, 5753, 84140, 22172,
+      17911, 9360, 326, 251516, 457712, 260928, 45795, 20787,
+    ],
+  },
+  {
     slug: "date-night",
     label: "Date night",
     emoji: "❤️",
