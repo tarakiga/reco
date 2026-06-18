@@ -276,10 +276,23 @@ export const MOODS: Mood[] = [
     slug: "valentines-picks",
     label: "Valentine's picks",
     emoji: "💘",
-    blurb: "Romance for the season of love.",
+    blurb: "The great love stories, for the season of love.",
     kind: "occasion",
     season: [2],
-    query: { withGenres: "10749", voteAverageGte: 6.8, voteCountGte: 400 },
+    // Hand-picked: the romance query was overrun by steamy trending YA (the
+    // After/Fault franchise) and, once tuned, just duplicated date-night.
+    // Curated as iconic love stories instead, distinct from date-night.
+    // Casablanca, Pride & Prejudice, The Notebook, Titanic, When Harry Met Sally,
+    // Notting Hill, Pretty Woman, Before Sunrise/Sunset, Eternal Sunshine, La La
+    // Land, Your Name, Brokeback Mountain, Call Me by Your Name, Atonement,
+    // Moulin Rouge, Romeo + Juliet, Dirty Dancing, Ghost, Sleepless in Seattle,
+    // You've Got Mail, 10 Things I Hate About You, Crazy Stupid Love, About Time,
+    // Past Lives, Portrait of a Lady on Fire, In the Mood for Love, Amelie, Sense
+    // and Sensibility, Roman Holiday, Silver Linings Playbook, 500 Days of Summer.
+    manual: [
+      289, 4348, 11036, 597, 639, 509, 114, 76, 80, 38, 313369, 372058, 142, 398818, 4347, 824, 454,
+      88, 251, 858, 9489, 4951, 50646, 122906, 666277, 531428, 843, 194, 4584, 804, 82693, 19913,
+    ],
   },
   {
     slug: "summer-blockbusters",
