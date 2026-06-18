@@ -98,6 +98,7 @@ export async function relatedTitles(mediaType: RelatedMediaType, tmdbId: number)
     rels.slice(0, 12).map(async (r): Promise<RelatedTitle | null> => {
       try {
         const t = await tmdb.titleBrief(mediaType, r.tmdbId);
+        if (t.adult) return null; // never surface adult titles (e.g. parodies via Wikidata)
         const title = (mediaType === "tv" ? t.name : t.title) ?? "Untitled";
         const date = (mediaType === "tv" ? t.first_air_date : t.release_date) ?? "";
         const year = date.length >= 4 ? Number(date.slice(0, 4)) : null;

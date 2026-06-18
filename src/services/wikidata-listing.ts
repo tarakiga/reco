@@ -68,6 +68,7 @@ async function build(qid: string, itemClause: string): Promise<Listing> {
       rows.slice(0, 40).map(async (r): Promise<ListingItem | null> => {
         try {
           const t = await tmdb.titleBrief(r.mediaType, r.tmdbId);
+          if (t.adult) return null; // never surface adult titles
           const name = (r.mediaType === "tv" ? t.name : t.title) ?? "Untitled";
           const date = (r.mediaType === "tv" ? t.first_air_date : t.release_date) ?? "";
           const year = date.length >= 4 ? Number(date.slice(0, 4)) : null;

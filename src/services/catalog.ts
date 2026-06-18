@@ -45,7 +45,9 @@ export async function getOrCreateTitle(
     metadata: slimTitleMetadata(data),
     refreshedAt: new Date(),
   };
-  if (!persist) return { id: existing?.id ?? "", ...values } as TitleRow;
+  // Never persist anonymous renders, and never persist adult titles (so a stray
+  // adult parody can't re-enter the catalog via a view or backfill).
+  if (!persist || (data as { adult?: boolean }).adult) return { id: existing?.id ?? "", ...values } as TitleRow;
 
   const [row] = await db
     .insert(titles)
