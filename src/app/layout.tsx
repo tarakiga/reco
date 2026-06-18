@@ -67,7 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={`${asap.variable} ${geistMono.variable} antialiased`}>
+        <body className={`${asap.variable} ${geistMono.variable} overflow-x-clip antialiased`}>
           <ToastProvider>
             <QueryProvider>
             <Suspense>

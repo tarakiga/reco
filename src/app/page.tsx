@@ -87,7 +87,7 @@ export default async function Home() {
     <div>
       {hero ? (
         <section
-          className="relative -mx-4 -mt-8 mb-10 flex min-h-[calc(100svh-4rem)] flex-col items-center justify-center overflow-hidden bg-cover bg-center bg-fixed px-4 py-16 text-center"
+          className="relative -mt-8 mb-10 mx-[calc(50%-50vw)] flex min-h-[calc(100svh-4rem)] w-screen flex-col items-center justify-center overflow-hidden bg-cover bg-center bg-fixed px-4 py-16 text-center"
           style={{ backgroundImage: `url(${hero.backdrop})` }}
         >
           {/* Contrast overlay (whole hero) + top darkening (nav readability). */}
@@ -116,13 +116,24 @@ export default async function Home() {
                 See everything you can do →
               </Link>
             </p>
-            <Link
-              href={hero.href}
-              className="mt-7 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/40 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur transition-colors hover:bg-black/60"
-            >
-              <span aria-hidden>🎬</span> Now #1 in cinemas: {hero.title}
-            </Link>
           </div>
+
+          {/* Featured: the current #1 in cinemas, credited bottom-left like a marquee. */}
+          <Link
+            href={hero.href}
+            className="group absolute bottom-12 left-5 z-10 max-w-[85%] text-left sm:bottom-16 sm:left-10"
+          >
+            <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-accent drop-shadow sm:text-xs">
+              <span className="inline-block h-px w-6 bg-accent" aria-hidden /> Now #1 in cinemas
+            </span>
+            <span className="mt-1.5 block text-3xl font-bold leading-none text-white drop-shadow-lg transition-colors group-hover:text-accent sm:text-5xl">
+              {hero.title}
+            </span>
+            <span className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-white/75 transition-colors group-hover:text-white">
+              View details
+              <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>
+            </span>
+          </Link>
         </section>
       ) : (
         <section className="py-12 text-center sm:py-16">
