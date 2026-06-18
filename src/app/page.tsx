@@ -3,6 +3,8 @@ import Link from "next/link";
 import { tmdb } from "@/lib/tmdb/client";
 import { toSearchResults } from "@/lib/tmdb/transform";
 import { toBrowseResults } from "@/lib/tmdb/discover";
+import { backdropUrl } from "@/lib/tmdb/images";
+import { titleSlug } from "@/lib/slug";
 import type { TitleResult } from "@/lib/tmdb/transform";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { Rail } from "@/components/catalog/Rail";
@@ -42,6 +44,23 @@ async function getNowPlaying(): Promise<TitleResult[]> {
   }
 }
 
+/** The current #1 in cinemas, with a wide backdrop for the home hero. */
+async function getBoxOfficeHero(): Promise<{ title: string; backdrop: string; href: string } | null> {
+  "use cache";
+  try {
+    const data = await tmdb.nowPlaying();
+    const results = data.results ?? [];
+    const top = results[0]?.backdrop_path ? results[0] : results.find((r) => r.backdrop_path);
+    const backdrop = backdropUrl(top?.backdrop_path);
+    if (!top || !backdrop) return null;
+    const name = top.title ?? top.name ?? "Untitled";
+    const date = top.release_date ?? top.first_air_date ?? null;
+    return { title: name, backdrop, href: `/title/movie/${top.id}-${titleSlug(name, date)}` };
+  } catch {
+    return null;
+  }
+}
+
 function PosterRail({ title, items }: { title: string; items: TitleResult[] }) {
   if (items.length === 0) return null;
   return (
@@ -56,42 +75,78 @@ function PosterRail({ title, items }: { title: string; items: TitleResult[] }) {
 }
 
 export default async function Home() {
-  const [trending, nowPlaying, popularMovies, popularTv] = await Promise.all([
+  const [trending, nowPlaying, popularMovies, popularTv, hero] = await Promise.all([
     getTrending(),
     getNowPlaying(),
     getPopular("movie"),
     getPopular("tv"),
+    getBoxOfficeHero(),
   ]);
 
   return (
     <div>
-      <section className="py-12 text-center sm:py-16">
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Find what to watch.</h1>
-        <p className="mx-auto mt-4 max-w-xl text-text-muted">
-          Search and browse movies and TV shows, see where they&apos;re streaming, and keep track
-          of what you want to watch.
-        </p>
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <Link
-            href="/movies"
-            className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface-raised px-5 text-sm font-medium text-text transition-colors hover:bg-surface-overlay focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-          >
-            Browse movies
-          </Link>
-          <Link
-            href="/tv"
-            className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface-raised px-5 text-sm font-medium text-text transition-colors hover:bg-surface-overlay focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
-          >
-            Browse TV
-          </Link>
-        </div>
-        <p className="mt-5 text-sm text-text-muted">
-          New here?{" "}
-          <Link href="/what-can-i-do" className="font-medium text-accent hover:underline">
-            See everything you can do →
-          </Link>
-        </p>
-      </section>
+      {hero ? (
+        <section
+          className="relative -mx-4 -mt-8 mb-10 flex min-h-[calc(100svh-4rem)] flex-col items-center justify-center overflow-hidden bg-cover bg-center bg-fixed px-4 py-16 text-center"
+          style={{ backgroundImage: `url(${hero.backdrop})` }}
+        >
+          {/* Contrast overlay (whole hero) + top darkening (nav readability). */}
+          <div className="pointer-events-none absolute inset-0 bg-black/55" />
+          <div className="pointer-events-none absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-black/70 to-transparent" />
+          {/* Bottom fade to the page background so the edge isn't a sharp line. */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-b from-transparent to-surface" />
+
+          <div className="relative z-10 flex flex-col items-center">
+            <h1 className="text-4xl font-bold tracking-tight text-white drop-shadow-lg sm:text-5xl">Find what to watch.</h1>
+            <p className="mx-auto mt-4 max-w-xl text-white/85 drop-shadow">
+              Search and browse movies and TV shows, see where they&apos;re streaming, and keep track
+              of what you want to watch.
+            </p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Link href="/movies" className="inline-flex h-10 items-center justify-center rounded-md border border-white/20 bg-black/40 px-5 text-sm font-medium text-white backdrop-blur transition-colors hover:bg-black/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                Browse movies
+              </Link>
+              <Link href="/tv" className="inline-flex h-10 items-center justify-center rounded-md border border-white/20 bg-black/40 px-5 text-sm font-medium text-white backdrop-blur transition-colors hover:bg-black/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+                Browse TV
+              </Link>
+            </div>
+            <p className="mt-5 text-sm text-white/85">
+              New here?{" "}
+              <Link href="/what-can-i-do" className="font-medium text-white underline underline-offset-2 hover:text-accent">
+                See everything you can do →
+              </Link>
+            </p>
+            <Link
+              href={hero.href}
+              className="mt-7 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/40 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur transition-colors hover:bg-black/60"
+            >
+              <span aria-hidden>🎬</span> Now #1 in cinemas: {hero.title}
+            </Link>
+          </div>
+        </section>
+      ) : (
+        <section className="py-12 text-center sm:py-16">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Find what to watch.</h1>
+          <p className="mx-auto mt-4 max-w-xl text-text-muted">
+            Search and browse movies and TV shows, see where they&apos;re streaming, and keep track
+            of what you want to watch.
+          </p>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Link href="/movies" className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface-raised px-5 text-sm font-medium text-text transition-colors hover:bg-surface-overlay focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+              Browse movies
+            </Link>
+            <Link href="/tv" className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface-raised px-5 text-sm font-medium text-text transition-colors hover:bg-surface-overlay focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent">
+              Browse TV
+            </Link>
+          </div>
+          <p className="mt-5 text-sm text-text-muted">
+            New here?{" "}
+            <Link href="/what-can-i-do" className="font-medium text-accent hover:underline">
+              See everything you can do →
+            </Link>
+          </p>
+        </section>
+      )}
 
       {/* Two compact CTAs, side by side on desktop and equal height. Red Shuffle
           + amber "describe a scene". */}

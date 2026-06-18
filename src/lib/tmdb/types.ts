@@ -6,6 +6,7 @@ export interface TmdbSearchItem {
   release_date?: string;
   first_air_date?: string;
   poster_path?: string | null;
+  backdrop_path?: string | null;
   profile_path?: string | null;
   overview?: string;
   known_for_department?: string;
