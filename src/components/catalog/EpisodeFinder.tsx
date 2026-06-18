@@ -33,7 +33,30 @@ function ResultRow({ ep }: { ep: EpisodeMatch }) {
           </span>
         ) : null}
         {ep.aiReason && <p className="mt-1 text-xs italic text-text-muted">Why: {ep.aiReason}</p>}
-        {ep.overview && <p className="mt-1 line-clamp-2 text-sm text-text-muted">{ep.overview}</p>}
+        {ep.overview && <p className="mt-1 text-sm text-text-muted">{ep.overview}</p>}
+        {ep.cast.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {ep.cast.map((c) => (
+              <a
+                key={c.id}
+                href={c.href}
+                className="flex items-center gap-1.5 rounded-full border border-border bg-surface py-0.5 pl-0.5 pr-2 text-xs transition-colors hover:border-accent"
+                title={c.character ? `${c.name} as ${c.character}` : c.name}
+              >
+                <span className="flex size-5 shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-overlay text-[9px] text-text-muted">
+                  {c.profileUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={c.profileUrl} alt="" className="h-full w-full object-cover" loading="lazy" />
+                  ) : (
+                    c.name.slice(0, 1)
+                  )}
+                </span>
+                <span className="text-text">{c.name}</span>
+                {c.character && <span className="text-text-muted">as {c.character}</span>}
+              </a>
+            ))}
+          </div>
+        )}
       </div>
     </li>
   );

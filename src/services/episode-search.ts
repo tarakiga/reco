@@ -1,7 +1,8 @@
 import "server-only";
 import { cacheTag, cacheLife } from "next/cache";
 import { tmdb } from "@/lib/tmdb/client";
-import { stillUrl } from "@/lib/tmdb/images";
+import { stillUrl, profileUrl } from "@/lib/tmdb/images";
+import { slugify } from "@/lib/slug";
 import { searchEpisodes, type EpisodeIndexEntry, type EpisodeMatch } from "@/lib/tmdb/episodes";
 
 const GUESS_MODEL = "gemini-flash-lite-latest";
@@ -48,7 +49,13 @@ async function episodeIndex(tvId: number): Promise<EpisodeIndexEntry[]> {
         airDate: e.air_date || null,
         stillUrl: stillUrl(e.still_path),
         voteAverage: e.vote_average && e.vote_average > 0 ? e.vote_average : null,
-        cast: [], // finder results don't render the cast grid
+        cast: (e.guest_stars ?? []).map((g) => ({
+          id: g.id,
+          name: g.name,
+          character: g.character || null,
+          profileUrl: profileUrl(g.profile_path),
+          href: `/person/${g.id}-${slugify(g.name)}`,
+        })),
         guestStars: (e.guest_stars ?? []).map((g) => g.name),
         characters: (e.guest_stars ?? []).map((g) => g.character).filter((c): c is string => !!c),
         crew: (e.crew ?? []).map((c) => c.name),
