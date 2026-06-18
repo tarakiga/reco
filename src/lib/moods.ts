@@ -136,8 +136,7 @@ export const MOODS: Mood[] = [
     kind: "mood",
     // Hand-picked: "mindless" is a tone judgment TMDB can't express. A popular
     // Action Discover query returns prestige films (Dark Knight, LOTR), the
-    // opposite of this, so curate toward the fun-not-acclaimed end. Distinct from
-    // "Adrenaline rush", which sorts by rating and surfaces the best action.
+    // opposite of this, so curate toward the fun-not-acclaimed end.
     // Fast & Furious x4, xXx x2, Transformers x2, Crank, Transporter x2, Bad Boys
     // x2, Con Air, The Rock, Armageddon, Expendables x2, G.I. Joe, San Andreas,
     // 2012, Independence Day, Olympus/London Has Fallen, Death Race, Wanted,
@@ -156,14 +155,6 @@ export const MOODS: Mood[] = [
     blurb: "Crowd-pleasers for two.",
     kind: "mood",
     query: { withGenres: "10749|35", withoutGenres: "27,53", voteAverageGte: 6.5, voteCountGte: 400 },
-  },
-  {
-    slug: "adrenaline-rush",
-    label: "Adrenaline rush",
-    emoji: "🔥",
-    blurb: "High-octane action.",
-    kind: "mood",
-    query: { withGenres: "28|12", voteCountGte: 800, sortBy: "vote_average.desc" },
   },
   {
     slug: "epic-adventures",
