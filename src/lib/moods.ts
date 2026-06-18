@@ -129,6 +129,27 @@ export const MOODS: Mood[] = [
     ],
   },
   {
+    slug: "popcorn-action",
+    label: "Popcorn action",
+    emoji: "🍿",
+    blurb: "Turn-your-brain-off blockbusters: fast cars, big explosions, zero homework.",
+    kind: "mood",
+    // Hand-picked: "mindless" is a tone judgment TMDB can't express. A popular
+    // Action Discover query returns prestige films (Dark Knight, LOTR), the
+    // opposite of this, so curate toward the fun-not-acclaimed end. Distinct from
+    // "Adrenaline rush", which sorts by rating and surfaces the best action.
+    // Fast & Furious x4, xXx x2, Transformers x2, Crank, Transporter x2, Bad Boys
+    // x2, Con Air, The Rock, Armageddon, Expendables x2, G.I. Joe, San Andreas,
+    // 2012, Independence Day, Olympus/London Has Fallen, Death Race, Wanted,
+    // Shoot 'Em Up, Rampage, Skyscraper, Battleship, Hardcore Henry, Need for
+    // Speed, Drive Angry, Commando, Cobra.
+    manual: [
+      9799, 51497, 168259, 385128, 7451, 47971, 1858, 38356, 1948, 4108, 9335, 9737, 8961, 1701,
+      9802, 95, 27578, 76163, 14869, 254128, 14161, 602, 117263, 267860, 10483, 8909, 4141, 427641,
+      447200, 44833, 325348, 136797, 47327, 10999, 9874,
+    ],
+  },
+  {
     slug: "date-night",
     label: "Date night",
     emoji: "❤️",
