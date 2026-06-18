@@ -75,6 +75,8 @@ export interface EpisodeIndexEntry extends EpisodeVM {
 export interface EpisodeMatch extends EpisodeIndexEntry {
   /** Human-readable reason, e.g. "Guest: Brad Pitt", or null for title/overview hits. */
   matchedOn: string | null;
+  /** Present only on AI fallback guesses: the model's one-line rationale. */
+  aiReason?: string;
 }
 
 // Filler words that wrap a query intent ("the episode with …", "show me …") and

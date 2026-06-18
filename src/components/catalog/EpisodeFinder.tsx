@@ -23,11 +23,16 @@ function ResultRow({ ep }: { ep: EpisodeMatch }) {
             <span className="shrink-0 text-xs font-medium text-warning">★ {ep.voteAverage.toFixed(1)}</span>
           ) : null}
         </div>
-        {ep.matchedOn && (
+        {ep.aiReason ? (
+          <span className="mt-1 inline-flex rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-medium text-accent">
+            AI best guess
+          </span>
+        ) : ep.matchedOn ? (
           <span className="mt-1 inline-flex rounded-full bg-warning/15 px-2 py-0.5 text-[11px] font-medium text-warning">
             {ep.matchedOn}
           </span>
-        )}
+        ) : null}
+        {ep.aiReason && <p className="mt-1 text-xs italic text-text-muted">Why: {ep.aiReason}</p>}
         {ep.overview && <p className="mt-1 line-clamp-2 text-sm text-text-muted">{ep.overview}</p>}
       </div>
     </li>
@@ -43,12 +48,13 @@ export function EpisodeFinder({ tvId }: { tvId: number }) {
     queryFn: async () => {
       const res = await fetch(`/api/v1/tv/${tvId}/find-episode?q=${encodeURIComponent(query)}`);
       if (!res.ok) throw new Error("Search failed");
-      return res.json() as Promise<{ results: EpisodeMatch[] }>;
+      return res.json() as Promise<{ results: EpisodeMatch[]; guesses?: EpisodeMatch[] }>;
     },
     enabled: query.length >= 2,
     staleTime: 60 * 60 * 1000,
   });
   const results = data?.results ?? [];
+  const guesses = data?.guesses ?? [];
 
   return (
     <div className="mb-4 rounded-lg border border-border bg-surface-raised p-4">
@@ -84,11 +90,7 @@ export function EpisodeFinder({ tvId }: { tvId: number }) {
             <p className="text-sm text-text-muted">Searching every episode…</p>
           ) : isError ? (
             <p className="text-sm text-text-muted">Couldn&apos;t search episodes. Try again later.</p>
-          ) : results.length === 0 ? (
-            <p className="text-sm text-text-muted">
-              No episodes matched &ldquo;{query}&rdquo;. Try a guest star, a name, or a word from the plot.
-            </p>
-          ) : (
+          ) : results.length > 0 ? (
             <>
               <p className="mb-3 text-xs font-medium uppercase tracking-wide text-text-muted">
                 {results.length} {results.length === 1 ? "match" : "matches"}
@@ -99,6 +101,25 @@ export function EpisodeFinder({ tvId }: { tvId: number }) {
                 ))}
               </ul>
             </>
+          ) : guesses.length > 0 ? (
+            // Keyword search found nothing; show the AI best-guess fallback.
+            <>
+              <p className="mb-1 text-xs font-medium uppercase tracking-wide text-text-muted">
+                No exact match. Our best guess:
+              </p>
+              <p className="mb-3 text-xs text-text-muted">
+                Worked out by AI from the plot and what it knows about the show, so double-check it&apos;s right.
+              </p>
+              <ul className="space-y-3">
+                {guesses.map((ep) => (
+                  <ResultRow key={`g-${ep.seasonNumber}-${ep.episodeNumber}`} ep={ep} />
+                ))}
+              </ul>
+            </>
+          ) : (
+            <p className="text-sm text-text-muted">
+              No episodes matched &ldquo;{query}&rdquo;. Try a guest star, a name, or a word from the plot.
+            </p>
           )}
         </div>
       )}
