@@ -18,6 +18,10 @@ function buildParams(q: MoodQuery, page: number): Record<string, string> {
   if (q.withoutGenres) p.without_genres = q.withoutGenres;
   if (q.withKeywords) p.with_keywords = q.withKeywords;
   if (q.voteAverageGte != null) p["vote_average.gte"] = String(q.voteAverageGte);
+  if (q.certificationLte) {
+    p.certification_country = "US";
+    p["certification.lte"] = q.certificationLte;
+  }
   return p;
 }
 

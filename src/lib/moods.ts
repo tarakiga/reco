@@ -10,6 +10,8 @@ export interface MoodQuery {
   voteCountGte?: number;
   sortBy?: string; // default popularity.desc
   mediaType?: "movie" | "tv"; // default movie
+  /** US certification ceiling, e.g. "PG-13" — keeps mature titles out of family/cosy moods. */
+  certificationLte?: string;
 }
 
 export interface Mood {
@@ -39,7 +41,16 @@ export const MOODS: Mood[] = [
     emoji: "🛋️",
     blurb: "Warm, comforting watches for a quiet evening.",
     kind: "mood",
-    query: { withGenres: "35|10749|10751", withoutGenres: "27,53", voteAverageGte: 6.7, voteCountGte: 300 },
+    // Most-voted feel-good favourites (not this week's trending), capped at PG-13
+    // so nothing harsh sneaks in.
+    query: {
+      withGenres: "35|10749|10751",
+      withoutGenres: "27,53",
+      voteAverageGte: 6.7,
+      voteCountGte: 500,
+      sortBy: "vote_count.desc",
+      certificationLte: "PG-13",
+    },
   },
   {
     slug: "edge-of-your-seat",
@@ -47,7 +58,18 @@ export const MOODS: Mood[] = [
     emoji: "😱",
     blurb: "Tense thrillers that won't let you breathe.",
     kind: "mood",
-    query: { withGenres: "53|9648", voteCountGte: 600, sortBy: "vote_average.desc" },
+    // Hand-picked: the genre query (sorted by rating) crowned obscure titles and
+    // mixed in prestige dramas that aren't thrillers. Curated for real tension.
+    // Se7en, Silence of the Lambs, Prisoners, Zodiac, Gone Girl, No Country for
+    // Old Men, Nightcrawler, Sicario, Wind River, A Quiet Place, Get Out, Sixth
+    // Sense, Misery, Panic Room, Dragon Tattoo, Shutter Island, Uncut Gems, 127
+    // Hours, Heat, Collateral, Drive, Invisible Man, Split, Searching, Run, Ready
+    // or Not, Green Room, Don't Breathe, Buried.
+    manual: [
+      807, 274, 146233, 1949, 210577, 6977, 242582, 273481, 395834, 447332, 419430, 745, 1700,
+      4547, 65754, 11324, 473033, 44115, 949, 1538, 64690, 570670, 358364, 489999, 546121, 567609,
+      313922, 300669, 26388,
+    ],
   },
   {
     slug: "need-a-laugh",
@@ -55,7 +77,19 @@ export const MOODS: Mood[] = [
     emoji: "😂",
     blurb: "Comedies to reset your mood.",
     kind: "mood",
-    query: { withGenres: "35", withoutGenres: "27,53", voteAverageGte: 6.5, voteCountGte: 400 },
+    // Hand-picked: the comedy genre sorted by popularity surfaced this week's
+    // trending releases over actual comedies. Curated crowd-pleasers.
+    // Girls Trip, The Wedding Ringer, Superbad, The Hangover, Bridesmaids, Step
+    // Brothers, Anchorman, Dumb and Dumber, 21 Jump Street, Tropic Thunder, This
+    // Is the End, Game Night, Booksmart, Pineapple Express, We're the Millers,
+    // Horrible Bosses, Ted, The Other Guys, Borat, Zoolander, Talladega Nights,
+    // Old School, Wedding Crashers, Dodgeball, Napoleon Dynamite, Mrs. Doubtfire,
+    // Liar Liar, Ace Ventura, The Nice Guys, Spy, Hot Fuzz.
+    manual: [
+      417870, 252838, 8363, 18785, 55721, 12133, 8699, 8467, 64688, 7446, 109414, 445571, 505600,
+      10189, 138832, 51540, 72105, 27581, 496, 9398, 9718, 11635, 9522, 9472, 8193, 788, 1624, 3049,
+      290250, 238713, 4638,
+    ],
   },
   {
     slug: "a-good-cry",
@@ -63,7 +97,19 @@ export const MOODS: Mood[] = [
     emoji: "😭",
     blurb: "Bring the tissues.",
     kind: "mood",
-    query: { withGenres: "18|10749", withKeywords: "156924", voteAverageGte: 6.5, voteCountGte: 80 },
+    // Hand-picked: TMDB's "tearjerker" keyword only tags ~16 films, mostly
+    // obscure foreign ones. Curated recognisable tearjerkers.
+    // The Champ, Nobody's Boy: Remi, Marley & Me, Up, The Green Mile, Hachi,
+    // Grave of the Fireflies, Bridge to Terabithia, My Girl, Steel Magnolias,
+    // Terms of Endearment, The Fault in Our Stars, A Walk to Remember, P.S. I
+    // Love You, The Notebook, Atonement, Manchester by the Sea, Coco, Life Is
+    // Beautiful, Dead Poets Society, Old Yeller, The Pianist, Philadelphia,
+    // Million Dollar Baby, Forrest Gump, Boy in the Striped Pyjamas, Five Feet
+    // Apart, We Live in Time.
+    manual: [
+      30547, 458302, 14306, 14160, 497, 28178, 12477, 1265, 4032, 10860, 11050, 222935, 10229, 6023,
+      11036, 4347, 334541, 354912, 637, 207, 22660, 423, 9800, 70, 13, 14574, 527641, 1100099,
+    ],
   },
   {
     slug: "mind-benders",
@@ -154,7 +200,16 @@ export const MOODS: Mood[] = [
     emoji: "❤️",
     blurb: "Crowd-pleasers for two.",
     kind: "mood",
-    query: { withGenres: "10749|35", withoutGenres: "27,53", voteAverageGte: 6.5, voteCountGte: 400 },
+    // Romance-led (not just popular comedies, which drifted into Thor/Men in
+    // Black) and capped at PG-13, so it stays on-vibe and distinct from cosy.
+    query: {
+      withGenres: "10749",
+      withoutGenres: "27,53,16",
+      voteAverageGte: 6.5,
+      voteCountGte: 800,
+      sortBy: "vote_count.desc",
+      certificationLte: "PG-13",
+    },
   },
   {
     slug: "epic-adventures",
@@ -162,7 +217,17 @@ export const MOODS: Mood[] = [
     emoji: "🌌",
     blurb: "Sweeping, big-screen journeys.",
     kind: "mood",
-    query: { withGenres: "12|14|878", voteCountGte: 1000 },
+    // Hand-picked: the genre query surfaced this week's trending releases and
+    // small-scale films, not epics. Curated sweeping journeys.
+    // Stardust, LOTR x3, The Hobbit, Raiders, Pirates of the Caribbean, Avatar,
+    // Gladiator, Braveheart, Dune x2, Mad Max: Fury Road, The Last Samurai,
+    // Master and Commander, Apocalypto, 300, Troy, Kingdom of Heaven, The Mummy,
+    // National Treasure, Jurassic Park, Star Wars, The Revenant, The Princess
+    // Bride, How to Train Your Dragon, Avatar: Way of Water, Last Crusade.
+    manual: [
+      2270, 120, 121, 122, 49051, 85, 22, 19995, 98, 197, 438631, 693134, 76341, 616, 8619, 1579,
+      1317499, 652, 1495, 564, 2059, 329, 11, 281957, 2493, 10191, 76600, 89,
+    ],
   },
   {
     slug: "family-movie-night",
@@ -170,7 +235,15 @@ export const MOODS: Mood[] = [
     emoji: "👨‍👩‍👧",
     blurb: "Something everyone can enjoy.",
     kind: "mood",
-    query: { withGenres: "10751|16", voteAverageGte: 6.5, voteCountGte: 200 },
+    // Most-voted family/animation, capped at PG-13 so mature anime (e.g. Demon
+    // Slayer) can't slip in through the Animation genre.
+    query: {
+      withGenres: "10751|16",
+      voteAverageGte: 6.5,
+      voteCountGte: 200,
+      sortBy: "vote_count.desc",
+      certificationLte: "PG-13",
+    },
   },
   {
     slug: "true-stories",
