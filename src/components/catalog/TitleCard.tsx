@@ -30,7 +30,7 @@ export function TitleCard({
 }) {
   return (
     <Link href={href} className="group block w-full">
-      <div className="relative aspect-2/3 overflow-hidden rounded-md border border-border bg-surface-overlay">
+      <div className="relative aspect-2/3 overflow-hidden rounded-lg border border-border bg-surface-overlay transition duration-200 group-hover:border-accent/50 group-hover:ring-2 group-hover:ring-accent/40">
         {(watchlist || favourite) && (
           <div className="absolute right-1.5 top-1.5 z-10 flex flex-col gap-1.5">
             {watchlist && <CardWatchlistButton {...watchlist} />}
@@ -60,7 +60,7 @@ export function TitleCard({
           <img
             src={posterUrl}
             alt=""
-            className="h-full w-full object-cover transition-transform group-hover:scale-105"
+            className="h-full w-full object-cover transition duration-300 group-hover:scale-105 group-hover:brightness-110"
             loading="lazy"
           />
         ) : (
@@ -85,7 +85,7 @@ export function TitleCard({
           </div>
         )}
       </div>
-      <p className="mt-1.5 line-clamp-1 text-sm font-medium text-text">{title}</p>
+      <p className="mt-1.5 line-clamp-1 text-sm font-medium text-text transition-colors group-hover:text-accent">{title}</p>
       {year !== null && <p className="text-xs text-text-muted">{year}</p>}
     </Link>
   );
