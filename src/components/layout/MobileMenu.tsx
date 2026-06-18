@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Show } from "@clerk/nextjs";
 import type { NavLink } from "./PageShell";
 
@@ -12,6 +13,12 @@ import type { NavLink } from "./PageShell";
  */
 export function MobileMenu({ navLinks, search }: { navLinks: NavLink[]; search?: ReactNode }) {
   const [open, setOpen] = useState(false);
+  // Close the drawer on any navigation — e.g. tapping a search result inside it,
+  // which navigates without going through the nav-link onClick handlers.
+  const pathname = usePathname();
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
   if (navLinks.length === 0 && !search) return null;
 
   return (
