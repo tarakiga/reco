@@ -281,13 +281,21 @@ export const MOODS: Mood[] = [
   {
     slug: "inspirational",
     label: "Inspirational",
-    emoji: "🙏",
-    blurb: "Faith-based and uplifting films to lift your spirit.",
+    emoji: "✨",
+    blurb: "Uplifting, faith-based and true-triumph films to lift your spirit.",
     kind: "mood",
-    // Query-able (unlike the cult moods): TMDB's "christian film" keyword
-    // (#253695) is well-applied. No voteAverageGte, so lower-rated favourites
-    // (God's Not Dead) still appear; vote_count.desc surfaces the recognisable
-    // ones first.
+    // Hybrid: a hand-picked seed of beloved inspirational classics that TMDB's
+    // "christian film" keyword misses (Miracle on 34th Street, sports underdogs,
+    // true-triumph stories), pinned ahead of the auto-updating faith-based query
+    // (keyword #253695, no voteAverageGte so God's Not Dead etc. still appear).
+    // Miracle on 34th Street, Pursuit of Happyness, Rudy, Remember the Titans,
+    // The Blind Side, Field of Dreams, Hidden Figures, Cool Runnings, Invictus,
+    // Coach Carter, October Sky, McFarland USA, Wonder, Hacksaw Ridge, Chariots
+    // of Fire, The Greatest Showman, Dead Poets Society, Good Will Hunting.
+    manual: [
+      11881, 1402, 14534, 10637, 22881, 2323, 381284, 864, 22954, 7214, 13466, 228203, 406997,
+      324786, 9443, 316029, 207, 489,
+    ],
     query: { withKeywords: "253695", voteCountGte: 80, sortBy: "vote_count.desc" },
   },
   // Occasions — only featured on the home page in their season.

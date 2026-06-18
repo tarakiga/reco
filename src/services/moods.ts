@@ -54,25 +54,36 @@ export async function getMoodTitles(slug: string, pages = 1): Promise<TitleResul
   const mood = getMoodBySlug(slug);
   if (!mood) return [];
 
-  // Curated list — preserve the hand-picked order.
-  if (mood.manual?.length) {
-    const cards = await Promise.all(mood.manual.map(manualMovie));
-    return cards.filter((c): c is TitleResult => c !== null);
-  }
-
-  if (!mood.query) return [];
-  const mt = mood.query.mediaType ?? "movie";
   const seen = new Set<number>();
   const out: TitleResult[] = [];
-  for (let page = 1; page <= pages; page++) {
-    const data = await tmdb.discover(mt, buildParams(mood.query, page)).catch(() => null);
-    if (!data) break;
-    for (const r of toBrowseResults(mt, data.results)) {
-      if (seen.has(r.tmdbId)) continue;
-      seen.add(r.tmdbId);
-      out.push(r);
+
+  // Hand-picked seed first, preserving curated order. This is the whole mood for
+  // a purely curated list, or a seed pinned ahead of a query fill (hybrid) when
+  // a keyword query misses beloved titles (e.g. Inspirational + Miracle on 34th).
+  if (mood.manual?.length) {
+    const cards = await Promise.all(mood.manual.map(manualMovie));
+    for (const c of cards) {
+      if (c && !seen.has(c.tmdbId)) {
+        seen.add(c.tmdbId);
+        out.push(c);
+      }
     }
-    if (page >= (data.total_pages ?? 1)) break;
   }
+
+  // Dynamic Discover fill, appended after any seed and de-duplicated.
+  if (mood.query) {
+    const mt = mood.query.mediaType ?? "movie";
+    for (let page = 1; page <= pages; page++) {
+      const data = await tmdb.discover(mt, buildParams(mood.query, page)).catch(() => null);
+      if (!data) break;
+      for (const r of toBrowseResults(mt, data.results)) {
+        if (seen.has(r.tmdbId)) continue;
+        seen.add(r.tmdbId);
+        out.push(r);
+      }
+      if (page >= (data.total_pages ?? 1)) break;
+    }
+  }
+
   return out;
 }
