@@ -106,6 +106,29 @@ export const MOODS: Mood[] = [
     ],
   },
   {
+    slug: "b-movie-mashups",
+    label: "B-movie mashups",
+    emoji: "🦈",
+    blurb: "Z-grade creature mashups where the title says it all: shark plus tornado, velociraptor plus pastor.",
+    kind: "mood",
+    // Hand-picked: TMDB's "creature feature" / "mockbuster" keywords are barely
+    // applied to the films that define the genre (Sharknado isn't even tagged
+    // "creature feature", and Sharknado 2 has no keywords), so a Discover filter
+    // misses the canon. Curated.
+    // Sharknado, Sharktopus, Mega Shark vs. Giant Octopus, Piranhaconda,
+    // Dinoshark, VelociPastor, Cowboys vs. Dinosaurs, 2/3/5-Headed Shark Attack,
+    // Mega Shark vs. Crocosaurus, Mega Python vs. Gatoroid, Boa vs. Python,
+    // Komodo vs. Cobra, Arachnoquake, Lavalantula, Sharknado 2, Sharktopus vs.
+    // Pteracuda, Sharktopus vs. Whalewolf, Dinocroc vs. Supergator, Ghost Shark,
+    // Sand Sharks, RoboCroc, Frankenfish, Zombeavers, Iron Sky, Big Ass Spider!,
+    // Eight Legged Freaks, Cocaine Bear, Sharkenstein, Dinocroc.
+    manual: [
+      205321, 46020, 17911, 115084, 35074, 457712, 337208, 86703, 342927, 460218, 52454, 56171,
+      36086, 28509, 116463, 294562, 248504, 284711, 344147, 44809, 216539, 83896, 221737, 33641,
+      254474, 10679, 166822, 8869, 804150, 402516, 4289,
+    ],
+  },
+  {
     slug: "date-night",
     label: "Date night",
     emoji: "❤️",
