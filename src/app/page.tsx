@@ -93,40 +93,34 @@ export default async function Home() {
         </p>
       </section>
 
-      {/* Shuffle call-to-action — prominent so impatient visitors can't miss it. */}
-      <section className="mb-10">
-        <div className="flex flex-col items-start gap-5 rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/20 via-surface-raised to-surface-raised p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
-          <div className="max-w-xl">
-            <p className="text-sm font-semibold uppercase tracking-wide text-accent">Can&apos;t decide?</p>
-            <h2 className="mt-1 text-2xl font-bold text-text sm:text-3xl">
-              We&apos;ll find something you can watch right now
-            </h2>
-            <p className="mt-2 text-text-muted">
-              Pick the streaming services you have and we&apos;ll instantly deal you a few great
-              movies and shows everyone can actually agree on.
-            </p>
-          </div>
-          <Link
-            href="/shuffle"
-            className="inline-flex min-h-12 w-full shrink-0 items-center justify-center gap-2 rounded-lg bg-accent px-7 py-2.5 text-center text-base font-semibold leading-tight text-text shadow-lg shadow-accent/20 transition-colors hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent sm:w-auto"
-          >
-            <span aria-hidden className="text-lg">🎲</span> Find me something to watch
-          </Link>
-        </div>
-      </section>
-
-      {/* "Describe a scene" CTA — find a film by what you remember. Warm amber to
-          contrast with the red "Can't decide?" Shuffle card above. */}
-      <section className="mb-10">
-        <div className="rounded-2xl border border-warning/30 bg-gradient-to-br from-warning/20 via-surface-raised to-surface-raised p-6 sm:p-8">
-          <p className="text-sm font-semibold uppercase tracking-wide text-warning">
-            Can&apos;t remember the name?
+      {/* Two compact CTAs, side by side on desktop and equal height. Red Shuffle
+          + amber "describe a scene". */}
+      <section className="mb-10 grid gap-4 md:grid-cols-2">
+        <div className="flex h-full flex-col rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/20 via-surface-raised to-surface-raised p-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-accent">Can&apos;t decide?</p>
+          <h2 className="mt-1 text-xl font-bold text-text">We&apos;ll pick something you can watch now</h2>
+          <p className="mt-1.5 text-sm text-text-muted">
+            Choose your streaming services and we&apos;ll deal a few picks everyone agrees on.
           </p>
-          <h2 className="mt-1 text-2xl font-bold text-text sm:text-3xl">Describe what you remember</h2>
-          <p className="mb-4 mt-2 max-w-xl text-text-muted">
+          <div className="mt-auto pt-4">
+            <Link
+              href="/shuffle"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-accent px-5 text-sm font-semibold text-text shadow-lg shadow-accent/20 transition-colors hover:bg-accent-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
+              <span aria-hidden>🎲</span> Find me something
+            </Link>
+          </div>
+        </div>
+
+        <div className="flex h-full flex-col rounded-2xl border border-warning/30 bg-gradient-to-br from-warning/20 via-surface-raised to-surface-raised p-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-warning">Can&apos;t remember the name?</p>
+          <h2 className="mt-1 text-xl font-bold text-text">Describe what you remember</h2>
+          <p className="mt-1.5 text-sm text-text-muted">
             Recall a scene but not the title? Describe it and we&apos;ll find the closest matches.
           </p>
-          <SceneSearchBar />
+          <div className="mt-auto pt-4">
+            <SceneSearchBar />
+          </div>
         </div>
       </section>
 
