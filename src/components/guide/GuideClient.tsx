@@ -215,7 +215,9 @@ export function GuideClient() {
     <div className="space-y-5">
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex h-9 overflow-hidden rounded-md border border-border">
+        {/* Keep the source toggle + region dropdown on one line, even on mobile. */}
+        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex h-9 shrink-0 overflow-hidden rounded-md border border-border">
           {(["broadcast", "streaming"] as const).map((m) => (
             <button
               key={m}
@@ -234,7 +236,7 @@ export function GuideClient() {
             aria-label="Broadcast region"
             value={isStreamingCode(country) ? "" : country}
             onChange={(e) => e.target.value && pickCountry(e.target.value)}
-            className="h-9 rounded-md border border-border bg-surface px-2 text-sm text-text focus:outline-2 focus:outline-accent"
+            className="h-9 min-w-0 rounded-md border border-border bg-surface px-2 text-sm text-text focus:outline-2 focus:outline-accent"
           >
             <option value="" disabled>
               Broadcast region
@@ -250,7 +252,7 @@ export function GuideClient() {
             aria-label="Streaming service"
             value={isStreamingCode(country) ? country : ""}
             onChange={(e) => e.target.value && pickCountry(e.target.value)}
-            className="h-9 rounded-md border border-border bg-surface px-2 text-sm text-text focus:outline-2 focus:outline-accent"
+            className="h-9 min-w-0 rounded-md border border-border bg-surface px-2 text-sm text-text focus:outline-2 focus:outline-accent"
           >
             <option value="" disabled>
               Streaming service
@@ -278,6 +280,7 @@ export function GuideClient() {
             </optgroup>
           </select>
         )}
+        </div>
 
         <span className="ml-auto flex items-center gap-2">
           {mode === "broadcast" && (
