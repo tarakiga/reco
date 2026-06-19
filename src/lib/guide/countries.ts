@@ -49,6 +49,8 @@ export const GUIDE_PLUTO: GuideCountry[] = [
 
 export const GUIDE_XUMO: GuideCountry[] = [{ code: "XUMO", name: "Xumo" }];
 
+export const GUIDE_UKTV: GuideCountry[] = [{ code: "UKTV", name: "U (UKTV)" }];
+
 export const GUIDE_PLEX: GuideCountry[] = [
   { code: "PLEX_ALL", name: "Plex (Global)" },
   { code: "PLEX_US", name: "Plex (US)" },

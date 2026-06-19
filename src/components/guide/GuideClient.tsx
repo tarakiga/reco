@@ -8,12 +8,13 @@ import {
   GUIDE_PLUTO,
   GUIDE_XUMO,
   GUIDE_PLEX,
+  GUIDE_UKTV,
   DEFAULT_GUIDE_COUNTRY,
 } from "@/lib/guide/countries";
 import { meFetch } from "@/lib/me-client";
 import type { GuideChannel, GuideEntry } from "@/services/guide";
 
-const isStreamingCode = (c: string) => /^(PLUTO_|XUMO|PLEX_)/i.test(c);
+const isStreamingCode = (c: string) => /^(PLUTO_|XUMO|PLEX_|UKTV)/i.test(c);
 
 const ymd = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -266,6 +267,13 @@ export function GuideClient() {
             </optgroup>
             <optgroup label="Xumo">
               {GUIDE_XUMO.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="U (UKTV)">
+              {GUIDE_UKTV.map((c) => (
                 <option key={c.code} value={c.code}>
                   {c.name}
                 </option>
