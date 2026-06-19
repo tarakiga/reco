@@ -276,14 +276,6 @@ export function GuideClient() {
           </select>
         )}
 
-        <button
-          type="button"
-          onClick={() => setPickerOpen((o) => !o)}
-          className="h-9 rounded-md border border-border bg-surface px-3 text-sm font-medium text-text hover:border-accent"
-        >
-          {pickerOpen ? "Done choosing" : favs.length > 0 ? `My channels (${favs.length})` : "Choose channels"}
-        </button>
-
         <span className="ml-auto flex items-center gap-2">
           <button
             type="button"
@@ -311,44 +303,52 @@ export function GuideClient() {
         </span>
       </div>
 
-      {/* Channel picker — directly under the controls so it reads as part of
-          the "Choose channels" action rather than floating below the dates. */}
-      {pickerOpen && (
-        <div className="rounded-lg border border-border bg-surface-raised p-4">
-          <div className="mb-2 flex items-center justify-between gap-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-text-muted">
-              Tap to pick the channels you care about
-            </p>
-            {favs.length > 0 && (
-              <div className="flex items-center gap-1.5 text-xs text-text-muted">
-                Guide shows
-                <div className="flex h-7 shrink-0 overflow-hidden rounded-md border border-border">
-                  <button
-                    type="button"
-                    onClick={() => setOnlyFavs(false)}
-                    className={`px-2 font-medium transition-colors ${
-                      !onlyFavs ? "bg-accent text-white" : "bg-surface text-text-muted hover:text-text"
-                    }`}
-                  >
-                    All
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setOnlyFavs(true)}
-                    className={`px-2 font-medium transition-colors ${
-                      onlyFavs ? "bg-accent text-white" : "bg-surface text-text-muted hover:text-text"
-                    }`}
-                  >
-                    Favourites
-                  </button>
-                </div>
+      {/* Channel picker — a retractable card. The title itself is the toggle;
+          the "Guide shows" filter stays visible even when collapsed. */}
+      <div className="rounded-lg border border-border bg-surface-raised p-4">
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => setPickerOpen((o) => !o)}
+            aria-expanded={pickerOpen}
+            className="flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-text-muted transition-colors hover:text-text"
+          >
+            <span className={`transition-transform ${pickerOpen ? "rotate-90" : ""}`} aria-hidden>
+              ▸
+            </span>
+            {pickerOpen ? "Click to close favourites" : "Click to select favourites"}
+          </button>
+          {favs.length > 0 && (
+            <div className="flex items-center gap-1.5 text-xs text-text-muted">
+              Guide shows
+              <div className="flex h-7 shrink-0 overflow-hidden rounded-md border border-border">
+                <button
+                  type="button"
+                  onClick={() => setOnlyFavs(false)}
+                  className={`px-2 font-medium transition-colors ${
+                    !onlyFavs ? "bg-accent text-white" : "bg-surface text-text-muted hover:text-text"
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOnlyFavs(true)}
+                  className={`px-2 font-medium transition-colors ${
+                    onlyFavs ? "bg-accent text-white" : "bg-surface text-text-muted hover:text-text"
+                  }`}
+                >
+                  Favourites
+                </button>
               </div>
-            )}
-          </div>
-          {allChannels.length === 0 ? (
-            <p className="text-sm text-text-muted">Load a region with listings to choose channels.</p>
+            </div>
+          )}
+        </div>
+        {pickerOpen &&
+          (allChannels.length === 0 ? (
+            <p className="mt-3 text-sm text-text-muted">Load a region with listings to choose channels.</p>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap gap-2">
               {allChannels.map((c) => {
                 const on = favSet.has(c.channel);
                 return (
@@ -368,9 +368,8 @@ export function GuideClient() {
                 );
               })}
             </div>
-          )}
-        </div>
-      )}
+          ))}
+      </div>
 
       {/* Day selector */}
       <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
