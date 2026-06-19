@@ -51,6 +51,7 @@ async function xumoChannelNames(): Promise<Map<string, string>> {
 
 interface XumoAsset {
   title?: string;
+  episodeTitle?: string;
   descriptions?: { tiny?: string; small?: string; medium?: string };
 }
 interface XumoScheduleItem {
@@ -77,7 +78,7 @@ export async function getXumoSchedule(date: string): Promise<GuideChannel[]> {
   for (let block = 0; block < 4; block++) {
     for (let offset = 0; offset <= 450; offset += 50) {
       urls.push(
-        `${XUMO}/epg/${LIST}/${ymd}/${block}.json?f=asset.title&f=asset.descriptions&limit=50&offset=${offset}`,
+        `${XUMO}/epg/${LIST}/${ymd}/${block}.json?f=asset.title&f=asset.episodeTitle&f=asset.descriptions&limit=50&offset=${offset}`,
       );
     }
   }
@@ -113,6 +114,7 @@ export async function getXumoSchedule(date: string): Promise<GuideChannel[]> {
         dedup.add(key);
         const asset = s.assetId ? assets[s.assetId] : undefined;
         const title = asset?.title ?? name;
+        const epTitle = asset?.episodeTitle && asset.episodeTitle !== title ? asset.episodeTitle : null;
         const st = Date.parse(s.start);
         const sp = s.end ? Date.parse(s.end) : NaN;
         list.push({
@@ -122,7 +124,7 @@ export async function getXumoSchedule(date: string): Promise<GuideChannel[]> {
           showName: title,
           season: null,
           episode: null,
-          episodeTitle: null,
+          episodeTitle: epTitle,
           synopsis: asset?.descriptions?.small ?? asset?.descriptions?.medium ?? asset?.descriptions?.tiny ?? null,
           runtime: !Number.isNaN(st) && !Number.isNaN(sp) ? Math.round((sp - st) / 60_000) : null,
           href: `/search?q=${encodeURIComponent(title)}`,
