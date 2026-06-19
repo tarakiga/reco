@@ -1,5 +1,6 @@
 import "server-only";
 import { cacheLife } from "next/cache";
+import { zonedDate } from "@/lib/guide/tz";
 import type { GuideChannel, GuideEntry } from "./guide";
 
 // Xumo's free channels. Open, keyless. Unlike Pluto/Plex it has a list EPG
@@ -73,14 +74,25 @@ export async function getXumoSchedule(date: string): Promise<GuideChannel[]> {
   const names = await xumoChannelNames();
   const ymd = date.replace(/-/g, "");
 
+  // Xumo's date is a UTC day, but we want the US (Eastern) local day so "on now"
+  // works in the evening (when local time has crossed into the next UTC day).
+  // Fetch the requested UTC day's 4 blocks plus the next UTC day's first block
+  // (the local-evening spillover), then keep only the Eastern calendar day.
+  const nextYmd = new Date(Date.parse(`${date}T00:00:00Z`) + 86_400_000)
+    .toISOString()
+    .slice(0, 10)
+    .replace(/-/g, "");
+
   // 4 six-hour blocks, paginated 50 channels at a time. Fetch all pages up front.
   const urls: string[] = [];
+  const fields = "f=asset.title&f=asset.episodeTitle&f=asset.descriptions";
   for (let block = 0; block < 4; block++) {
     for (let offset = 0; offset <= 450; offset += 50) {
-      urls.push(
-        `${XUMO}/epg/${LIST}/${ymd}/${block}.json?f=asset.title&f=asset.episodeTitle&f=asset.descriptions&limit=50&offset=${offset}`,
-      );
+      urls.push(`${XUMO}/epg/${LIST}/${ymd}/${block}.json?${fields}&limit=50&offset=${offset}`);
     }
+  }
+  for (let offset = 0; offset <= 450; offset += 50) {
+    urls.push(`${XUMO}/epg/${LIST}/${nextYmd}/0.json?${fields}&limit=50&offset=${offset}`);
   }
 
   const pages = await Promise.all(
@@ -109,6 +121,7 @@ export async function getXumoSchedule(date: string): Promise<GuideChannel[]> {
       const dedup = seen.get(cid) ?? new Set<string>();
       for (const s of ch.schedule ?? []) {
         if (!s.start || !s.assetId) continue;
+        if (zonedDate(s.start, XUMO_TZ) !== date) continue; // keep the Eastern day only
         const key = `${s.start}-${s.assetId}`;
         if (dedup.has(key)) continue;
         dedup.add(key);

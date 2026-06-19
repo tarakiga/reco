@@ -1,5 +1,6 @@
 import "server-only";
 import { cacheLife } from "next/cache";
+import { zonedDate } from "@/lib/guide/tz";
 import type { GuideChannel, GuideEntry } from "./guide";
 
 // Pluto TV's free ad-supported (FAST) channels. Pluto's channel-LIST endpoint is
@@ -116,8 +117,12 @@ export async function getPlutoSchedule(region: string, date: string): Promise<Gu
   const list = await plutoChannels(reg);
   if (list.length === 0) return [];
 
-  const start = `${date}T00:00:00.000Z`;
-  const stop = `${date}T23:59:59.000Z`;
+  // Fetch a window spanning the day boundary (yesterday..tomorrow UTC) so we can
+  // keep the region's full local calendar day; a bare UTC-day window misses the
+  // currently-airing programme at the edges, breaking "on now".
+  const baseMs = Date.parse(`${date}T00:00:00Z`);
+  const start = new Date(baseMs - 86_400_000).toISOString();
+  const stop = new Date(baseMs + 2 * 86_400_000).toISOString();
 
   const channels: GuideChannel[] = [];
   for (let i = 0; i < list.length; i += BATCH) {
@@ -126,9 +131,13 @@ export async function getPlutoSchedule(region: string, date: string): Promise<Gu
       batch.map(async (ch) => {
         const epg = await channelEpg(ch.id, start, stop);
         const channelName = epg?.name ?? ch.name;
-        // Drop Pluto's filler blocks (a program titled like the channel itself).
+        // Keep this region's local calendar day, and drop Pluto's filler blocks
+        // (a program titled like the channel itself).
         const timelines = (epg?.timelines ?? []).filter(
-          (t) => (t.title ?? "").trim() !== channelName.trim(),
+          (t) =>
+            (t.title ?? "").trim() !== channelName.trim() &&
+            t.start != null &&
+            zonedDate(t.start, meta.tz) === date,
         );
         if (timelines.length === 0) return null;
         const entries: GuideEntry[] = timelines.map((t, idx) => {
