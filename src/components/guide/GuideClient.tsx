@@ -308,6 +308,7 @@ const LABEL_W = 104;
 
 function GuideGrid({ channels }: { channels: GuideChannel[] }) {
   const scroller = useRef<HTMLDivElement>(null);
+  const [selected, setSelected] = useState<{ channel: string; entry: GuideEntry } | null>(null);
 
   // Time window covering all shown entries (floored/ceiled to the hour).
   const { startMin, endMin } = useMemo(() => {
@@ -340,8 +341,50 @@ function GuideGrid({ channels }: { channels: GuideChannel[] }) {
   }, [width]);
 
   return (
-    <div ref={scroller} className="overflow-x-auto rounded-lg border border-border">
-      <div style={{ width: LABEL_W + width }}>
+    <div className="space-y-2">
+      {selected && (
+        <div className="rounded-lg border border-accent/40 bg-surface-raised p-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs text-text-muted">
+                {selected.channel}
+                {selected.entry.time ? ` · ${selected.entry.time}` : ""}
+                {isOnNow(selected.entry) ? " · On now" : ""}
+              </p>
+              <h3 className="flex flex-wrap items-baseline gap-x-2 text-sm font-semibold text-text">
+                {selected.entry.showName}
+                {selected.entry.season != null && selected.entry.episode != null && (
+                  <span className="rounded bg-surface-overlay px-1.5 py-0.5 text-[11px] font-medium text-text-muted">
+                    S{selected.entry.season} E{selected.entry.episode}
+                  </span>
+                )}
+              </h3>
+              {selected.entry.episodeTitle && selected.entry.episodeTitle !== selected.entry.showName && (
+                <p className="text-xs text-text">{selected.entry.episodeTitle}</p>
+              )}
+              {selected.entry.synopsis && (
+                <p className="mt-1 text-xs text-text-muted">{selected.entry.synopsis}</p>
+              )}
+              <Link
+                href={selected.entry.href}
+                className="mt-2 inline-block text-xs font-medium text-accent hover:underline"
+              >
+                View full details →
+              </Link>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              aria-label="Close details"
+              className="shrink-0 rounded px-2 py-1 text-text-muted hover:text-text"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+      <div ref={scroller} className="overflow-x-auto rounded-lg border border-border">
+        <div style={{ width: LABEL_W + width }}>
         {/* Hour ruler */}
         <div className="flex border-b border-border bg-surface-raised">
           <div className="shrink-0 border-r border-border" style={{ width: LABEL_W, height: 24 }} />
@@ -375,15 +418,19 @@ function GuideGrid({ channels }: { channels: GuideChannel[] }) {
                 if (s == null) return null;
                 const w = Math.max((e.runtime && e.runtime > 0 ? e.runtime : 30) * PX_PER_MIN, 36);
                 const on = isOnNow(e);
+                const sel = selected?.entry.id === e.id;
                 return (
-                  <Link
+                  <button
                     key={e.id}
-                    href={e.href}
+                    type="button"
+                    onClick={() => setSelected({ channel: c.channel, entry: e })}
                     title={`${e.time ?? ""} ${e.showName}`}
-                    className={`absolute top-1 bottom-1 overflow-hidden rounded border px-1.5 py-1 text-[11px] leading-tight transition-colors ${
-                      on
-                        ? "border-accent bg-accent/20 text-text"
-                        : "border-border bg-surface-raised text-text-muted hover:border-accent hover:text-text"
+                    className={`absolute top-1 bottom-1 overflow-hidden rounded border px-1.5 py-1 text-left text-[11px] leading-tight transition-colors ${
+                      sel
+                        ? "border-accent bg-accent/30 text-text ring-2 ring-accent"
+                        : on
+                          ? "border-accent bg-accent/20 text-text"
+                          : "border-border bg-surface-raised text-text-muted hover:border-accent hover:text-text"
                     }`}
                     style={{ left: (s - startMin) * PX_PER_MIN, width: w - 2 }}
                   >
@@ -392,12 +439,13 @@ function GuideGrid({ channels }: { channels: GuideChannel[] }) {
                       {e.time}
                       {e.season != null && e.episode != null ? ` · S${e.season}E${e.episode}` : ""}
                     </span>
-                  </Link>
+                  </button>
                 );
               })}
             </div>
           </div>
         ))}
+        </div>
       </div>
     </div>
   );
