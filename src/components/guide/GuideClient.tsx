@@ -2,8 +2,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@clerk/nextjs";
 import { GUIDE_COUNTRIES, GUIDE_PLUTO, DEFAULT_GUIDE_COUNTRY } from "@/lib/guide/countries";
+import { meFetch } from "@/lib/me-client";
 import type { GuideChannel, GuideEntry } from "@/services/guide";
+
+const isPlutoCode = (c: string) => c.toUpperCase().startsWith("PLUTO_");
 
 const ymd = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -71,17 +75,54 @@ export function GuideClient() {
   const [view, setView] = useState<"list" | "grid">("list");
   const [primeOnly, setPrimeOnly] = useState(false);
 
+  // Signed-in users sync their channel picks to the DB so the choice carries
+  // across devices; guests fall back to localStorage only.
+  const { isSignedIn, isLoaded } = useAuth();
+  const dbMap = useRef<Record<string, string[]> | null>(null);
+  const [dbLoaded, setDbLoaded] = useState(false);
+
+  const localFavs = (c: string): string[] => {
+    try {
+      return JSON.parse(localStorage.getItem(`guide:favs:${c}`) ?? "[]");
+    } catch {
+      return [];
+    }
+  };
+
   useEffect(() => {
     const c = localStorage.getItem("guide:country");
     if (c) setCountry(c);
   }, []);
+
+  // Load the saved DB picks once (signed-in), then reflect the current region.
   useEffect(() => {
-    try {
-      setFavs(JSON.parse(localStorage.getItem(`guide:favs:${country}`) ?? "[]"));
-    } catch {
-      setFavs([]);
+    if (!isLoaded) return;
+    if (!isSignedIn) {
+      dbMap.current = null;
+      return;
     }
-  }, [country]);
+    let active = true;
+    (async () => {
+      try {
+        const res = await meFetch<{ channels: Record<string, string[]> }>("/api/v1/me/guide-channels");
+        if (!active) return;
+        dbMap.current = res.channels ?? {};
+        setDbLoaded(true);
+      } catch {
+        /* offline / not signed in — keep localStorage behaviour */
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [isLoaded, isSignedIn]);
+
+  // Reflect the active region's picks (DB first, then localStorage). Re-runs
+  // when the DB load completes so signed-in picks replace the localStorage seed.
+  useEffect(() => {
+    setFavs(dbMap.current?.[country] ?? localFavs(country));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [country, dbLoaded]);
 
   function pickCountry(c: string) {
     setCountry(c);
@@ -91,6 +132,12 @@ export function GuideClient() {
     setFavs((prev) => {
       const next = prev.includes(channel) ? prev.filter((c) => c !== channel) : [...prev, channel];
       localStorage.setItem(`guide:favs:${country}`, JSON.stringify(next));
+      if (isSignedIn) {
+        if (dbMap.current) dbMap.current[country] = next;
+        meFetch("/api/v1/me/guide-channels", { method: "PUT", body: { country, channels: next } }).catch(
+          () => {},
+        );
+      }
       return next;
     });
   }
@@ -119,26 +166,37 @@ export function GuideClient() {
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 text-sm text-text-muted">
-          Region
+          Broadcast
           <select
-            value={country}
-            onChange={(e) => pickCountry(e.target.value)}
+            value={isPlutoCode(country) ? "" : country}
+            onChange={(e) => e.target.value && pickCountry(e.target.value)}
             className="h-9 rounded-md border border-border bg-surface px-2 text-sm text-text focus:outline-2 focus:outline-accent"
           >
-            <optgroup label="Broadcast TV">
-              {GUIDE_COUNTRIES.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.name}
-                </option>
-              ))}
-            </optgroup>
-            <optgroup label="Free streaming">
-              {GUIDE_PLUTO.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.name}
-                </option>
-              ))}
-            </optgroup>
+            <option value="" disabled>
+              Broadcast region
+            </option>
+            {GUIDE_COUNTRIES.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex items-center gap-2 text-sm text-text-muted">
+          Streaming
+          <select
+            value={isPlutoCode(country) ? country : ""}
+            onChange={(e) => e.target.value && pickCountry(e.target.value)}
+            className="h-9 rounded-md border border-border bg-surface px-2 text-sm text-text focus:outline-2 focus:outline-accent"
+          >
+            <option value="" disabled>
+              Pluto TV region
+            </option>
+            {GUIDE_PLUTO.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.name.replace(/^Pluto TV /, "")}
+              </option>
+            ))}
           </select>
         </label>
 

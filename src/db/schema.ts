@@ -270,5 +270,21 @@ export const userTaste = pgTable("user_taste", {
   builtAt: timestamp("built_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Per-user TV-guide channel picks, keyed by source/region (e.g. "GB",
+// "PLUTO_UK") so favourites sync across devices.
+export const guideChannels = pgTable(
+  "guide_channels",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => profiles.id, { onDelete: "cascade" }),
+    country: text("country").notNull(),
+    channels: text("channels").array().notNull().default([]),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.country] })],
+);
+
+export type GuideChannelRow = typeof guideChannels.$inferSelect;
 export type TitleEmbeddingRow = typeof titleEmbeddings.$inferSelect;
 export type UserTasteRow = typeof userTaste.$inferSelect;
