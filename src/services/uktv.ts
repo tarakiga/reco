@@ -15,8 +15,7 @@ const UKTV_CHANNELS: { slug: string; name: string }[] = [
   { slug: "drama", name: "U&Drama" },
   { slug: "yesterday", name: "U&Yesterday" },
   { slug: "eden", name: "U&Eden" },
-  { slug: "home", name: "U&Home" },
-  { slug: "w", name: "W" },
+  { slug: "watch", name: "W" },
 ];
 
 function fmtTime(iso: string): string | null {
