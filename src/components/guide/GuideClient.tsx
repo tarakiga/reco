@@ -159,6 +159,9 @@ export function GuideClient() {
   function switchMode(m: "broadcast" | "streaming") {
     if (m === mode) return;
     setMode(m);
+    // Streaming (FAST) channels are 24/7 loops with no prime-time block, so
+    // clear that filter to avoid it silently hiding streaming listings.
+    if (m === "streaming") setPrimeOnly(false);
     pickCountry(m === "broadcast" ? lastBroadcast.current : lastStreaming.current);
   }
   const toggleFav = useCallback(
@@ -277,15 +280,17 @@ export function GuideClient() {
         )}
 
         <span className="ml-auto flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setPrimeOnly((p) => !p)}
-            className={`h-9 rounded-md border px-3 text-sm font-medium transition-colors ${
-              primeOnly ? "border-accent bg-accent/15 text-accent" : "border-border bg-surface text-text-muted hover:border-accent"
-            }`}
-          >
-            Prime time
-          </button>
+          {mode === "broadcast" && (
+            <button
+              type="button"
+              onClick={() => setPrimeOnly((p) => !p)}
+              className={`h-9 rounded-md border px-3 text-sm font-medium transition-colors ${
+                primeOnly ? "border-accent bg-accent/15 text-accent" : "border-border bg-surface text-text-muted hover:border-accent"
+              }`}
+            >
+              Prime time
+            </button>
+          )}
           <div className="flex h-9 overflow-hidden rounded-md border border-border">
             {(["list", "grid"] as const).map((v) => (
               <button
