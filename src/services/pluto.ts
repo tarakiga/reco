@@ -23,8 +23,8 @@ export const PLUTO_REGIONS: Record<string, { name: string; tz: string }> = {
   br: { name: "Pluto TV (Brazil)", tz: "America/Sao_Paulo" },
 };
 
-const MAX_CHANNELS = 200; // safety bound on the per-channel fan-out
-const BATCH = 24;
+const MAX_CHANNELS = 500; // safety bound on the per-channel fan-out (US has ~400)
+const BATCH = 50;
 
 function decode(s: string): string {
   return s
@@ -93,7 +93,7 @@ async function channelEpg(
   try {
     const res = await fetch(`${PLUTO_API}/${id}?start=${startISO}&stop=${stopISO}`, {
       headers: { accept: "application/json" },
-      signal: AbortSignal.timeout(7000),
+      signal: AbortSignal.timeout(6000),
     });
     if (!res.ok) return null;
     return (await res.json()) as { name?: string; timelines?: PlutoTimeline[] };
