@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
@@ -80,7 +80,6 @@ export function GuideClient() {
   const [pickerOpen, setPickerOpen] = useState(true); // open by default so picking is obvious
   const [view, setView] = useState<"list" | "grid">("list");
   const [primeOnly, setPrimeOnly] = useState(false);
-  const [pickerFilter, setPickerFilter] = useState<"all" | "favs">("all");
   const [showTop, setShowTop] = useState(false);
 
   useEffect(() => {
@@ -162,19 +161,23 @@ export function GuideClient() {
     setMode(m);
     pickCountry(m === "broadcast" ? lastBroadcast.current : lastStreaming.current);
   }
-  function toggleFav(channel: string) {
-    setFavs((prev) => {
-      const next = prev.includes(channel) ? prev.filter((c) => c !== channel) : [...prev, channel];
-      localStorage.setItem(`guide:favs:${country}`, JSON.stringify(next));
-      if (isSignedIn) {
-        if (dbMap.current) dbMap.current[country] = next;
-        meFetch("/api/v1/me/guide-channels", { method: "PUT", body: { country, channels: next } }).catch(
-          () => {},
-        );
-      }
-      return next;
-    });
-  }
+  const toggleFav = useCallback(
+    (channel: string) => {
+      setFavs((prev) => {
+        const next = prev.includes(channel) ? prev.filter((c) => c !== channel) : [...prev, channel];
+        localStorage.setItem(`guide:favs:${country}`, JSON.stringify(next));
+        if (isSignedIn) {
+          if (dbMap.current) dbMap.current[country] = next;
+          meFetch("/api/v1/me/guide-channels", {
+            method: "PUT",
+            body: { country, channels: next },
+          }).catch(() => {});
+        }
+        return next;
+      });
+    },
+    [country, isSignedIn],
+  );
 
   const { data, isFetching, isError } = useQuery({
     queryKey: ["guide", country, date],
@@ -186,14 +189,24 @@ export function GuideClient() {
     staleTime: 30 * 60 * 1000,
   });
 
-  const allChannels = data?.channels ?? [];
+  const allChannels = useMemo(() => data?.channels ?? [], [data]);
   const favsActive = onlyFavs && favs.length > 0;
+  const favSet = useMemo(() => new Set(favs), [favs]);
 
-  // Apply favourites + prime-time filters.
-  const shown: GuideChannel[] = allChannels
-    .filter((c) => !favsActive || favs.includes(c.channel))
-    .map((c) => ({ channel: c.channel, entries: primeOnly ? c.entries.filter(inPrime) : c.entries }))
-    .filter((c) => c.entries.length > 0);
+  // Favourites filter first. In "All" mode this returns the SAME array reference
+  // regardless of favs, so toggling a favourite doesn't rebuild the listings.
+  const filtered = useMemo(
+    () => (favsActive ? allChannels.filter((c) => favSet.has(c.channel)) : allChannels),
+    [allChannels, favsActive, favSet],
+  );
+  // Then prime-time + empties. Stable unless `filtered`/primeOnly change.
+  const shown: GuideChannel[] = useMemo(
+    () =>
+      filtered
+        .map((c) => ({ channel: c.channel, entries: primeOnly ? c.entries.filter(inPrime) : c.entries }))
+        .filter((c) => c.entries.length > 0),
+    [filtered, primeOnly],
+  );
 
   return (
     <div className="space-y-5">
@@ -270,12 +283,6 @@ export function GuideClient() {
         >
           {pickerOpen ? "Done choosing" : favs.length > 0 ? `My channels (${favs.length})` : "Choose channels"}
         </button>
-        {favs.length > 0 && (
-          <label className="flex items-center gap-1.5 text-sm text-text-muted">
-            <input type="checkbox" checked={onlyFavs} onChange={(e) => setOnlyFavs(e.target.checked)} />
-            Only my channels
-          </label>
-        )}
 
         <span className="ml-auto flex items-center gap-2">
           <button
@@ -313,19 +320,28 @@ export function GuideClient() {
               Tap to pick the channels you care about
             </p>
             {favs.length > 0 && (
-              <div className="flex h-7 shrink-0 overflow-hidden rounded-md border border-border text-xs">
-                {(["all", "favs"] as const).map((f) => (
+              <div className="flex items-center gap-1.5 text-xs text-text-muted">
+                Guide shows
+                <div className="flex h-7 shrink-0 overflow-hidden rounded-md border border-border">
                   <button
-                    key={f}
                     type="button"
-                    onClick={() => setPickerFilter(f)}
+                    onClick={() => setOnlyFavs(false)}
                     className={`px-2 font-medium transition-colors ${
-                      pickerFilter === f ? "bg-accent text-white" : "bg-surface text-text-muted hover:text-text"
+                      !onlyFavs ? "bg-accent text-white" : "bg-surface text-text-muted hover:text-text"
                     }`}
                   >
-                    {f === "all" ? "All" : "Favourites"}
+                    All
                   </button>
-                ))}
+                  <button
+                    type="button"
+                    onClick={() => setOnlyFavs(true)}
+                    className={`px-2 font-medium transition-colors ${
+                      onlyFavs ? "bg-accent text-white" : "bg-surface text-text-muted hover:text-text"
+                    }`}
+                  >
+                    Favourites
+                  </button>
+                </div>
               </div>
             )}
           </div>
@@ -333,26 +349,24 @@ export function GuideClient() {
             <p className="text-sm text-text-muted">Load a region with listings to choose channels.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {allChannels
-                .filter((c) => !(pickerFilter === "favs" && favs.length > 0) || favs.includes(c.channel))
-                .map((c) => {
-                  const on = favs.includes(c.channel);
-                  return (
-                    <button
-                      key={c.channel}
-                      type="button"
-                      onClick={() => toggleFav(c.channel)}
-                      className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-                        on
-                          ? "border-success bg-success/15 text-success"
-                          : "border-border bg-surface text-text-muted hover:border-accent"
-                      }`}
-                    >
-                      {on ? "✓ " : ""}
-                      {c.channel}
-                    </button>
-                  );
-                })}
+              {allChannels.map((c) => {
+                const on = favSet.has(c.channel);
+                return (
+                  <button
+                    key={c.channel}
+                    type="button"
+                    onClick={() => toggleFav(c.channel)}
+                    className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+                      on
+                        ? "border-success bg-success/15 text-success"
+                        : "border-border bg-surface text-text-muted hover:border-accent"
+                    }`}
+                  >
+                    {on ? "✓ " : ""}
+                    {c.channel}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
@@ -426,7 +440,7 @@ function EntryMeta({ e }: { e: GuideEntry }) {
   );
 }
 
-function GuideList({ channels }: { channels: GuideChannel[] }) {
+const GuideList = memo(function GuideList({ channels }: { channels: GuideChannel[] }) {
   return (
     <div className="space-y-6">
       {channels.map((c) => (
@@ -455,13 +469,84 @@ function GuideList({ channels }: { channels: GuideChannel[] }) {
       ))}
     </div>
   );
-}
+});
 
 const PX_PER_MIN = 4;
 const ROW_H = 56;
 const LABEL_W = 104;
 
-function GuideGrid({
+// One channel row. Memoised on `isFav`/`selectedId` so toggling a favourite
+// (which changes one row's isFav) re-renders only that row, not the whole grid.
+const GridRow = memo(function GridRow({
+  channel,
+  isFav,
+  onToggleFav,
+  startMin,
+  width,
+  nowX,
+  selectedId,
+  onSelect,
+}: {
+  channel: GuideChannel;
+  isFav: boolean;
+  onToggleFav: (channel: string) => void;
+  startMin: number;
+  width: number;
+  nowX: number | null;
+  selectedId: string | number | null;
+  onSelect: (sel: { channel: string; entry: GuideEntry }) => void;
+}) {
+  return (
+    <div className="flex border-b border-border last:border-b-0">
+      <button
+        type="button"
+        onClick={() => onToggleFav(channel.channel)}
+        title={isFav ? "Remove from your channels" : "Add to your channels"}
+        className={`sticky left-0 z-10 flex shrink-0 items-center gap-1 border-r border-border px-2 text-left text-xs font-semibold transition-colors ${
+          isFav ? "bg-success/20 text-success" : "bg-surface text-text hover:bg-surface-overlay"
+        }`}
+        style={{ width: LABEL_W, height: ROW_H }}
+      >
+        {isFav && <span aria-hidden>✓</span>}
+        <span className="line-clamp-2">{channel.channel}</span>
+      </button>
+      <div className="relative" style={{ width, height: ROW_H }}>
+        {nowX != null && <div className="absolute top-0 z-20 h-full w-px bg-danger/70" style={{ left: nowX }} />}
+        {channel.entries.map((e) => {
+          const s = timeToMin(e.time);
+          if (s == null) return null;
+          const w = Math.max((e.runtime && e.runtime > 0 ? e.runtime : 30) * PX_PER_MIN, 36);
+          const on = isOnNow(e);
+          const sel = selectedId === e.id;
+          return (
+            <button
+              key={e.id}
+              type="button"
+              onClick={() => onSelect({ channel: channel.channel, entry: e })}
+              title={`${e.time ?? ""} ${e.showName}`}
+              className={`absolute top-1 bottom-1 overflow-hidden rounded border px-1.5 py-1 text-left text-[11px] leading-tight transition-colors ${
+                sel
+                  ? "border-accent bg-accent/30 text-text ring-2 ring-accent"
+                  : on
+                    ? "border-accent bg-accent/20 text-text"
+                    : "border-border bg-surface-raised text-text-muted hover:border-accent hover:text-text"
+              }`}
+              style={{ left: (s - startMin) * PX_PER_MIN, width: w - 2 }}
+            >
+              <span className="block truncate font-medium text-text">{e.showName}</span>
+              <span className="block truncate">
+                {e.time}
+                {e.season != null && e.episode != null ? ` · S${e.season}E${e.episode}` : ""}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+});
+
+const GuideGrid = memo(function GuideGrid({
   channels,
   favs,
   onToggleFav,
@@ -471,6 +556,7 @@ function GuideGrid({
   onToggleFav: (channel: string) => void;
 }) {
   const scroller = useRef<HTMLDivElement>(null);
+  const favSet = useMemo(() => new Set(favs), [favs]);
   const [selected, setSelected] = useState<{ channel: string; entry: GuideEntry } | null>(null);
 
   // Time window covering all shown entries (floored/ceiled to the hour).
@@ -490,7 +576,12 @@ function GuideGrid({
 
   const width = (endMin - startMin) * PX_PER_MIN;
   const nowMin = nowLocalMinutes(channels);
-  const nowX = nowMin != null && nowMin >= startMin && nowMin <= endMin ? (nowMin - startMin) * PX_PER_MIN : null;
+  // Round to whole pixels so sub-second Date.now() drift doesn't change the prop
+  // on every render (which would re-render every memoised row).
+  const nowX =
+    nowMin != null && nowMin >= startMin && nowMin <= endMin
+      ? Math.round((nowMin - startMin) * PX_PER_MIN)
+      : null;
 
   const hours: number[] = [];
   for (let h = startMin; h <= endMin; h += 60) hours.push(h);
@@ -567,57 +658,20 @@ function GuideGrid({
 
         {/* Channel rows */}
         {channels.map((c) => (
-          <div key={c.channel} className="flex border-b border-border last:border-b-0">
-            <button
-              type="button"
-              onClick={() => onToggleFav(c.channel)}
-              title={favs.includes(c.channel) ? "Remove from your channels" : "Add to your channels"}
-              className={`sticky left-0 z-10 flex shrink-0 items-center gap-1 border-r border-border px-2 text-left text-xs font-semibold transition-colors ${
-                favs.includes(c.channel)
-                  ? "bg-success/20 text-success"
-                  : "bg-surface text-text hover:bg-surface-overlay"
-              }`}
-              style={{ width: LABEL_W, height: ROW_H }}
-            >
-              {favs.includes(c.channel) && <span aria-hidden>✓</span>}
-              <span className="line-clamp-2">{c.channel}</span>
-            </button>
-            <div className="relative" style={{ width, height: ROW_H }}>
-              {nowX != null && <div className="absolute top-0 z-20 h-full w-px bg-danger/70" style={{ left: nowX }} />}
-              {c.entries.map((e) => {
-                const s = timeToMin(e.time);
-                if (s == null) return null;
-                const w = Math.max((e.runtime && e.runtime > 0 ? e.runtime : 30) * PX_PER_MIN, 36);
-                const on = isOnNow(e);
-                const sel = selected?.entry.id === e.id;
-                return (
-                  <button
-                    key={e.id}
-                    type="button"
-                    onClick={() => setSelected({ channel: c.channel, entry: e })}
-                    title={`${e.time ?? ""} ${e.showName}`}
-                    className={`absolute top-1 bottom-1 overflow-hidden rounded border px-1.5 py-1 text-left text-[11px] leading-tight transition-colors ${
-                      sel
-                        ? "border-accent bg-accent/30 text-text ring-2 ring-accent"
-                        : on
-                          ? "border-accent bg-accent/20 text-text"
-                          : "border-border bg-surface-raised text-text-muted hover:border-accent hover:text-text"
-                    }`}
-                    style={{ left: (s - startMin) * PX_PER_MIN, width: w - 2 }}
-                  >
-                    <span className="block truncate font-medium text-text">{e.showName}</span>
-                    <span className="block truncate">
-                      {e.time}
-                      {e.season != null && e.episode != null ? ` · S${e.season}E${e.episode}` : ""}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          <GridRow
+            key={c.channel}
+            channel={c}
+            isFav={favSet.has(c.channel)}
+            onToggleFav={onToggleFav}
+            startMin={startMin}
+            width={width}
+            nowX={nowX}
+            selectedId={selected?.entry.id ?? null}
+            onSelect={setSelected}
+          />
         ))}
         </div>
       </div>
     </div>
   );
-}
+});
