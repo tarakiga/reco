@@ -34,6 +34,7 @@ export const FEATURES: Feature[] = [
   { category: "discover", emoji: "🎲", name: "Shuffle", blurb: "Can't decide? Pick your streaming services and we deal a few great picks to watch right now.", where: "Shuffle", href: "/shuffle" },
   { category: "discover", emoji: "🎭", name: "Mood & occasion rails", blurb: "Pick a vibe or an occasion and we line up the watches. Spooky season, date night, mind-benders and more.", where: "Browse by mood", href: "/moods", isNew: true },
   { category: "discover", emoji: "📅", name: "Release calendar", blurb: "What's coming to cinemas and streaming over the next two months, with a theatres or streaming filter.", where: "Calendar", href: "/calendar", isNew: true },
+  { category: "discover", emoji: "📡", name: "TV guide", blurb: "What's on live TV by channel and region, with season and episode numbers and synopses. Pick your channels and skip the clutter.", where: "TV guide", href: "/guide", isNew: true },
   { category: "discover", emoji: "🆕", name: "New to streaming", blurb: "Films that just landed on subscription streaming in your region.", where: "Top of the Calendar page", href: "/calendar", isNew: true },
   { category: "discover", emoji: "✨", name: "For you", blurb: "Personalised picks that learn from what you rate and watch.", where: "For you", href: "/for-you" },
   { category: "discover", emoji: "🍿", name: "Browse movies", blurb: "Browse and filter the movie catalogue by genre and year.", where: "Movies", href: "/movies" },
