@@ -80,6 +80,14 @@ export function GuideClient() {
   const [pickerOpen, setPickerOpen] = useState(true); // open by default so picking is obvious
   const [view, setView] = useState<"list" | "grid">("list");
   const [primeOnly, setPrimeOnly] = useState(false);
+  const [pickerFilter, setPickerFilter] = useState<"all" | "favs">("all");
+  const [showTop, setShowTop] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShowTop(window.scrollY > 600);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Signed-in users sync their channel picks to the DB so the choice carries
   // across devices; guests fall back to localStorage only.
@@ -296,6 +304,60 @@ export function GuideClient() {
         </span>
       </div>
 
+      {/* Channel picker — directly under the controls so it reads as part of
+          the "Choose channels" action rather than floating below the dates. */}
+      {pickerOpen && (
+        <div className="rounded-lg border border-border bg-surface-raised p-4">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-text-muted">
+              Tap to pick the channels you care about
+            </p>
+            {favs.length > 0 && (
+              <div className="flex h-7 shrink-0 overflow-hidden rounded-md border border-border text-xs">
+                {(["all", "favs"] as const).map((f) => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setPickerFilter(f)}
+                    className={`px-2 font-medium transition-colors ${
+                      pickerFilter === f ? "bg-accent text-white" : "bg-surface text-text-muted hover:text-text"
+                    }`}
+                  >
+                    {f === "all" ? "All" : "Favourites"}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          {allChannels.length === 0 ? (
+            <p className="text-sm text-text-muted">Load a region with listings to choose channels.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {allChannels
+                .filter((c) => !(pickerFilter === "favs" && favs.length > 0) || favs.includes(c.channel))
+                .map((c) => {
+                  const on = favs.includes(c.channel);
+                  return (
+                    <button
+                      key={c.channel}
+                      type="button"
+                      onClick={() => toggleFav(c.channel)}
+                      className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+                        on
+                          ? "border-success bg-success/15 text-success"
+                          : "border-border bg-surface text-text-muted hover:border-accent"
+                      }`}
+                    >
+                      {on ? "✓ " : ""}
+                      {c.channel}
+                    </button>
+                  );
+                })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Day selector */}
       <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {days.map((d, i) => {
@@ -318,37 +380,6 @@ export function GuideClient() {
         })}
       </div>
 
-      {/* Channel picker */}
-      {pickerOpen && (
-        <div className="rounded-lg border border-border bg-surface-raised p-4">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-text-muted">
-            Tap to pick the channels you care about
-          </p>
-          {allChannels.length === 0 ? (
-            <p className="text-sm text-text-muted">Load a region with listings to choose channels.</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {allChannels.map((c) => {
-                const on = favs.includes(c.channel);
-                return (
-                  <button
-                    key={c.channel}
-                    type="button"
-                    onClick={() => toggleFav(c.channel)}
-                    className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-                      on ? "border-accent bg-accent/15 text-accent" : "border-border bg-surface text-text-muted hover:border-accent"
-                    }`}
-                  >
-                    {on ? "✓ " : ""}
-                    {c.channel}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Listings */}
       {isFetching ? (
         <p className="text-sm text-text-muted">Loading the schedule…</p>
@@ -361,9 +392,20 @@ export function GuideClient() {
             : "No listings for this region on this day. TVmaze covers some regions sparsely."}
         </p>
       ) : view === "grid" ? (
-        <GuideGrid channels={shown} />
+        <GuideGrid channels={shown} favs={favs} onToggleFav={toggleFav} />
       ) : (
         <GuideList channels={shown} />
+      )}
+
+      {showTop && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          aria-label="Scroll to top"
+          className="fixed bottom-6 right-6 z-40 flex size-11 items-center justify-center rounded-full border border-border bg-surface-raised text-lg text-text shadow-overlay transition-colors hover:border-accent hover:text-accent"
+        >
+          ↑
+        </button>
       )}
     </div>
   );
@@ -419,7 +461,15 @@ const PX_PER_MIN = 4;
 const ROW_H = 56;
 const LABEL_W = 104;
 
-function GuideGrid({ channels }: { channels: GuideChannel[] }) {
+function GuideGrid({
+  channels,
+  favs,
+  onToggleFav,
+}: {
+  channels: GuideChannel[];
+  favs: string[];
+  onToggleFav: (channel: string) => void;
+}) {
   const scroller = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<{ channel: string; entry: GuideEntry } | null>(null);
 
@@ -518,12 +568,20 @@ function GuideGrid({ channels }: { channels: GuideChannel[] }) {
         {/* Channel rows */}
         {channels.map((c) => (
           <div key={c.channel} className="flex border-b border-border last:border-b-0">
-            <div
-              className="sticky left-0 z-10 flex shrink-0 items-center border-r border-border bg-surface px-2 text-xs font-semibold text-text"
+            <button
+              type="button"
+              onClick={() => onToggleFav(c.channel)}
+              title={favs.includes(c.channel) ? "Remove from your channels" : "Add to your channels"}
+              className={`sticky left-0 z-10 flex shrink-0 items-center gap-1 border-r border-border px-2 text-left text-xs font-semibold transition-colors ${
+                favs.includes(c.channel)
+                  ? "bg-success/20 text-success"
+                  : "bg-surface text-text hover:bg-surface-overlay"
+              }`}
               style={{ width: LABEL_W, height: ROW_H }}
             >
+              {favs.includes(c.channel) && <span aria-hidden>✓</span>}
               <span className="line-clamp-2">{c.channel}</span>
-            </div>
+            </button>
             <div className="relative" style={{ width, height: ROW_H }}>
               {nowX != null && <div className="absolute top-0 z-20 h-full w-px bg-danger/70" style={{ left: nowX }} />}
               {c.entries.map((e) => {
