@@ -343,7 +343,7 @@ function GuideGrid({ channels }: { channels: GuideChannel[] }) {
   return (
     <div className="space-y-2">
       {selected && (
-        <div className="rounded-lg border border-accent/40 bg-surface-raised p-3">
+        <div className="sticky top-16 z-30 rounded-lg border border-accent/40 bg-surface-raised p-3 shadow-overlay">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-xs text-text-muted">
