@@ -81,6 +81,11 @@ export function GuideClient() {
   const dbMap = useRef<Record<string, string[]> | null>(null);
   const [dbLoaded, setDbLoaded] = useState(false);
 
+  // Broadcast vs Streaming switcher — only one region dropdown shows at a time.
+  const [mode, setMode] = useState<"broadcast" | "streaming">("broadcast");
+  const lastBroadcast = useRef(DEFAULT_GUIDE_COUNTRY);
+  const lastStreaming = useRef(GUIDE_PLUTO[0]?.code ?? "PLUTO_US");
+
   const localFavs = (c: string): string[] => {
     try {
       return JSON.parse(localStorage.getItem(`guide:favs:${c}`) ?? "[]");
@@ -91,7 +96,15 @@ export function GuideClient() {
 
   useEffect(() => {
     const c = localStorage.getItem("guide:country");
-    if (c) setCountry(c);
+    if (c) {
+      setCountry(c);
+      if (isPlutoCode(c)) {
+        setMode("streaming");
+        lastStreaming.current = c;
+      } else {
+        lastBroadcast.current = c;
+      }
+    }
   }, []);
 
   // Load the saved DB picks once (signed-in), then reflect the current region.
@@ -127,6 +140,13 @@ export function GuideClient() {
   function pickCountry(c: string) {
     setCountry(c);
     localStorage.setItem("guide:country", c);
+    if (isPlutoCode(c)) lastStreaming.current = c;
+    else lastBroadcast.current = c;
+  }
+  function switchMode(m: "broadcast" | "streaming") {
+    if (m === mode) return;
+    setMode(m);
+    pickCountry(m === "broadcast" ? lastBroadcast.current : lastStreaming.current);
   }
   function toggleFav(channel: string) {
     setFavs((prev) => {
@@ -165,9 +185,23 @@ export function GuideClient() {
     <div className="space-y-5">
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-3">
-        <label className="flex items-center gap-2 text-sm text-text-muted">
-          Broadcast
+        <div className="flex h-9 overflow-hidden rounded-md border border-border">
+          {(["broadcast", "streaming"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => switchMode(m)}
+              className={`px-3 text-sm font-medium transition-colors ${
+                mode === m ? "bg-accent text-white" : "bg-surface text-text-muted hover:text-text"
+              }`}
+            >
+              {m === "broadcast" ? "Broadcast" : "Streaming"}
+            </button>
+          ))}
+        </div>
+        {mode === "broadcast" ? (
           <select
+            aria-label="Broadcast region"
             value={isPlutoCode(country) ? "" : country}
             onChange={(e) => e.target.value && pickCountry(e.target.value)}
             className="h-9 rounded-md border border-border bg-surface px-2 text-sm text-text focus:outline-2 focus:outline-accent"
@@ -181,10 +215,9 @@ export function GuideClient() {
               </option>
             ))}
           </select>
-        </label>
-        <label className="flex items-center gap-2 text-sm text-text-muted">
-          Streaming
+        ) : (
           <select
+            aria-label="Streaming region"
             value={isPlutoCode(country) ? country : ""}
             onChange={(e) => e.target.value && pickCountry(e.target.value)}
             className="h-9 rounded-md border border-border bg-surface px-2 text-sm text-text focus:outline-2 focus:outline-accent"
@@ -198,7 +231,7 @@ export function GuideClient() {
               </option>
             ))}
           </select>
-        </label>
+        )}
 
         <button
           type="button"
