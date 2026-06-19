@@ -3,11 +3,17 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
-import { GUIDE_COUNTRIES, GUIDE_PLUTO, DEFAULT_GUIDE_COUNTRY } from "@/lib/guide/countries";
+import {
+  GUIDE_COUNTRIES,
+  GUIDE_PLUTO,
+  GUIDE_XUMO,
+  GUIDE_PLEX,
+  DEFAULT_GUIDE_COUNTRY,
+} from "@/lib/guide/countries";
 import { meFetch } from "@/lib/me-client";
 import type { GuideChannel, GuideEntry } from "@/services/guide";
 
-const isPlutoCode = (c: string) => c.toUpperCase().startsWith("PLUTO_");
+const isStreamingCode = (c: string) => /^(PLUTO_|XUMO|PLEX_)/i.test(c);
 
 const ymd = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -98,7 +104,7 @@ export function GuideClient() {
     const c = localStorage.getItem("guide:country");
     if (c) {
       setCountry(c);
-      if (isPlutoCode(c)) {
+      if (isStreamingCode(c)) {
         setMode("streaming");
         lastStreaming.current = c;
       } else {
@@ -140,7 +146,7 @@ export function GuideClient() {
   function pickCountry(c: string) {
     setCountry(c);
     localStorage.setItem("guide:country", c);
-    if (isPlutoCode(c)) lastStreaming.current = c;
+    if (isStreamingCode(c)) lastStreaming.current = c;
     else lastBroadcast.current = c;
   }
   function switchMode(m: "broadcast" | "streaming") {
@@ -202,7 +208,7 @@ export function GuideClient() {
         {mode === "broadcast" ? (
           <select
             aria-label="Broadcast region"
-            value={isPlutoCode(country) ? "" : country}
+            value={isStreamingCode(country) ? "" : country}
             onChange={(e) => e.target.value && pickCountry(e.target.value)}
             className="h-9 rounded-md border border-border bg-surface px-2 text-sm text-text focus:outline-2 focus:outline-accent"
           >
@@ -217,19 +223,35 @@ export function GuideClient() {
           </select>
         ) : (
           <select
-            aria-label="Streaming region"
-            value={isPlutoCode(country) ? country : ""}
+            aria-label="Streaming service"
+            value={isStreamingCode(country) ? country : ""}
             onChange={(e) => e.target.value && pickCountry(e.target.value)}
             className="h-9 rounded-md border border-border bg-surface px-2 text-sm text-text focus:outline-2 focus:outline-accent"
           >
             <option value="" disabled>
-              Pluto TV region
+              Streaming service
             </option>
-            {GUIDE_PLUTO.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.name.replace(/^Pluto TV /, "")}
-              </option>
-            ))}
+            <optgroup label="Pluto TV">
+              {GUIDE_PLUTO.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name.replace(/^Pluto TV /, "Pluto ")}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Xumo">
+              {GUIDE_XUMO.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Plex">
+              {GUIDE_PLEX.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name.replace(/^Plex /, "Plex ")}
+                </option>
+              ))}
+            </optgroup>
           </select>
         )}
 

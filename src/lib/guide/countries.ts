@@ -47,6 +47,22 @@ export const GUIDE_PLUTO: GuideCountry[] = [
   { code: "PLUTO_BR", name: "Pluto TV (Brazil)" },
 ];
 
+export const GUIDE_XUMO: GuideCountry[] = [{ code: "XUMO", name: "Xumo" }];
+
+export const GUIDE_PLEX: GuideCountry[] = [
+  { code: "PLEX_ALL", name: "Plex (Global)" },
+  { code: "PLEX_US", name: "Plex (US)" },
+  { code: "PLEX_UK", name: "Plex (UK)" },
+  { code: "PLEX_CA", name: "Plex (Canada)" },
+  { code: "PLEX_AU", name: "Plex (Australia)" },
+  { code: "PLEX_DE", name: "Plex (Germany)" },
+  { code: "PLEX_FR", name: "Plex (France)" },
+  { code: "PLEX_ES", name: "Plex (Spain)" },
+  { code: "PLEX_IT", name: "Plex (Italy)" },
+  { code: "PLEX_BR", name: "Plex (Brazil)" },
+  { code: "PLEX_MX", name: "Plex (Mexico)" },
+];
+
 export const DEFAULT_GUIDE_COUNTRY = "US";
 
 export function guideCountryName(code: string): string {
