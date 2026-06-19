@@ -33,6 +33,20 @@ export const GUIDE_COUNTRIES: GuideCountry[] = [
   { code: "IN", name: "India" },
 ];
 
+// Pluto TV free-streaming regions, shown as a separate group in the picker.
+// Codes carry a PLUTO_ prefix so the API routes them to the Pluto source.
+export const GUIDE_PLUTO: GuideCountry[] = [
+  { code: "PLUTO_US", name: "Pluto TV (US)" },
+  { code: "PLUTO_UK", name: "Pluto TV (UK)" },
+  { code: "PLUTO_CA", name: "Pluto TV (Canada)" },
+  { code: "PLUTO_AU", name: "Pluto TV (Australia)" },
+  { code: "PLUTO_DE", name: "Pluto TV (Germany)" },
+  { code: "PLUTO_FR", name: "Pluto TV (France)" },
+  { code: "PLUTO_ES", name: "Pluto TV (Spain)" },
+  { code: "PLUTO_IT", name: "Pluto TV (Italy)" },
+  { code: "PLUTO_BR", name: "Pluto TV (Brazil)" },
+];
+
 export const DEFAULT_GUIDE_COUNTRY = "US";
 
 export function guideCountryName(code: string): string {

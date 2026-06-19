@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { GUIDE_COUNTRIES, DEFAULT_GUIDE_COUNTRY } from "@/lib/guide/countries";
+import { GUIDE_COUNTRIES, GUIDE_PLUTO, DEFAULT_GUIDE_COUNTRY } from "@/lib/guide/countries";
 import type { GuideChannel, GuideEntry } from "@/services/guide";
 
 const ymd = (d: Date) =>
@@ -125,11 +125,20 @@ export function GuideClient() {
             onChange={(e) => pickCountry(e.target.value)}
             className="h-9 rounded-md border border-border bg-surface px-2 text-sm text-text focus:outline-2 focus:outline-accent"
           >
-            {GUIDE_COUNTRIES.map((c) => (
-              <option key={c.code} value={c.code}>
-                {c.name}
-              </option>
-            ))}
+            <optgroup label="Broadcast TV">
+              {GUIDE_COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </optgroup>
+            <optgroup label="Free streaming">
+              {GUIDE_PLUTO.map((c) => (
+                <option key={c.code} value={c.code}>
+                  {c.name}
+                </option>
+              ))}
+            </optgroup>
           </select>
         </label>
 

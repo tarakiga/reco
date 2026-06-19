@@ -9,7 +9,7 @@ import { titleSlug } from "@/lib/slug";
 const TVMAZE = "https://api.tvmaze.com";
 
 export interface GuideEntry {
-  id: number;
+  id: number | string;
   /** Channel-local clock time, e.g. "20:00". */
   time: string | null;
   /** ISO timestamp with offset, for the "on now" check. */
