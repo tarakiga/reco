@@ -1,5 +1,7 @@
 import "server-only";
 import { cacheLife } from "next/cache";
+import { tmdb } from "@/lib/tmdb/client";
+import { titleSlug } from "@/lib/slug";
 
 // TVmaze's schedule API is free and keyless. We only cache the response; nothing
 // is stored. It is episode/scripted-focused, so it lists shows airing (with rich
@@ -18,8 +20,8 @@ export interface GuideEntry {
   episodeTitle: string | null;
   synopsis: string | null;
   runtime: number | null;
-  /** Link into our own search so the show can be opened on Haystackk. */
-  searchHref: string;
+  /** Direct Haystackk title page when we can map the show (via IMDb), else our search. */
+  href: string;
 }
 
 export interface GuideChannel {
@@ -41,6 +43,7 @@ interface TvmazeItem {
     network?: { name?: string } | null;
     webChannel?: { name?: string } | null;
     summary?: string | null;
+    externals?: { imdb?: string | null } | null;
   };
 }
 
@@ -50,6 +53,26 @@ function strip(html?: string | null): string | null {
   return t || null;
 }
 
+/** Map a show's IMDb id to a Haystackk title page via TMDB; null if unmappable. */
+async function hrefFromImdb(imdb: string, showName: string): Promise<string | null> {
+  try {
+    const f = await tmdb.findByImdb(imdb);
+    const tv = f.tv_results?.[0];
+    if (tv) {
+      const date = tv.first_air_date ?? tv.release_date ?? null;
+      return `/title/tv/${tv.id}-${titleSlug(tv.name ?? tv.title ?? showName, date)}`;
+    }
+    const movie = f.movie_results?.[0];
+    if (movie) {
+      const date = movie.release_date ?? null;
+      return `/title/movie/${movie.id}-${titleSlug(movie.title ?? movie.name ?? showName, date)}`;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * A day's schedule for a country, grouped by channel and sorted by time.
  * Cached per (country, date). Returns [] on any failure so the page degrades to
@@ -57,7 +80,10 @@ function strip(html?: string | null): string | null {
  */
 export async function getSchedule(country: string, date: string): Promise<GuideChannel[]> {
   "use cache";
-  cacheLife("minutes");
+  // A day's listings are stable once published; "on now" is computed client-side
+  // from each entry's timestamp, so we can cache for hours and keep upstream
+  // (TVmaze + the per-show TMDB lookups) light.
+  cacheLife("hours");
 
   const cc = country.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 2);
   const dt = /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : "";
@@ -72,11 +98,27 @@ export async function getSchedule(country: string, date: string): Promise<GuideC
     if (!res.ok) return [];
     const items = (await res.json()) as TvmazeItem[];
 
+    // Resolve a direct title link per unique IMDb id (deduped, in parallel).
+    const imdbIds = [
+      ...new Set(
+        items.map((it) => it.show?.externals?.imdb).filter((v): v is string => !!v),
+      ),
+    ];
+    const hrefByImdb = new Map<string, string>();
+    await Promise.all(
+      imdbIds.map(async (imdb) => {
+        const name = items.find((it) => it.show?.externals?.imdb === imdb)?.show?.name ?? "";
+        const href = await hrefFromImdb(imdb, name);
+        if (href) hrefByImdb.set(imdb, href);
+      }),
+    );
+
     const byChannel = new Map<string, GuideEntry[]>();
     for (const it of items) {
       const show = it.show;
       const channel = show?.network?.name ?? show?.webChannel?.name;
       if (!channel || !show?.name) continue;
+      const imdb = show.externals?.imdb ?? null;
       const entry: GuideEntry = {
         id: it.id,
         time: it.airtime || null,
@@ -87,7 +129,7 @@ export async function getSchedule(country: string, date: string): Promise<GuideC
         episodeTitle: it.name ?? null,
         synopsis: strip(it.summary) ?? strip(show.summary),
         runtime: it.runtime ?? null,
-        searchHref: `/search?q=${encodeURIComponent(show.name)}`,
+        href: (imdb && hrefByImdb.get(imdb)) || `/search?q=${encodeURIComponent(show.name)}`,
       };
       const arr = byChannel.get(channel);
       if (arr) arr.push(entry);

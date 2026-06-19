@@ -80,4 +80,8 @@ export const tmdb = {
     ),
   watchRegions: () =>
     get<{ results: { iso_3166_1: string; english_name: string }[] }>("/watch/providers/regions"),
+  findByImdb: (imdbId: string) =>
+    get<{ movie_results: TmdbSearchItem[]; tv_results: TmdbSearchItem[] }>(`/find/${imdbId}`, {
+      external_source: "imdb_id",
+    }),
 };
