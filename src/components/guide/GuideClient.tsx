@@ -17,6 +17,17 @@ import type { GuideChannel, GuideEntry } from "@/services/guide";
 
 const isStreamingCode = (c: string) => /^(PLUTO_|XUMO|PLEX_|UKTV)/i.test(c);
 
+/** Streaming service name for calendar events; null for broadcast (the channel
+ *  name stands alone there). */
+function serviceLabel(country: string): string | null {
+  const c = country.toUpperCase();
+  if (c.startsWith("PLUTO_")) return "Pluto TV";
+  if (c === "XUMO") return "Xumo";
+  if (c.startsWith("PLEX_")) return "Plex";
+  if (c === "UKTV") return "U";
+  return null;
+}
+
 const ymd = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
@@ -196,6 +207,7 @@ export function GuideClient() {
 
   const allChannels = useMemo(() => data?.channels ?? [], [data]);
   const favsActive = onlyFavs && favs.length > 0;
+  const service = serviceLabel(country);
   const favSet = useMemo(() => new Set(favs), [favs]);
 
   // Favourites filter first. In "All" mode this returns the SAME array reference
@@ -422,9 +434,9 @@ export function GuideClient() {
             : "No listings for this region on this day. TVmaze covers some regions sparsely."}
         </p>
       ) : view === "grid" ? (
-        <GuideGrid channels={shown} favs={favs} onToggleFav={toggleFav} />
+        <GuideGrid channels={shown} favs={favs} onToggleFav={toggleFav} service={service} />
       ) : (
-        <GuideList channels={shown} />
+        <GuideList channels={shown} service={service} />
       )}
 
       {showTop && (
@@ -456,7 +468,13 @@ function EntryMeta({ e }: { e: GuideEntry }) {
   );
 }
 
-const GuideList = memo(function GuideList({ channels }: { channels: GuideChannel[] }) {
+const GuideList = memo(function GuideList({
+  channels,
+  service,
+}: {
+  channels: GuideChannel[];
+  service: string | null;
+}) {
   return (
     <div className="space-y-6">
       {channels.map((c) => (
@@ -467,7 +485,7 @@ const GuideList = memo(function GuideList({ channels }: { channels: GuideChannel
               <li key={e.id} className={`flex gap-3 py-2 ${isOnNow(e) ? "rounded-md bg-accent/10 px-2" : ""}`}>
                 <div className="flex w-12 shrink-0 flex-col items-start gap-1">
                   <span className="text-sm font-medium text-text-muted">{e.time ?? "--"}</span>
-                  <AddToCalendar entry={e} channel={c.channel} />
+                  <AddToCalendar entry={e} channel={c.channel} service={service} />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-baseline gap-x-2">
@@ -569,10 +587,12 @@ const GuideGrid = memo(function GuideGrid({
   channels,
   favs,
   onToggleFav,
+  service,
 }: {
   channels: GuideChannel[];
   favs: string[];
   onToggleFav: (channel: string) => void;
+  service: string | null;
 }) {
   const scroller = useRef<HTMLDivElement>(null);
   const favSet = useMemo(() => new Set(favs), [favs]);
@@ -645,7 +665,7 @@ const GuideGrid = memo(function GuideGrid({
                 >
                   View full details →
                 </Link>
-                <AddToCalendar entry={selected.entry} channel={selected.channel} />
+                <AddToCalendar entry={selected.entry} channel={selected.channel} service={service} />
               </div>
             </div>
             <button

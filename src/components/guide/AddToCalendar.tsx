@@ -8,10 +8,12 @@ import type { GuideEntry } from "@/services/guide";
 export function AddToCalendar({
   entry,
   channel,
+  service,
   className,
 }: {
   entry: GuideEntry;
   channel: string;
+  service?: string | null;
   className?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -26,7 +28,7 @@ export function AddToCalendar({
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
-  const ev = calEvent(entry, channel);
+  const ev = calEvent(entry, channel, service);
   if (!ev || ev.startMs <= Date.now()) return null;
 
   function downloadIcs() {

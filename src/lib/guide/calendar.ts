@@ -24,8 +24,10 @@ export interface CalEvent {
   uid: string;
 }
 
-/** Calendar event for a programme, or null if it has no usable start time. */
-export function calEvent(entry: GuideEntry, channel: string): CalEvent | null {
+/** Calendar event for a programme, or null if it has no usable start time.
+ *  `service` is the streaming service (e.g. "Pluto TV") when on streaming;
+ *  omit it for broadcast channels, where the channel name stands alone. */
+export function calEvent(entry: GuideEntry, channel: string, service?: string | null): CalEvent | null {
   if (!entry.airstamp) return null;
   const startMs = Date.parse(entry.airstamp);
   if (Number.isNaN(startMs)) return null;
@@ -34,15 +36,16 @@ export function calEvent(entry: GuideEntry, channel: string): CalEvent | null {
   const isTv = entry.season != null && entry.episode != null;
   const title = isTv ? `${entry.showName} S${entry.season}E${entry.episode}` : entry.showName;
 
+  const where = service ? `${channel} (${service})` : channel;
   const parts: string[] = [];
   if (isTv && entry.episodeTitle) parts.push(entry.episodeTitle);
   if (entry.synopsis) parts.push(entry.synopsis);
-  parts.push(`On ${channel}`);
+  parts.push(`On ${where}`);
 
   return {
     title,
     details: parts.join("\n\n"),
-    location: `On ${channel}`,
+    location: `On ${where}`,
     startMs,
     endMs,
     uid: `guide-${entry.id}@haystackk.com`,

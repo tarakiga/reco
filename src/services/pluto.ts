@@ -82,7 +82,13 @@ interface PlutoTimeline {
   title?: string;
   start?: string;
   stop?: string;
-  episode?: { season?: number; number?: number; name?: string; description?: string };
+  episode?: {
+    season?: number;
+    number?: number;
+    name?: string;
+    description?: string;
+    series?: { type?: string };
+  };
 }
 
 async function channelEpg(
@@ -150,13 +156,16 @@ export async function getPlutoSchedule(region: string, date: string): Promise<Gu
           const runtime =
             !Number.isNaN(st) && !Number.isNaN(sp) ? Math.round((sp - st) / 60_000) : null;
           const title = t.title ?? ch.name;
+          // Films are flagged series.type "film"; Pluto still stamps them S1E1,
+          // so suppress episode info for movies.
+          const isFilm = t.episode?.series?.type === "film";
           return {
             id: `${ch.id}-${idx}`,
             time: t.start ? fmtTime(t.start, meta.tz) : null,
             airstamp: t.start ?? null,
             showName: title,
-            season: t.episode?.season ?? null,
-            episode: t.episode?.number ?? null,
+            season: isFilm ? null : (t.episode?.season ?? null),
+            episode: isFilm ? null : (t.episode?.number ?? null),
             episodeTitle: t.episode?.name && t.episode.name !== title ? t.episode.name : null,
             synopsis: strip(t.episode?.description),
             runtime,
