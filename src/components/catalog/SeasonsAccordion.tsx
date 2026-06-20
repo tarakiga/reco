@@ -19,6 +19,55 @@ function fmtRuntime(min: number | null): string | null {
   return h ? `${h}h` : `${m}m`;
 }
 
+/** Deep-link target parsed from the URL hash: `#s3` (season) or `#s3e5` (episode). */
+interface HashTarget {
+  season: number;
+  episode: number | null;
+}
+function parseHashTarget(): HashTarget | null {
+  if (typeof window === "undefined") return null;
+  const m = /^#s(\d+)(?:e(\d+))?$/i.exec(window.location.hash);
+  if (!m) return null;
+  return { season: Number(m[1]), episode: m[2] ? Number(m[2]) : null };
+}
+
+/** Copy a shareable deep link (and reflect it in the address bar) for a season
+ *  or episode anchor. Sibling of the accordion toggle, never nested in it. */
+function CopyLinkButton({ hash, label }: { hash: string; label: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={(e) => {
+        e.stopPropagation();
+        const url = `${window.location.origin}${window.location.pathname}#${hash}`;
+        history.replaceState(null, "", `#${hash}`);
+        navigator.clipboard
+          ?.writeText(url)
+          .then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1200);
+          })
+          .catch(() => {});
+      }}
+      className="flex size-7 shrink-0 items-center justify-center rounded text-text-muted transition-colors hover:bg-surface-overlay hover:text-accent"
+    >
+      {copied ? (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-3.5" aria-hidden>
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-3.5" aria-hidden>
+          <path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5" />
+          <path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
 function CastAvatar({ member }: { member: EpisodeCastMember }) {
   return (
     <Link href={member.href} className="group w-full text-center">
@@ -40,11 +89,21 @@ function CastAvatar({ member }: { member: EpisodeCastMember }) {
   );
 }
 
-function EpisodeRow({ ep }: { ep: EpisodeVM }) {
+function EpisodeRow({
+  ep,
+  seasonNumber,
+  highlight,
+}: {
+  ep: EpisodeVM;
+  seasonNumber: number;
+  /** Deep-link target: scroll into view on mount and flash a ring briefly. */
+  highlight: boolean;
+}) {
   const [showCast, setShowCast] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [clamped, setClamped] = useState(false);
   const overviewRef = useRef<HTMLParagraphElement>(null);
+  const rowRef = useRef<HTMLLIElement>(null);
   const meta = [fmtDate(ep.airDate), fmtRuntime(ep.runtime)].filter(Boolean).join(" · ");
 
   // Only offer "View more" when the 2-line clamp actually hides text.
@@ -52,8 +111,18 @@ function EpisodeRow({ ep }: { ep: EpisodeVM }) {
     const el = overviewRef.current;
     if (el) setClamped(el.scrollHeight > el.clientHeight + 1);
   }, []);
+
+  // When this row is the deep-link target, scroll it into view once it renders.
+  useEffect(() => {
+    if (highlight) rowRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlight]);
+
   return (
-    <li>
+    <li
+      ref={rowRef}
+      id={`s${seasonNumber}e${ep.episodeNumber}`}
+      className={`group scroll-mt-24 rounded-md transition-shadow ${highlight ? "ring-2 ring-accent" : ""}`}
+    >
       <div className="flex gap-3">
         <div className="aspect-video w-28 shrink-0 self-start overflow-hidden rounded-md border border-border bg-surface-overlay">
           {ep.stillUrl ? (
@@ -66,9 +135,14 @@ function EpisodeRow({ ep }: { ep: EpisodeVM }) {
             <h4 className="truncate text-sm font-medium text-text">
               {ep.episodeNumber}. {ep.name}
             </h4>
-            {ep.voteAverage ? (
-              <span className="shrink-0 text-xs font-medium text-warning">★ {ep.voteAverage.toFixed(1)}</span>
-            ) : null}
+            <div className="flex shrink-0 items-center gap-1.5">
+              <span className="opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+                <CopyLinkButton hash={`s${seasonNumber}e${ep.episodeNumber}`} label="Copy link to this episode" />
+              </span>
+              {ep.voteAverage ? (
+                <span className="text-xs font-medium text-warning">★ {ep.voteAverage.toFixed(1)}</span>
+              ) : null}
+            </div>
           </div>
           {meta && <p className="mt-0.5 text-xs text-text-muted">{meta}</p>}
           {ep.overview && (
@@ -119,12 +193,20 @@ function SeasonItem({
   tvId,
   season,
   defaultOpen,
+  isTarget,
+  targetEpisode,
 }: {
   tvId: number;
   season: SeasonSummary;
   defaultOpen: boolean;
+  /** This season is the current deep-link target. */
+  isTarget: boolean;
+  /** Episode number to scroll to within this season, or null for season-only. */
+  targetEpisode: number | null;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const [flashEp, setFlashEp] = useState<number | null>(null);
   const { data, isLoading, isError } = useQuery({
     queryKey: ["tv-season", tvId, season.seasonNumber],
     queryFn: async () => {
@@ -137,32 +219,53 @@ function SeasonItem({
   });
   const episodes = data?.episodes ?? [];
 
+  // Becoming the deep-link target: open this season. Runs after mount (not during
+  // render) so the server/client first paint match — no hydration mismatch.
+  useEffect(() => {
+    if (!isTarget) return;
+    setOpen(true);
+    // Season-only target: scroll to the header now. Episode targets scroll
+    // themselves once their row loads (handled in EpisodeRow).
+    if (!targetEpisode) wrapRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [isTarget, targetEpisode]);
+
+  // Flash the targeted episode once its data has loaded, then fade the ring.
+  useEffect(() => {
+    if (!isTarget || !targetEpisode || episodes.length === 0) return;
+    setFlashEp(targetEpisode);
+    const t = setTimeout(() => setFlashEp(null), 2000);
+    return () => clearTimeout(t);
+  }, [isTarget, targetEpisode, episodes.length]);
+
   return (
-    <div>
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        aria-expanded={open}
-        className="flex w-full items-center gap-3 py-3 text-left transition-colors hover:text-accent"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden
-          className={`size-4 shrink-0 text-text-muted transition-transform ${open ? "rotate-90" : ""}`}
+    <div ref={wrapRef} id={`s${season.seasonNumber}`} className="scroll-mt-24">
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          aria-expanded={open}
+          className="flex flex-1 items-center gap-3 py-3 text-left transition-colors hover:text-accent"
         >
-          <path d="m9 18 6-6-6-6" />
-        </svg>
-        <span className="font-semibold text-text">{season.name}</span>
-        <span className="text-sm text-text-muted">
-          {season.episodeCount} {season.episodeCount === 1 ? "episode" : "episodes"}
-          {season.year ? ` · ${season.year}` : ""}
-        </span>
-      </button>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+            className={`size-4 shrink-0 text-text-muted transition-transform ${open ? "rotate-90" : ""}`}
+          >
+            <path d="m9 18 6-6-6-6" />
+          </svg>
+          <span className="font-semibold text-text">{season.name}</span>
+          <span className="text-sm text-text-muted">
+            {season.episodeCount} {season.episodeCount === 1 ? "episode" : "episodes"}
+            {season.year ? ` · ${season.year}` : ""}
+          </span>
+        </button>
+        <CopyLinkButton hash={`s${season.seasonNumber}`} label="Copy link to this season" />
+      </div>
       {open && (
         <div className="pb-4">
           {isLoading ? (
@@ -184,7 +287,12 @@ function SeasonItem({
           ) : (
             <ul className="space-y-3">
               {episodes.map((ep) => (
-                <EpisodeRow key={ep.episodeNumber} ep={ep} />
+                <EpisodeRow
+                  key={ep.episodeNumber}
+                  ep={ep}
+                  seasonNumber={season.seasonNumber}
+                  highlight={ep.episodeNumber === flashEp}
+                />
               ))}
             </ul>
           )}
@@ -195,12 +303,36 @@ function SeasonItem({
 }
 
 export function SeasonsAccordion({ tvId, seasons }: { tvId: number; seasons: SeasonSummary[] }) {
+  const [target, setTarget] = useState<HashTarget | null>(null);
+
+  // Resolve the deep-link target from the URL hash, and keep it in sync if the
+  // hash changes (in-page link click, pasted URL). Effect-only → no SSR hash read.
+  useEffect(() => {
+    const sync = () => {
+      const t = parseHashTarget();
+      setTarget(t && seasons.some((s) => s.seasonNumber === t.season) ? t : null);
+    };
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, [seasons]);
+
   if (seasons.length === 0) return null;
   return (
     <div className="divide-y divide-border rounded-lg border border-border bg-surface-raised px-4">
-      {seasons.map((s, i) => (
-        <SeasonItem key={s.seasonNumber} tvId={tvId} season={s} defaultOpen={i === 0} />
-      ))}
+      {seasons.map((s, i) => {
+        const isTarget = target?.season === s.seasonNumber;
+        return (
+          <SeasonItem
+            key={s.seasonNumber}
+            tvId={tvId}
+            season={s}
+            defaultOpen={target ? isTarget : i === 0}
+            isTarget={!!isTarget}
+            targetEpisode={isTarget ? target!.episode : null}
+          />
+        );
+      })}
     </div>
   );
 }
