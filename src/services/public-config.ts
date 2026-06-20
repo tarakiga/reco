@@ -1,5 +1,5 @@
 import "server-only";
-import { cacheTag } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { getPublishedOptions } from "./config";
 import { getPublishedBlock as getPublishedBlockRaw } from "./content";
 import type { PublishedBlock, PublishedOption } from "@/lib/contracts/config";
@@ -15,6 +15,7 @@ import type { PublishedBlock, PublishedOption } from "@/lib/contracts/config";
  */
 export async function publishedOptions(namespace: string): Promise<PublishedOption[]> {
   "use cache";
+  cacheLife("hours"); // also revalidated instantly on publish; never cache forever
   cacheTag(`config:options_namespace:${namespace}`);
   const result = await getPublishedOptions(namespace);
   const options: PublishedOption[] = result?.options ?? [];
