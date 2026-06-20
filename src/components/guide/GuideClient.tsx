@@ -12,6 +12,7 @@ import {
   DEFAULT_GUIDE_COUNTRY,
 } from "@/lib/guide/countries";
 import { meFetch } from "@/lib/me-client";
+import { AddToCalendar } from "./AddToCalendar";
 import type { GuideChannel, GuideEntry } from "@/services/guide";
 
 const isStreamingCode = (c: string) => /^(PLUTO_|XUMO|PLEX_|UKTV)/i.test(c);
@@ -464,7 +465,10 @@ const GuideList = memo(function GuideList({ channels }: { channels: GuideChannel
           <ul className="divide-y divide-border">
             {c.entries.map((e) => (
               <li key={e.id} className={`flex gap-3 py-2 ${isOnNow(e) ? "rounded-md bg-accent/10 px-2" : ""}`}>
-                <div className="w-12 shrink-0 text-sm font-medium text-text-muted">{e.time ?? "--"}</div>
+                <div className="flex w-12 shrink-0 flex-col items-start gap-1">
+                  <span className="text-sm font-medium text-text-muted">{e.time ?? "--"}</span>
+                  <AddToCalendar entry={e} channel={c.channel} />
+                </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-baseline gap-x-2">
                     <Link href={e.href} className="text-sm font-medium text-text hover:text-accent">
@@ -475,7 +479,7 @@ const GuideList = memo(function GuideList({ channels }: { channels: GuideChannel
                   {e.episodeTitle && e.episodeTitle !== e.showName && (
                     <p className="text-xs text-text">{e.episodeTitle}</p>
                   )}
-                  {e.synopsis && <p className="mt-0.5 line-clamp-2 text-xs text-text-muted">{e.synopsis}</p>}
+                  {e.synopsis && <p className="mt-0.5 text-xs text-text-muted">{e.synopsis}</p>}
                 </div>
               </li>
             ))}
@@ -634,12 +638,15 @@ const GuideGrid = memo(function GuideGrid({
               {selected.entry.synopsis && (
                 <p className="mt-1 text-xs text-text-muted">{selected.entry.synopsis}</p>
               )}
-              <Link
-                href={selected.entry.href}
-                className="mt-2 inline-block text-xs font-medium text-accent hover:underline"
-              >
-                View full details →
-              </Link>
+              <div className="mt-2 flex items-center gap-3">
+                <Link
+                  href={selected.entry.href}
+                  className="text-xs font-medium text-accent hover:underline"
+                >
+                  View full details →
+                </Link>
+                <AddToCalendar entry={selected.entry} channel={selected.channel} />
+              </div>
             </div>
             <button
               type="button"
