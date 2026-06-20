@@ -52,10 +52,17 @@ export async function getReleaseCalendar(
   cacheTag(`calendar:${region}:${filter}:${todayYmd}`);
 
   const end = shiftYmd(todayYmd, weeks * 7);
+  // Use the region-scoped `release_date` window (NOT `primary_release_date`) so
+  // that `with_release_type` actually constrains by that type's date in-region.
+  // With `primary_release_date`, a movie surfaces on its primary date regardless
+  // of the type filter — e.g. a film with only a theatrical date would still show
+  // under "Streaming" on its primary date, implying a streaming release that
+  // doesn't exist. `release_date` makes each tab show only its real releases and
+  // groups them on the matched type's date.
   const base: Record<string, string> = {
     region,
-    "primary_release_date.gte": todayYmd,
-    "primary_release_date.lte": end,
+    "release_date.gte": todayYmd,
+    "release_date.lte": end,
     sort_by: "popularity.desc",
     include_adult: "false",
   };
