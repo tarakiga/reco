@@ -53,6 +53,23 @@ function strip(html?: string | null): string | null {
   return t || null;
 }
 
+/**
+ * Append the episode deep-link anchor (e.g. `#s3e5`) when the href is a TV title
+ * page and we know the season + episode — matching the SeasonsAccordion scheme,
+ * so the show page opens that season and scrolls to the episode. No-op for movie
+ * pages, the /search fallback, or entries missing the numbers. The anchor
+ * degrades gracefully on the show page if the numbering doesn't line up (it just
+ * opens the season, or does nothing if that season doesn't exist).
+ */
+export function withEpisodeAnchor(
+  href: string,
+  season: number | null,
+  episode: number | null,
+): string {
+  if (season == null || episode == null || !href.startsWith("/title/tv/")) return href;
+  return `${href}#s${season}e${episode}`;
+}
+
 /** Map a show's IMDb id to a Haystackk title page via TMDB; null if unmappable. */
 async function hrefFromImdb(imdb: string, showName: string): Promise<string | null> {
   try {
@@ -119,17 +136,22 @@ export async function getSchedule(country: string, date: string): Promise<GuideC
       const channel = show?.network?.name ?? show?.webChannel?.name;
       if (!channel || !show?.name) continue;
       const imdb = show.externals?.imdb ?? null;
+      const season = it.season ?? null;
+      const episode = it.number ?? null;
+      const base = (imdb && hrefByImdb.get(imdb)) || `/search?q=${encodeURIComponent(show.name)}`;
       const entry: GuideEntry = {
         id: it.id,
         time: it.airtime || null,
         airstamp: it.airstamp || null,
         showName: show.name,
-        season: it.season ?? null,
-        episode: it.number ?? null,
+        season,
+        episode,
         episodeTitle: it.name ?? null,
         synopsis: strip(it.summary) ?? strip(show.summary),
         runtime: it.runtime ?? null,
-        href: (imdb && hrefByImdb.get(imdb)) || `/search?q=${encodeURIComponent(show.name)}`,
+        // Deep-link straight to the episode on the show page when we resolved a
+        // TV title page; falls back to the bare title page / search otherwise.
+        href: withEpisodeAnchor(base, season, episode),
       };
       const arr = byChannel.get(channel);
       if (arr) arr.push(entry);
