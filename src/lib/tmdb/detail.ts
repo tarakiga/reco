@@ -114,6 +114,57 @@ export function certification(meta: TmdbTitleDetail, mediaType: MediaType, regio
   return entry?.rating?.trim() || null;
 }
 
+// TMDB release-date types: 1 Premiere, 2 Theatrical (limited), 3 Theatrical,
+// 4 Digital, 5 Physical, 6 TV. We surface the cinema date (theatrical, with a
+// limited/premiere fallback) and the digital/VOD date.
+const CINEMA_TYPES = [3, 2, 1];
+const VOD_TYPES = [4];
+
+/**
+ * Earliest release date (ISO) of the given TMDB types for a movie. Prefers the
+ * region (US default), then falls back to the earliest such date in any kept
+ * region. Returns null when no matching date exists.
+ */
+function releaseDateOfType(
+  meta: TmdbTitleDetail,
+  types: number[],
+  region = "US",
+): string | null {
+  const results = meta.release_dates?.results;
+  if (!results) return null;
+  const pick = (entries: { type?: number; release_date?: string }[]): string | null => {
+    for (const t of types) {
+      const dates = entries
+        .filter((d) => d.type === t && d.release_date)
+        .map((d) => d.release_date as string)
+        .sort();
+      if (dates.length) return dates[0];
+    }
+    return null;
+  };
+  const regional = results.find((r) => r.iso_3166_1 === region);
+  if (regional) {
+    const hit = pick(regional.release_dates);
+    if (hit) return hit;
+  }
+  let earliest: string | null = null;
+  for (const r of results) {
+    const hit = pick(r.release_dates);
+    if (hit && (!earliest || hit < earliest)) earliest = hit;
+  }
+  return earliest;
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** ISO date -> "12 Jul 2024" (UTC, so no off-by-one near midnight). */
+export function formatReleaseDate(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
 /** "More like this" — TMDB recommendations mapped to title cards. */
 export function recommendations(meta: TmdbTitleDetail, limit = 12): TitleResult[] {
   const items = meta.recommendations?.results ?? [];
@@ -186,6 +237,10 @@ export function titleFacts(meta: TmdbTitleDetail, mediaType: MediaType): Fact[] 
     facts.push({ label: "Original language", value: languageName(meta.original_language) });
   }
   if (mediaType === "movie") {
+    const cinema = formatReleaseDate(releaseDateOfType(meta, CINEMA_TYPES));
+    const vod = formatReleaseDate(releaseDateOfType(meta, VOD_TYPES));
+    if (cinema) facts.push({ label: "In cinemas", value: cinema });
+    if (vod) facts.push({ label: "VOD", value: vod });
     const budget = formatMoney(meta.budget);
     const revenue = formatMoney(meta.revenue);
     if (budget) facts.push({ label: "Budget", value: budget });

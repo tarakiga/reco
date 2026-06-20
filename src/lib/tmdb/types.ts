@@ -101,7 +101,7 @@ export interface TmdbSeasonDetail {
 export interface TmdbReleaseDates {
   results?: {
     iso_3166_1: string;
-    release_dates: { certification?: string; type?: number }[];
+    release_dates: { certification?: string; type?: number; release_date?: string }[];
   }[];
 }
 /** TV age-rating payload (append_to_response=content_ratings). */

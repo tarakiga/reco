@@ -160,6 +160,40 @@ test("titleFacts returns money for movies and counts for TV", () => {
   expect(facts.some((f) => f.label === "Binge watch")).toBe(false);
 });
 
+test("titleFacts adds cinema + VOD release dates for movies", () => {
+  const movie: TmdbTitleDetail = {
+    id: 1,
+    release_dates: {
+      results: [
+        {
+          iso_3166_1: "US",
+          release_dates: [
+            { type: 3, release_date: "2024-07-12T00:00:00.000Z" }, // theatrical
+            { type: 4, release_date: "2024-09-20T00:00:00.000Z" }, // digital/VOD
+          ],
+        },
+      ],
+    },
+  };
+  const facts = titleFacts(movie, "movie");
+  expect(facts).toContainEqual({ label: "In cinemas", value: "12 Jul 2024" });
+  expect(facts).toContainEqual({ label: "VOD", value: "20 Sep 2024" });
+});
+
+test("titleFacts omits VOD when only a theatrical date exists", () => {
+  const movie: TmdbTitleDetail = {
+    id: 1,
+    release_dates: {
+      results: [
+        { iso_3166_1: "US", release_dates: [{ type: 2, release_date: "2024-01-05T00:00:00.000Z" }] },
+      ],
+    },
+  };
+  const facts = titleFacts(movie, "movie");
+  expect(facts).toContainEqual({ label: "In cinemas", value: "5 Jan 2024" });
+  expect(facts.some((f) => f.label === "VOD")).toBe(false);
+});
+
 test("titleFacts attaches the network logo when present", () => {
   const tv: TmdbTitleDetail = {
     id: 1,

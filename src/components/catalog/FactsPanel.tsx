@@ -9,6 +9,8 @@ type IconName =
   | "binge"
   | "network"
   | "money"
+  | "cinema"
+  | "vod"
   | "default";
 
 const ICON_FOR_LABEL: Record<string, IconName> = {
@@ -21,6 +23,8 @@ const ICON_FOR_LABEL: Record<string, IconName> = {
   Network: "network",
   Budget: "money",
   Revenue: "money",
+  "In cinemas": "cinema",
+  VOD: "vod",
 };
 
 function Icon({ name }: { name: IconName }) {
@@ -77,6 +81,20 @@ function Icon({ name }: { name: IconName }) {
           <rect x="2" y="6" width="20" height="12" rx="2" />
           <circle cx="12" cy="12" r="2.5" />
           <path d="M6 12h.01M18 12h.01" />
+        </svg>
+      );
+    case "cinema": // film / ticket
+      return (
+        <svg {...common}>
+          <rect x="3" y="4" width="18" height="16" rx="2" />
+          <path d="M3 9h18M8 4v5M16 4v5M8 20v-5M16 20v-5" />
+        </svg>
+      );
+    case "vod": // play in a frame
+      return (
+        <svg {...common}>
+          <rect x="3" y="5" width="18" height="14" rx="2" />
+          <path d="m10 9 5 3-5 3V9Z" />
         </svg>
       );
     case "status": // activity pulse
