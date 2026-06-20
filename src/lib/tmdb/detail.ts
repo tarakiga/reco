@@ -45,14 +45,25 @@ export function topCast(cast: TmdbCastMember[] | undefined, limit = 12): CastEnt
 }
 
 /** Full-series cast from /tv aggregate_credits (includes regulars who left
- *  before the final season, e.g. someone billed across seasons 1–4 of 8). */
+ *  before the final season, e.g. someone billed across seasons 1–4 of 8).
+ *
+ *  Ranked by episode count first, then billing `order`. TMDB's `order` is
+ *  unreliable for long-running shows — recurring cast added later often get a
+ *  huge order number (e.g. Candy Davis on Are You Being Served: 13 episodes but
+ *  order 558), which a pure-order sort would bury below 2-episode guests who
+ *  happen to have a low order. Episode count is the better significance signal;
+ *  order only breaks ties (so the main cast keep their billing among equals). */
 export function aggregateCast(
   cast: TmdbAggregateCastMember[] | undefined,
   limit = 18,
 ): CastEntry[] {
   if (!cast) return [];
   return [...cast]
-    .sort((a, b) => (a.order ?? 999) - (b.order ?? 999))
+    .sort(
+      (a, b) =>
+        (b.total_episode_count ?? 0) - (a.total_episode_count ?? 0) ||
+        (a.order ?? 999) - (b.order ?? 999),
+    )
     .slice(0, limit)
     .map((c) => ({
       tmdbId: c.id,

@@ -11,8 +11,11 @@ import { aggregateCast, type CastEntry } from "@/lib/tmdb/detail";
  */
 export async function seriesCast(tvId: number): Promise<CastEntry[]> {
   "use cache";
-  cacheLife("days");
-  cacheTag(`series-cast:${tvId}`);
+  // Hours, not days: TMDB cast edits (new credits, episode counts) should surface
+  // the same day. The `v2` tag also re-keys this cache on deploy, picking up the
+  // episode-count-first ranking in aggregateCast.
+  cacheLife("hours");
+  cacheTag(`series-cast:v2:${tvId}`);
   try {
     const agg = await tmdb.tvAggregateCredits(tvId);
     return aggregateCast(agg.cast, 18);

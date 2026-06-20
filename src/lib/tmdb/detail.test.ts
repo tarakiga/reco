@@ -19,7 +19,7 @@ test("parseIdSlug extracts leading integer id", () => {
   expect(parseIdSlug("not-a-number")).toBeNull();
 });
 
-test("aggregateCast orders by billing and reads the first role's character", () => {
+test("aggregateCast orders by episode count and reads the first role's character", () => {
   const cast = aggregateCast([
     { id: 2, name: "Jill Marie Jones", order: 4, total_episode_count: 137, roles: [{ character: "Toni Childs-Garrett" }] },
     { id: 1, name: "Tracee Ellis Ross", order: 0, total_episode_count: 172, roles: [{ character: "Joan Clayton" }] },
@@ -27,6 +27,24 @@ test("aggregateCast orders by billing and reads the first role's character", () 
   expect(cast.map((c) => c.name)).toEqual(["Tracee Ellis Ross", "Jill Marie Jones"]);
   expect(cast[1]).toMatchObject({ tmdbId: 2, character: "Toni Childs-Garrett" });
   expect(cast[1].href).toBe("/person/2-jill-marie-jones");
+});
+
+test("aggregateCast ranks a high-episode recurring role above a low-episode guest with lower billing", () => {
+  // Candy Davis (13 eps, order 558) should outrank a 2-episode guest billed at
+  // order 8 — episode count is the significance signal, order only breaks ties.
+  const cast = aggregateCast([
+    { id: 1, name: "Low-ep Guest", order: 8, total_episode_count: 2, roles: [{ character: "Guest" }] },
+    { id: 2, name: "Candy Davis", order: 558, total_episode_count: 13, roles: [{ character: "Miss Belfridge" }] },
+  ]);
+  expect(cast.map((c) => c.name)).toEqual(["Candy Davis", "Low-ep Guest"]);
+});
+
+test("aggregateCast uses billing order to break episode-count ties", () => {
+  const cast = aggregateCast([
+    { id: 1, name: "Second Billed", order: 3, total_episode_count: 20 },
+    { id: 2, name: "First Billed", order: 1, total_episode_count: 20 },
+  ]);
+  expect(cast.map((c) => c.name)).toEqual(["First Billed", "Second Billed"]);
 });
 
 test("pickTrailerKey prefers official YouTube Trailer", () => {
