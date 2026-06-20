@@ -94,12 +94,20 @@ export function GuideClient() {
   const [view, setView] = useState<"list" | "grid">("list");
   const [primeOnly, setPrimeOnly] = useState(false);
   const [showTop, setShowTop] = useState(false);
+  const [tipOpen, setTipOpen] = useState(true);
 
   useEffect(() => {
     const onScroll = () => setShowTop(window.scrollY > 600);
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+  useEffect(() => {
+    if (localStorage.getItem("guide:tip-calendar") === "dismissed") setTipOpen(false);
+  }, []);
+  function dismissTip() {
+    setTipOpen(false);
+    localStorage.setItem("guide:tip-calendar", "dismissed");
+  }
 
   // Signed-in users sync their channel picks to the DB so the choice carries
   // across devices; guests fall back to localStorage only.
@@ -227,6 +235,34 @@ export function GuideClient() {
 
   return (
     <div className="space-y-5">
+      {tipOpen && (
+        <div className="flex items-start gap-2.5 rounded-lg border border-accent/40 bg-accent/10 p-3">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="mt-0.5 size-5 shrink-0 text-accent"
+            aria-hidden
+          >
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <path d="M16 2v4M8 2v4M3 10h18" />
+          </svg>
+          <p className="flex-1 text-sm text-text">
+            <span className="font-semibold">New:</span> tap the calendar icon on any programme to add
+            a reminder to your Google or Apple calendar.
+          </p>
+          <button
+            type="button"
+            onClick={dismissTip}
+            aria-label="Dismiss tip"
+            className="shrink-0 rounded px-1.5 text-text-muted hover:text-text"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Controls */}
       <div className="flex flex-wrap items-center gap-3">
         {/* Keep the source toggle + region dropdown on one line, even on mobile. */}
