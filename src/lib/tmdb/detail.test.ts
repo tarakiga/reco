@@ -180,7 +180,7 @@ test("titleFacts adds cinema + VOD release dates for movies", () => {
   expect(facts).toContainEqual({ label: "VOD", value: "20 Sep 2024" });
 });
 
-test("titleFacts omits VOD when only a theatrical date exists", () => {
+test("titleFacts omits VOD when only a theatrical date exists (no today given)", () => {
   const movie: TmdbTitleDetail = {
     id: 1,
     release_dates: {
@@ -191,7 +191,55 @@ test("titleFacts omits VOD when only a theatrical date exists", () => {
   };
   const facts = titleFacts(movie, "movie");
   expect(facts).toContainEqual({ label: "In cinemas", value: "5 Jan 2024" });
-  expect(facts.some((f) => f.label === "VOD")).toBe(false);
+  expect(facts.some((f) => f.label === "VOD" || f.label === "Est. VOD")).toBe(false);
+});
+
+test("titleFacts estimates VOD (theatrical + 18d) when no digital date and film is recent", () => {
+  const movie: TmdbTitleDetail = {
+    id: 1,
+    release_dates: {
+      results: [
+        { iso_3166_1: "US", release_dates: [{ type: 3, release_date: "2026-06-05T00:00:00.000Z" }] },
+      ],
+    },
+  };
+  const facts = titleFacts(movie, "movie", "2026-06-20");
+  expect(facts).toContainEqual({ label: "In cinemas", value: "5 Jun 2026" });
+  expect(facts).toContainEqual({ label: "Est. VOD", value: "23 Jun 2026" });
+});
+
+test("titleFacts does not estimate VOD for old catalogue titles", () => {
+  const movie: TmdbTitleDetail = {
+    id: 1,
+    release_dates: {
+      results: [
+        { iso_3166_1: "US", release_dates: [{ type: 3, release_date: "1999-03-31T00:00:00.000Z" }] },
+      ],
+    },
+  };
+  const facts = titleFacts(movie, "movie", "2026-06-20");
+  expect(facts).toContainEqual({ label: "In cinemas", value: "31 Mar 1999" });
+  expect(facts.some((f) => f.label === "Est. VOD")).toBe(false);
+});
+
+test("titleFacts prefers a confirmed digital date over an estimate", () => {
+  const movie: TmdbTitleDetail = {
+    id: 1,
+    release_dates: {
+      results: [
+        {
+          iso_3166_1: "US",
+          release_dates: [
+            { type: 3, release_date: "2026-06-05T00:00:00.000Z" },
+            { type: 4, release_date: "2026-07-01T00:00:00.000Z" },
+          ],
+        },
+      ],
+    },
+  };
+  const facts = titleFacts(movie, "movie", "2026-06-20");
+  expect(facts).toContainEqual({ label: "VOD", value: "1 Jul 2026" });
+  expect(facts.some((f) => f.label === "Est. VOD")).toBe(false);
 });
 
 test("titleFacts attaches the network logo when present", () => {

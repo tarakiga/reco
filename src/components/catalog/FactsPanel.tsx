@@ -25,6 +25,7 @@ const ICON_FOR_LABEL: Record<string, IconName> = {
   Revenue: "money",
   "In cinemas": "cinema",
   VOD: "vod",
+  "Est. VOD": "vod",
 };
 
 function Icon({ name }: { name: IconName }) {

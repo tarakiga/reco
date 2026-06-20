@@ -121,7 +121,9 @@ export default async function TitlePage({
   const trailerKey = pickTrailerKey(meta.videos?.results);
   const recs = recommendations(meta);
   const seasons = mediaType === "tv" ? seasonSummaries(meta) : [];
-  const facts = titleFacts(meta, mediaType);
+  const now = new Date();
+  const todayYmd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const facts = titleFacts(meta, mediaType, todayYmd);
   const voteAverage = meta.vote_average;
   const voteCount = meta.vote_count;
   const poster = posterUrl(title.posterPath);

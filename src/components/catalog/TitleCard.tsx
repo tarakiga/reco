@@ -10,6 +10,7 @@ export function TitleCard({
   year,
   posterUrl,
   upcoming,
+  estimated,
   status,
   favourite,
   watchlist,
@@ -21,6 +22,9 @@ export function TitleCard({
   /** Pre-computed "upcoming" date label (e.g. "Aug 15, 2026"); computed by the
    *  page since it depends on the current time (not allowed in prerendered cards). */
   upcoming?: string | null;
+  /** Release calendar: marks the date as an estimated VOD window (adds an "Est."
+   *  badge) so a projected streaming date never reads as confirmed. */
+  estimated?: boolean;
   /** TV production status badge (Ended / Cancelled) — only for terminal states. */
   status?: StatusBadge | null;
   /** When provided, shows a heart to favourite the title without opening it. */
@@ -37,7 +41,7 @@ export function TitleCard({
             {favourite && <CardFavouriteButton {...favourite} />}
           </div>
         )}
-        {(status || upcoming) && (
+        {(status || upcoming || estimated) && (
           <div className="absolute left-1 top-1 z-10 flex flex-col items-start gap-1">
             {status && (
               <span
@@ -51,6 +55,14 @@ export function TitleCard({
             {upcoming && (
               <span className="rounded bg-black/75 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white shadow-sm backdrop-blur-sm">
                 {upcoming}
+              </span>
+            )}
+            {estimated && (
+              <span
+                title="Estimated VOD date — not yet confirmed"
+                className="rounded bg-warning/90 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-black shadow-sm backdrop-blur-sm"
+              >
+                Est. VOD
               </span>
             )}
           </div>

@@ -1,4 +1,5 @@
 import { slugify, titleSlug } from "@/lib/slug";
+import { estimatedVodYmd, shiftYmd } from "@/lib/release";
 import { profileUrl, posterUrl, logoUrl } from "./images";
 import type { TitleResult } from "./transform";
 import type { TmdbTitleDetail, TmdbCastMember, TmdbVideo, TmdbAggregateCastMember } from "./types";
@@ -230,17 +231,35 @@ export interface Fact {
 }
 
 /** Type-appropriate facts for the detail sidebar. */
-export function titleFacts(meta: TmdbTitleDetail, mediaType: MediaType): Fact[] {
+export function titleFacts(
+  meta: TmdbTitleDetail,
+  mediaType: MediaType,
+  todayYmd?: string,
+): Fact[] {
   const facts: Fact[] = [];
   if (meta.status) facts.push({ label: "Status", value: meta.status });
   if (meta.original_language) {
     facts.push({ label: "Original language", value: languageName(meta.original_language) });
   }
   if (mediaType === "movie") {
-    const cinema = formatReleaseDate(releaseDateOfType(meta, CINEMA_TYPES));
-    const vod = formatReleaseDate(releaseDateOfType(meta, VOD_TYPES));
+    const cinemaIso = releaseDateOfType(meta, CINEMA_TYPES);
+    const vodIso = releaseDateOfType(meta, VOD_TYPES);
+    const cinema = formatReleaseDate(cinemaIso);
     if (cinema) facts.push({ label: "In cinemas", value: cinema });
-    if (vod) facts.push({ label: "VOD", value: vod });
+    if (vodIso) {
+      const vod = formatReleaseDate(vodIso);
+      if (vod) facts.push({ label: "VOD", value: vod });
+    } else if (cinemaIso && todayYmd) {
+      // No confirmed digital date — a common TMDB gap for smaller films. Estimate
+      // from the theatrical window, but only for films still in/near their release
+      // window (don't guess a VOD date for decades-old catalogue titles). Clearly
+      // labelled "Est." so it never reads as a confirmed date.
+      const cinemaYmd = cinemaIso.slice(0, 10);
+      if (cinemaYmd >= shiftYmd(todayYmd, -120)) {
+        const est = formatReleaseDate(estimatedVodYmd(cinemaYmd));
+        if (est) facts.push({ label: "Est. VOD", value: est });
+      }
+    }
     const budget = formatMoney(meta.budget);
     const revenue = formatMoney(meta.revenue);
     if (budget) facts.push({ label: "Budget", value: budget });

@@ -2,6 +2,7 @@ import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { tmdb } from "@/lib/tmdb/client";
 import { toBrowseResults } from "@/lib/tmdb/discover";
+import { estimatedVodYmd, shiftYmd, VOD_WINDOW_DAYS } from "@/lib/release";
 import type { TitleResult } from "@/lib/tmdb/transform";
 
 export type ReleaseFilter = "all" | "theaters" | "streaming";
@@ -15,14 +16,6 @@ const RELEASE_TYPES: Record<ReleaseFilter, string | null> = {
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-/** Shift a YYYY-MM-DD by N days, deterministically (UTC, no Date.now). */
-function shiftYmd(ymd: string, days: number): string {
-  const [y, m, d] = ymd.split("-").map(Number);
-  const dt = new Date(Date.UTC(y, m - 1, d));
-  dt.setUTCDate(dt.getUTCDate() + days);
-  return dt.toISOString().slice(0, 10);
-}
 
 function dayLabel(ymd: string): string {
   const [y, m, d] = ymd.split("-").map(Number);
@@ -83,6 +76,10 @@ export async function getReleaseCalendar(
     if (page >= (data.total_pages ?? 1)) break;
   }
 
+  if (filter === "streaming") {
+    await addEstimatedVod(items, seen, region, todayYmd, end);
+  }
+
   const byDay = new Map<string, TitleResult[]>();
   for (const it of items) {
     const day = it.releaseDate!.slice(0, 10);
@@ -91,6 +88,53 @@ export async function getReleaseCalendar(
   return [...byDay.keys()]
     .sort()
     .map((date) => ({ date, label: dayLabel(date), items: byDay.get(date)! }));
+}
+
+/**
+ * Fill the streaming agenda's coverage gap: many films get a theatrical date in
+ * TMDB long before anyone logs the digital/VOD date. We pull recent wide
+ * theatrical releases whose estimated VOD (theatrical + window) falls in the
+ * agenda window, then add any not already present as `estimated` entries placed
+ * on their projected date. Mutates `items`/`seen` in place.
+ *
+ * Note: discover is popularity-sorted, so only films notable enough to surface
+ * in the first pages get a projection — very obscure titles still won't appear
+ * until TMDB has a real digital date. That's intentional: the calendar is a
+ * notable-releases view, not an exhaustive index.
+ */
+async function addEstimatedVod(
+  items: TitleResult[],
+  seen: Set<number>,
+  region: string,
+  todayYmd: string,
+  end: string,
+): Promise<void> {
+  // An estimate lands in [today, end] iff the theatrical date is in
+  // [today - window, end - window].
+  const thFrom = shiftYmd(todayYmd, -VOD_WINDOW_DAYS);
+  const thTo = shiftYmd(end, -VOD_WINDOW_DAYS);
+  for (let page = 1; page <= 2; page++) {
+    const data = await tmdb
+      .discover("movie", {
+        region,
+        with_release_type: "3", // wide theatrical only — skips festival/limited noise
+        "release_date.gte": thFrom,
+        "release_date.lte": thTo,
+        sort_by: "popularity.desc",
+        include_adult: "false",
+        page: String(page),
+      })
+      .catch(() => null);
+    if (!data) break;
+    for (const r of toBrowseResults("movie", data.results)) {
+      if (seen.has(r.tmdbId) || !r.releaseDate) continue; // already has a confirmed date in-window
+      const est = estimatedVodYmd(r.releaseDate);
+      if (est < todayYmd || est > end) continue;
+      seen.add(r.tmdbId);
+      items.push({ ...r, releaseDate: est, estimated: true });
+    }
+    if (page >= (data.total_pages ?? 1)) break;
+  }
 }
 
 /**

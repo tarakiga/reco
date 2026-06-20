@@ -11,6 +11,9 @@ export interface TitleResult {
   releaseDate: string | null;
   posterUrl: string | null;
   href: string;
+  /** Release calendar: `releaseDate` is an estimated VOD window, not a confirmed
+   *  date. Drives an "Est." badge so users know it's a projection. */
+  estimated?: boolean;
 }
 export interface PersonResult {
   kind: "person";

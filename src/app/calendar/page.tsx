@@ -86,6 +86,13 @@ export default async function CalendarPage({
         })}
       </div>
 
+      {filter === "streaming" && (
+        <p className="-mt-4 text-xs text-text-muted">
+          Dates marked <span className="font-semibold text-warning">Est. VOD</span> are projected
+          from the typical cinema-to-streaming window and may change once the platform confirms.
+        </p>
+      )}
+
       {days.length === 0 ? (
         <EmptyState
           title="Nothing scheduled"
@@ -106,7 +113,8 @@ export default async function CalendarPage({
                     title={t.title}
                     year={t.year}
                     posterUrl={t.posterUrl}
-                    upcoming={upcomingLabel(t.releaseDate)}
+                    upcoming={t.estimated ? null : upcomingLabel(t.releaseDate)}
+                    estimated={t.estimated}
                     favourite={favouriteProp(ctx, "movie", t.tmdbId)}
                     watchlist={watchlistProp(ctx, "movie", t.tmdbId)}
                   />
