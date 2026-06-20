@@ -133,15 +133,15 @@ export async function getPlutoSchedule(region: string, date: string): Promise<Gu
         const channelName = epg?.name ?? ch.name;
         const timelines = (epg?.timelines ?? []).filter((t) => {
           if (t.start == null || zonedDate(t.start, meta.tz) !== date) return false;
-          // Drop only true placeholder blocks: titled like the channel with no
-          // episode detail. Single-show pop-up channels (Family Ties, The Love
-          // Boat) title every show like the channel, but carry real episode
-          // names/synopses, so they're kept.
-          const desc = t.episode?.description;
-          const blankDesc = !desc || desc === "no info available";
-          const blankEp = !t.episode?.name || t.episode.name === t.title;
-          const isFiller = (t.title ?? "").trim() === channelName.trim() && blankDesc && blankEp;
-          return !isFiller;
+          // Drop Pluto's placeholder blocks: titled like the channel with episode
+          // number 0 (a long "no info" filler that otherwise overlaps the real
+          // programmes). Real content has number >= 1, so single-show pop-up
+          // channels (Family Ties) and curated channels (90s Throwback -> Election)
+          // keep their actual shows/movies.
+          const ep = t.episode;
+          const brandTitle = (t.title ?? "").trim() === channelName.trim();
+          const placeholder = ep == null || ep.number == null || ep.number === 0;
+          return !(brandTitle && placeholder);
         });
         if (timelines.length === 0) return null;
         const entries: GuideEntry[] = timelines.map((t, idx) => {
