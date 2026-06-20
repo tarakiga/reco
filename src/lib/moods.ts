@@ -354,14 +354,21 @@ export function getMoodBySlug(slug: string): Mood | undefined {
   return MOODS.find((m) => m.slug === slug);
 }
 
+/** The four mood rails pinned to the home page, in display order. */
+export const FEATURED_MOOD_SLUGS = [
+  "cosy-night-in",
+  "mind-benders",
+  "so-bad-its-good",
+  "family-movie-night",
+] as const;
+
 /**
- * Home-page selection: any in-season occasions first, then a daily-rotating
- * slice of evergreen moods, capped at `count`. Deterministic given the date.
+ * Home-page mood rails: a fixed, curated set in a stable order (no daily
+ * rotation or seasonal swap). The full catalogue, including occasions, is still
+ * browsable at /moods.
  */
-export function featuredMoods(month: number, dayOfYear: number, count = 4): Mood[] {
-  const occasions = MOODS.filter((m) => m.kind === "occasion" && m.season?.includes(month));
-  const evergreen = MOODS.filter((m) => m.kind === "mood");
-  const offset = ((dayOfYear % evergreen.length) + evergreen.length) % evergreen.length;
-  const rotated = [...evergreen.slice(offset), ...evergreen.slice(0, offset)];
-  return [...occasions, ...rotated].slice(0, count);
+export function featuredMoods(): Mood[] {
+  return FEATURED_MOOD_SLUGS.map((slug) => getMoodBySlug(slug)).filter(
+    (m): m is Mood => m !== undefined,
+  );
 }

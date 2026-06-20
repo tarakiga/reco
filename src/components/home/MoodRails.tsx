@@ -7,19 +7,13 @@ import { getMoodTitles } from "@/services/moods";
 import { featuredMoods } from "@/lib/moods";
 
 /**
- * Home-page mood rails — a date-aware rotating set (in-season occasions first).
- * Dynamic (resolves the signed-in user for card quick-actions), so render it
- * inside a <Suspense> boundary on the otherwise-static home page.
+ * Home-page mood rails — a fixed, curated set of four moods. Dynamic (resolves
+ * the signed-in user for card quick-actions), so render it inside a <Suspense>
+ * boundary on the otherwise-static home page.
  */
 export async function MoodRails() {
-  await connection(); // dynamic: reads the current date + signed-in user
-  const now = new Date();
-  const month = now.getMonth() + 1;
-  const startOfYear = Date.UTC(now.getUTCFullYear(), 0, 0);
-  const dayOfYear = Math.floor(
-    (Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - startOfYear) / 86_400_000,
-  );
-  const moods = featuredMoods(month, dayOfYear);
+  await connection(); // dynamic: reads the signed-in user for card quick-actions
+  const moods = featuredMoods();
 
   const [ctx, ...lists] = await Promise.all([
     cardActionContext(),
