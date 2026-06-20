@@ -131,14 +131,18 @@ export async function getPlutoSchedule(region: string, date: string): Promise<Gu
       batch.map(async (ch) => {
         const epg = await channelEpg(ch.id, start, stop);
         const channelName = epg?.name ?? ch.name;
-        // Keep this region's local calendar day, and drop Pluto's filler blocks
-        // (a program titled like the channel itself).
-        const timelines = (epg?.timelines ?? []).filter(
-          (t) =>
-            (t.title ?? "").trim() !== channelName.trim() &&
-            t.start != null &&
-            zonedDate(t.start, meta.tz) === date,
-        );
+        const timelines = (epg?.timelines ?? []).filter((t) => {
+          if (t.start == null || zonedDate(t.start, meta.tz) !== date) return false;
+          // Drop only true placeholder blocks: titled like the channel with no
+          // episode detail. Single-show pop-up channels (Family Ties, The Love
+          // Boat) title every show like the channel, but carry real episode
+          // names/synopses, so they're kept.
+          const desc = t.episode?.description;
+          const blankDesc = !desc || desc === "no info available";
+          const blankEp = !t.episode?.name || t.episode.name === t.title;
+          const isFiller = (t.title ?? "").trim() === channelName.trim() && blankDesc && blankEp;
+          return !isFiller;
+        });
         if (timelines.length === 0) return null;
         const entries: GuideEntry[] = timelines.map((t, idx) => {
           const st = t.start ? Date.parse(t.start) : NaN;
