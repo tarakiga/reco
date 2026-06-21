@@ -3,6 +3,7 @@ export const ADMIN_NAV: { href: string; label: string }[] = [
   { href: "/admin/analytics", label: "Analytics" },
   { href: "/admin/options", label: "Options" },
   { href: "/admin/affiliates", label: "Affiliates" },
+  { href: "/admin/ads", label: "Ads" },
   { href: "/admin/content", label: "Content" },
   { href: "/admin/audit", label: "Audit log" },
 ];

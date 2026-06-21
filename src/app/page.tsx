@@ -11,6 +11,7 @@ import { Rail } from "@/components/catalog/Rail";
 import { ForYouPreview } from "@/components/home/ForYouPreview";
 import { GenreTiles } from "@/components/home/GenreTiles";
 import { MoodRails } from "@/components/home/MoodRails";
+import { AdSlot } from "@/components/ads/AdSlot";
 import { SceneSearchBar } from "@/components/search/SceneSearchBar";
 
 async function getTrending(): Promise<TitleResult[]> {
@@ -228,6 +229,8 @@ export default async function Home() {
       <Suspense fallback={null}>
         <MoodRails />
       </Suspense>
+
+      <AdSlot placement="home-feed" className="mb-10" />
 
       <PosterRail title="Popular movies" items={popularMovies} />
       <PosterRail title="Popular TV shows" items={popularTv} />

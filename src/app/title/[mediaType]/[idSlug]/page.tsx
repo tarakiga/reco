@@ -33,6 +33,7 @@ import { DiaryButton } from "@/components/catalog/DiaryButton";
 import { HeroBackdrop } from "@/components/catalog/HeroBackdrop";
 import { AmbientBackground } from "@/components/catalog/AmbientBackground";
 import { FactsPanel } from "@/components/catalog/FactsPanel";
+import { AdSlot } from "@/components/ads/AdSlot";
 import { SeasonsAccordion } from "@/components/catalog/SeasonsAccordion";
 import { EpisodeFinder } from "@/components/catalog/EpisodeFinder";
 import { RelatedTitlesRail } from "@/components/catalog/RelatedTitlesRail";
@@ -251,6 +252,8 @@ export default async function TitlePage({
             <p className="mb-8 leading-relaxed text-text-muted">{title.overview}</p>
           )}
 
+          <AdSlot placement="title-inline" className="mb-8" />
+
           <Suspense fallback={null}>
             <TitleExtras mediaType={mediaType} tmdbId={id} />
           </Suspense>
@@ -326,7 +329,10 @@ export default async function TitlePage({
           )}
         </div>
 
-        <FactsPanel facts={facts} />
+        <aside className="space-y-6">
+          <FactsPanel facts={facts} />
+          <AdSlot placement="title-sidebar" />
+        </aside>
       </div>
     </div>
   );

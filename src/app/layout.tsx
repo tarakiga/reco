@@ -5,6 +5,8 @@ import "./globals.css";
 import { Suspense } from "react";
 import { ClerkProvider, Show, SignInButton } from "@clerk/nextjs";
 import { PageShell } from "@/components/layout/PageShell";
+import { AdLoader } from "@/components/ads/AdLoader";
+import { AdSlot } from "@/components/ads/AdSlot";
 import { AccountAvatar } from "@/components/layout/AccountAvatar";
 import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { ToastProvider } from "@/components/ui/Toast";
@@ -89,6 +91,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <ToastProvider>
             <QueryProvider>
             <Suspense>
+              <AdLoader />
+            </Suspense>
+            <Suspense>
               <NavigationProgress />
             </Suspense>
             <Suspense>
@@ -96,7 +101,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                 brand={brand}
                 navLinks={navLinks}
                 search={headerSearch}
-                footer={footerAttribution}
+                footer={
+                  <>
+                    <AdSlot placement="footer" className="mb-5" />
+                    {footerAttribution}
+                  </>
+                }
                 actions={
                   <>
                     <Show when="signed-out">
