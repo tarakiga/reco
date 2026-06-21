@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Asap, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
@@ -33,6 +34,23 @@ const footerAttribution = (
       but is not endorsed or certified by TMDB.
     </p>
     <p>Streaming data powered by JustWatch.</p>
+    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 pt-1">
+      <Link href="/privacy" className="underline hover:text-text">
+        Privacy policy
+      </Link>
+      <span aria-hidden>·</span>
+      <span>
+        Created by{" "}
+        <a
+          href="https://virtumultimedia.com/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline hover:text-text"
+        >
+          VirtuMultimedia
+        </a>
+      </span>
+    </p>
   </div>
 );
 
