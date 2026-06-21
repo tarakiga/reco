@@ -143,9 +143,13 @@ export async function addListItem(userId: string, listId: string, titleId: strin
     .select({ max: sql<number>`coalesce(max(${listItems.position}), -1)::int` })
     .from(listItems)
     .where(eq(listItems.listId, listId));
+  // CockroachDB INT8 comes back from postgres.js as a STRING, so `max + 1` would
+  // string-concatenate ("10" -> "101" -> "1011" ...) and eventually overflow the
+  // integer column. Coerce to a number before the arithmetic.
+  const nextPosition = Number(max ?? -1) + 1;
   await db
     .insert(listItems)
-    .values({ listId, titleId, position: (max ?? -1) + 1 })
+    .values({ listId, titleId, position: nextPosition })
     .onConflictDoNothing();
   await touch(listId);
   return true;
