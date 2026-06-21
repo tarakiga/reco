@@ -36,6 +36,20 @@ export async function ensureProfile(
   throw new Error(`Could not allocate a username for ${clerkUserId}`);
 }
 
+/**
+ * Delete a user's local profile by Clerk id. Every user-owned table references
+ * profiles.id with onDelete: "cascade", so this removes all of their data
+ * (ratings, watchlist, favourites, lists, tags, diary, polls, taste, guide
+ * channels). Returns the number of profile rows removed (0 if none existed).
+ */
+export async function deleteProfileByClerkId(clerkUserId: string): Promise<number> {
+  const rows = await db
+    .delete(profiles)
+    .where(eq(profiles.clerkUserId, clerkUserId))
+    .returning({ id: profiles.id });
+  return rows.length;
+}
+
 /** Current request's profile, or null when signed out. */
 export async function getCurrentProfile(): Promise<Profile | null> {
   const { userId } = await auth();
