@@ -20,6 +20,7 @@ import { SITE_URL } from "@/lib/brand";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { AccountHeader } from "@/components/account/AccountHeader";
 import { AccountSettings } from "@/components/account/AccountSettings";
+import { DataManager } from "@/components/account/DataManager";
 import { WatchlistSections } from "@/components/account/WatchlistSections";
 import { FavouritesGrid, type FavouriteVM } from "@/components/account/FavouritesGrid";
 import { UpcomingEpg } from "@/components/account/UpcomingEpg";
@@ -156,7 +157,10 @@ export default async function AccountPage() {
       id: "settings",
       label: "Settings",
       content: (
-        <AccountSettings initialRegion={profile.region} initialGenres={profile.preferredGenres ?? []} />
+        <div className="space-y-6">
+          <AccountSettings initialRegion={profile.region} initialGenres={profile.preferredGenres ?? []} />
+          <DataManager />
+        </div>
       ),
     },
   ];
