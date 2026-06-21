@@ -1,5 +1,6 @@
 import { titleSlug, slugify } from "@/lib/slug";
 import { posterUrl, profileUrl } from "./images";
+import { isSuppressedTitle } from "./suppressed";
 import type { TmdbSearchItem } from "./types";
 
 export interface TitleResult {
@@ -28,6 +29,7 @@ export function toSearchResults(items: TmdbSearchItem[]): SearchResult[] {
   const out: SearchResult[] = [];
   for (const it of items) {
     if (it.media_type === "movie" || it.media_type === "tv") {
+      if (isSuppressedTitle(it.media_type, it.id)) continue;
       const name = it.title ?? it.name ?? "Untitled";
       const date = it.release_date ?? it.first_air_date ?? null;
       const year = date && date.length >= 4 ? Number(date.slice(0, 4)) : null;

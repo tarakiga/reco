@@ -1,5 +1,6 @@
 import { slugify, titleSlug } from "@/lib/slug";
 import { estimatedVodYmd, shiftYmd } from "@/lib/release";
+import { isSuppressedTitle } from "./suppressed";
 import { profileUrl, posterUrl, logoUrl } from "./images";
 import type { TitleResult } from "./transform";
 import type { TmdbTitleDetail, TmdbCastMember, TmdbVideo, TmdbAggregateCastMember } from "./types";
@@ -183,6 +184,7 @@ export function recommendations(meta: TmdbTitleDetail, limit = 12): TitleResult[
   const out: TitleResult[] = [];
   for (const it of items) {
     if (it.media_type !== "movie" && it.media_type !== "tv") continue;
+    if (isSuppressedTitle(it.media_type, it.id)) continue;
     const name = it.title ?? it.name ?? "Untitled";
     const date = it.release_date ?? it.first_air_date ?? "";
     const year = date && date.length >= 4 ? Number(date.slice(0, 4)) : null;

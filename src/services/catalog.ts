@@ -2,8 +2,9 @@ import "server-only";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { titles, people, type TitleRow, type PersonRow } from "@/db/schema";
-import { tmdb } from "@/lib/tmdb/client";
+import { tmdb, TmdbError } from "@/lib/tmdb/client";
 import { slimTitleMetadata, slimPersonMetadata } from "@/lib/tmdb/slim";
+import { isSuppressedTitle } from "@/lib/tmdb/suppressed";
 import { titleSlug, slugify } from "@/lib/slug";
 
 const STALE_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
@@ -23,6 +24,13 @@ export async function getOrCreateTitle(
   tmdbId: number,
   persist = true,
 ): Promise<TitleRow> {
+  // Suppressed junk/duplicate entry: behave as "not found" so the page 404s and
+  // it never (re-)enters the catalog. Existing rows are purged by a one-off
+  // cleanup; toBrowseResults already keeps it out of discover/backfill.
+  if (isSuppressedTitle(mediaType, tmdbId)) {
+    throw new TmdbError(404, `Title ${mediaType}/${tmdbId} is suppressed`);
+  }
+
   const [existing] = await db
     .select()
     .from(titles)
