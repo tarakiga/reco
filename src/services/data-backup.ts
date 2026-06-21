@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
 import {
   favourites,
@@ -22,7 +22,7 @@ export const BACKUP_VERSION = 1;
 
 type Ref = { mediaType: "movie" | "tv"; tmdbId: number };
 const refKey = (mt: string, id: number) => `${mt}:${id}`;
-// CockroachDB INT8 (tmdb_id) can arrive as a string via the driver — normalise.
+// CockroachDB INT8 (tmdb_id) can arrive as a string via the driver, normalise.
 const n = (v: unknown): number => Number(v);
 
 /**
@@ -129,7 +129,7 @@ async function resolveTitleIds(refs: Ref[]): Promise<Map<string, string>> {
       const t = await getOrCreateTitle(r.mediaType, r.tmdbId);
       if (t.id) map.set(k, t.id);
     } catch {
-      // unresolvable (404/adult/etc.) — skip; counted as skipped below
+      // unresolvable (404/adult/etc.), skip; counted as skipped below
     }
   }
   return map;
@@ -149,7 +149,7 @@ export interface ImportSummary {
 }
 
 /**
- * Merge a backup into the user's account. Idempotent and additive — existing
+ * Merge a backup into the user's account. Idempotent and additive, existing
  * data is never deleted; rows already present are left as-is (or updated, for
  * ratings/watchlist status). Titles not yet in the catalogue are resolved via
  * TMDB. Returns a per-section count.
@@ -168,47 +168,51 @@ export async function importUserData(userId: string, data: BackupData): Promise<
   const s: ImportSummary = {
     favourites: 0, ratings: 0, watchlist: 0, lists: 0, listItems: 0, diary: 0, tags: 0, taggedTitles: 0, guideChannels: 0, skipped: 0,
   };
+  // Chunk so a big library is a handful of statements, not one round-trip per row.
+  const CHUNK = 500;
+  const chunked = <T>(arr: T[]): T[][] => {
+    const out: T[][] = [];
+    for (let i = 0; i < arr.length; i += CHUNK) out.push(arr.slice(i, i + CHUNK));
+    return out;
+  };
 
+  const favVals: { userId: string; titleId: string }[] = [];
   for (const r of data.favourites ?? []) {
     const t = tid(r);
-    if (!t) { s.skipped++; continue; }
-    await db.insert(favourites).values({ userId, titleId: t }).onConflictDoNothing();
-    s.favourites++;
+    if (t) favVals.push({ userId, titleId: t }); else s.skipped++;
   }
+  for (const c of chunked(favVals)) await db.insert(favourites).values(c).onConflictDoNothing();
+  s.favourites = favVals.length;
 
+  const ratVals: { userId: string; titleId: string; score: number }[] = [];
   for (const r of data.ratings ?? []) {
     const t = tid(r);
-    if (!t) { s.skipped++; continue; }
-    await db
-      .insert(ratings)
-      .values({ userId, titleId: t, score: r.score })
-      .onConflictDoUpdate({ target: [ratings.userId, ratings.titleId], set: { score: r.score } });
-    s.ratings++;
+    if (t) ratVals.push({ userId, titleId: t, score: r.score }); else s.skipped++;
   }
+  for (const c of chunked(ratVals))
+    await db.insert(ratings).values(c).onConflictDoUpdate({ target: [ratings.userId, ratings.titleId], set: { score: sql`excluded.score` } });
+  s.ratings = ratVals.length;
 
+  const watchVals: { userId: string; titleId: string; status: "want_to_watch" | "watching" | "watched" }[] = [];
   for (const r of data.watchlist ?? []) {
     const t = tid(r);
-    if (!t) { s.skipped++; continue; }
-    await db
-      .insert(watchlistItems)
-      .values({ userId, titleId: t, status: r.status })
-      .onConflictDoUpdate({ target: [watchlistItems.userId, watchlistItems.titleId], set: { status: r.status } });
-    s.watchlist++;
+    if (t) watchVals.push({ userId, titleId: t, status: r.status }); else s.skipped++;
   }
+  for (const c of chunked(watchVals))
+    await db.insert(watchlistItems).values(c).onConflictDoUpdate({ target: [watchlistItems.userId, watchlistItems.titleId], set: { status: sql`excluded.status` } });
+  s.watchlist = watchVals.length;
 
+  const diaryVals: { userId: string; titleId: string; watchedOn: string }[] = [];
   for (const r of data.diary ?? []) {
     const t = tid(r);
-    if (!t) { s.skipped++; continue; }
-    await db.insert(diary).values({ userId, titleId: t, watchedOn: r.watchedOn }).onConflictDoNothing();
-    s.diary++;
+    if (t) diaryVals.push({ userId, titleId: t, watchedOn: r.watchedOn }); else s.skipped++;
   }
+  for (const c of chunked(diaryVals)) await db.insert(diary).values(c).onConflictDoNothing();
+  s.diary = diaryVals.length;
 
   for (const l of data.lists ?? []) {
     // Reuse an existing same-named list so re-imports don't duplicate it.
-    const [existing] = await db
-      .select({ id: lists.id })
-      .from(lists)
-      .where(and(eq(lists.userId, userId), eq(lists.title, l.title)));
+    const [existing] = await db.select({ id: lists.id }).from(lists).where(and(eq(lists.userId, userId), eq(lists.title, l.title)));
     let listId = existing?.id;
     if (!listId) {
       const [created] = await db
@@ -218,35 +222,31 @@ export async function importUserData(userId: string, data: BackupData): Promise<
       listId = created.id;
       s.lists++;
     }
+    const itemVals: { listId: string; titleId: string; position: number; note: string | null }[] = [];
     for (const it of l.items ?? []) {
       const t = tid(it);
-      if (!t) { s.skipped++; continue; }
-      await db
-        .insert(listItems)
-        .values({ listId, titleId: t, position: it.position ?? 0, note: it.note ?? null })
-        .onConflictDoNothing();
-      s.listItems++;
+      if (t) itemVals.push({ listId, titleId: t, position: it.position ?? 0, note: it.note ?? null }); else s.skipped++;
     }
+    for (const c of chunked(itemVals)) await db.insert(listItems).values(c).onConflictDoNothing();
+    s.listItems += itemVals.length;
   }
 
   for (const tag of data.tags ?? []) {
     const slug = slugify(tag.name) || "tag";
-    const [existing] = await db
-      .select({ id: tags.id })
-      .from(tags)
-      .where(and(eq(tags.userId, userId), eq(tags.slug, slug)));
+    const [existing] = await db.select({ id: tags.id }).from(tags).where(and(eq(tags.userId, userId), eq(tags.slug, slug)));
     let tagId = existing?.id;
     if (!tagId) {
       const [created] = await db.insert(tags).values({ userId, name: tag.name, slug }).returning({ id: tags.id });
       tagId = created.id;
       s.tags++;
     }
+    const ttVals: { tagId: string; titleId: string }[] = [];
     for (const tt of tag.titles ?? []) {
       const t = tid(tt);
-      if (!t) { s.skipped++; continue; }
-      await db.insert(titleTags).values({ tagId, titleId: t }).onConflictDoNothing();
-      s.taggedTitles++;
+      if (t) ttVals.push({ tagId, titleId: t }); else s.skipped++;
     }
+    for (const c of chunked(ttVals)) await db.insert(titleTags).values(c).onConflictDoNothing();
+    s.taggedTitles += ttVals.length;
   }
 
   for (const [country, channels] of Object.entries(data.guideChannels ?? {})) {

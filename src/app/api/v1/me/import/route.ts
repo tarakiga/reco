@@ -12,6 +12,11 @@ export async function POST(req: Request) {
   await connection();
   const profile = await getCurrentProfile();
   if (!profile) return jsonError(401, "Sign in required");
+  // Reject an oversized upload before parsing it into memory. A real backup,
+  // even a huge library, is well under this; the array caps in backupSchema
+  // bound it further after parse.
+  const len = Number(req.headers.get("content-length") ?? 0);
+  if (len > 25_000_000) return jsonError(413, "That backup file is too large");
   try {
     let body: unknown;
     try {

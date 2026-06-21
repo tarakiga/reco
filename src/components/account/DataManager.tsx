@@ -7,7 +7,7 @@ import type { ImportSummary } from "@/services/data-backup";
 
 /**
  * Self-service data backup: download everything as a JSON file, or upload a
- * previous backup to restore it. Import is additive (merge) — it never deletes
+ * previous backup to restore it. Import is additive (merge); it never deletes
  * what you already have.
  */
 export function DataManager() {
@@ -79,7 +79,7 @@ export function DataManager() {
         <h2 className="text-base font-semibold text-text">Your data</h2>
         <p className="mt-1 text-sm text-text-muted">
           Download a backup of your favourites, ratings, watchlist, lists, diary, and tags as a JSON
-          file. You can re-upload it any time to restore — importing only adds, it never deletes what
+          file. You can re-upload it any time to restore. Importing only adds, it never deletes what
           you already have.
         </p>
       </div>

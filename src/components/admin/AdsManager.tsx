@@ -71,7 +71,7 @@ export function AdsManager({ isAdmin }: { isAdmin: boolean }) {
           enabled: v !== "",
         });
       }
-      toast({ title: "Saved as draft — Publish to go live", variant: "success" });
+      toast({ title: "Saved as draft. Publish to go live", variant: "success" });
     } catch (err) {
       toast({ title: err instanceof AdminApiError ? err.message : "Save failed.", variant: "danger" });
     }

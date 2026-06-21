@@ -1,4 +1,4 @@
-// Display-ads plumbing — pure helpers shared by the server reader, the ad-slot
+// Display-ads plumbing: pure helpers shared by the server reader, the ad-slot
 // components, and the admin form. No "server-only" here so the admin client can
 // import the placement metadata.
 //
@@ -12,7 +12,7 @@ export const ADS_ENABLED_KEY = "enabled"; // master on/off switch
 export const ADS_LOADER_KEY = "loader"; // network loader script URL
 export const slotKey = (placement: string) => `slot-${placement}`;
 
-/** A configurable ad placement — the source of truth for both the admin form
+/** A configurable ad placement: the source of truth for both the admin form
  *  and the slot components (which placement keys exist). */
 export interface AdPlacement {
   key: string;
@@ -23,22 +23,22 @@ export interface AdPlacement {
 export const AD_PLACEMENTS: AdPlacement[] = [
   {
     key: "title-inline",
-    label: "Title page — below synopsis",
+    label: "Title page: below synopsis",
     help: "In-feed unit on a movie/TV page, after the overview text.",
   },
   {
     key: "title-sidebar",
-    label: "Title page — sidebar",
+    label: "Title page: sidebar",
     help: "Vertical unit in the right sidebar under the Facts panel.",
   },
   {
     key: "home-feed",
-    label: "Home page — in-feed",
+    label: "Home page: in-feed",
     help: "One unit on the home page between the rails.",
   },
   {
     key: "footer",
-    label: "Site footer — all pages",
+    label: "Site footer: all pages",
     help: "A horizontal unit above the footer, site-wide.",
   },
 ];
