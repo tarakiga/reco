@@ -1,6 +1,6 @@
 import "server-only";
 import { cacheLife } from "next/cache";
-import type { GuideChannel, GuideEntry } from "./guide";
+import { getTvmazeChannel, type GuideChannel, type GuideEntry } from "./guide";
 
 // U (UKTV)'s free EPG API. Open, keyless, one call per channel/day, and the
 // richest of our sources: full season/episode numbers + synopsis. Covers UKTV's
@@ -130,7 +130,13 @@ export async function getUktvSchedule(date: string): Promise<GuideChannel[]> {
     }),
   );
 
-  return results
-    .filter((c): c is GuideChannel => c !== null)
-    .sort((a, b) => a.channel.localeCompare(b.channel));
+  const channels = results.filter((c): c is GuideChannel => c !== null);
+
+  // Sky Arts isn't a UKTV channel and has no free EPG of its own, but TVmaze
+  // carries it for GB. Fold it into this (U) source so it sits with the other
+  // British channels instead of stranded alone in the broadcast list.
+  const skyArts = await getTvmazeChannel("GB", date, "Sky Arts");
+  if (skyArts) channels.push(skyArts);
+
+  return channels.sort((a, b) => a.channel.localeCompare(b.channel));
 }

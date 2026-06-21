@@ -90,6 +90,25 @@ async function hrefFromImdb(imdb: string, showName: string): Promise<string | nu
   }
 }
 
+/** Map a TVmaze schedule item to a GuideEntry. `base` is the resolved link
+ *  (title page or /search); the episode deep-link anchor is applied here. */
+function tvmazeEntry(it: TvmazeItem, base: string): GuideEntry {
+  const season = it.season ?? null;
+  const episode = it.number ?? null;
+  return {
+    id: it.id,
+    time: it.airtime || null,
+    airstamp: it.airstamp || null,
+    showName: it.show?.name ?? "",
+    season,
+    episode,
+    episodeTitle: it.name ?? null,
+    synopsis: strip(it.summary) ?? strip(it.show?.summary),
+    runtime: it.runtime ?? null,
+    href: withEpisodeAnchor(base, season, episode),
+  };
+}
+
 /**
  * A day's schedule for a country, grouped by channel and sorted by time.
  * Cached per (country, date). Returns [] on any failure so the page degrades to
@@ -136,23 +155,8 @@ export async function getSchedule(country: string, date: string): Promise<GuideC
       const channel = show?.network?.name ?? show?.webChannel?.name;
       if (!channel || !show?.name) continue;
       const imdb = show.externals?.imdb ?? null;
-      const season = it.season ?? null;
-      const episode = it.number ?? null;
       const base = (imdb && hrefByImdb.get(imdb)) || `/search?q=${encodeURIComponent(show.name)}`;
-      const entry: GuideEntry = {
-        id: it.id,
-        time: it.airtime || null,
-        airstamp: it.airstamp || null,
-        showName: show.name,
-        season,
-        episode,
-        episodeTitle: it.name ?? null,
-        synopsis: strip(it.summary) ?? strip(show.summary),
-        runtime: it.runtime ?? null,
-        // Deep-link straight to the episode on the show page when we resolved a
-        // TV title page; falls back to the bare title page / search otherwise.
-        href: withEpisodeAnchor(base, season, episode),
-      };
+      const entry = tvmazeEntry(it, base);
       const arr = byChannel.get(channel);
       if (arr) arr.push(entry);
       else byChannel.set(channel, [entry]);
@@ -166,5 +170,48 @@ export async function getSchedule(country: string, date: string): Promise<GuideC
       .sort((a, b) => a.channel.localeCompare(b.channel));
   } catch {
     return [];
+  }
+}
+
+/**
+ * A single broadcast network's day from TVmaze (same entry shape as
+ * getSchedule), or null if it has nothing that day. Used to fold a non-UKTV UK
+ * channel (e.g. Sky Arts) into the U source so it isn't stranded alone in the
+ * broadcast list. Coverage is whatever TVmaze carries for that network.
+ */
+export async function getTvmazeChannel(
+  country: string,
+  date: string,
+  networkName: string,
+): Promise<GuideChannel | null> {
+  "use cache";
+  cacheLife("hours");
+
+  const cc = country.replace(/[^a-zA-Z]/g, "").toUpperCase().slice(0, 2);
+  const dt = /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : "";
+  if (cc.length !== 2) return null;
+
+  try {
+    const res = await fetch(`${TVMAZE}/schedule?country=${cc}${dt ? `&date=${dt}` : ""}`, {
+      headers: { accept: "application/json" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+    const items = (await res.json()) as TvmazeItem[];
+    const wanted = items.filter((it) => it.show?.network?.name === networkName && it.show?.name);
+    if (wanted.length === 0) return null;
+
+    const entries = await Promise.all(
+      wanted.map(async (it) => {
+        const imdb = it.show?.externals?.imdb ?? null;
+        const name = it.show!.name!;
+        const base = (imdb ? await hrefFromImdb(imdb, name) : null) || `/search?q=${encodeURIComponent(name)}`;
+        return tvmazeEntry(it, base);
+      }),
+    );
+    entries.sort((a, b) => (a.time ?? "").localeCompare(b.time ?? ""));
+    return { channel: networkName, entries };
+  } catch {
+    return null;
   }
 }
