@@ -182,7 +182,7 @@ export function TitleTags({ mediaType, tmdbId }: { mediaType: "movie" | "tv"; tm
           <button
             type="button"
             onClick={openAdd}
-            className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-1 text-xs font-medium text-text-muted transition-colors hover:border-accent hover:text-text"
+            className="inline-flex items-center gap-1 rounded-full border border-dashed border-[#22e06b] bg-[#22e06b]/10 px-2.5 py-1 text-xs font-semibold text-[#22e06b] transition-colors hover:bg-[#22e06b] hover:text-black"
           >
             + Add a tag
           </button>
