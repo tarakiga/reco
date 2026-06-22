@@ -27,6 +27,7 @@ export function DiaryManager({ initial }: { initial: DiaryEntry[] }) {
   const [date, setDate] = useState(today());
   const [q, setQ] = useState("");
   const [results, setResults] = useState<TitleResult[]>([]);
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   useEffect(() => {
     const query = q.trim();
@@ -77,6 +78,7 @@ export function DiaryManager({ initial }: { initial: DiaryEntry[] }) {
   }
 
   async function remove(id: string) {
+    setConfirmId(null);
     setEntries((es) => es.filter((e) => e.id !== id));
     try {
       await meFetch("/api/v1/me/diary", { method: "DELETE", body: { entryId: id } });
@@ -154,14 +156,33 @@ export function DiaryManager({ initial }: { initial: DiaryEntry[] }) {
                 </p>
               </div>
               <span className="shrink-0 text-xs text-text-muted">{fmt(e.watchedOn)}</span>
-              <button
-                type="button"
-                onClick={() => remove(e.id)}
-                aria-label="Remove entry"
-                className="shrink-0 rounded px-2 py-1 text-danger hover:text-danger/80"
-              >
-                ✕
-              </button>
+              {confirmId === e.id ? (
+                <div className="flex shrink-0 items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => remove(e.id)}
+                    className="rounded-md bg-danger px-2.5 py-1 text-xs font-medium text-white"
+                  >
+                    Sure?
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmId(null)}
+                    className="rounded-md border border-border bg-surface px-2.5 py-1 text-xs font-medium text-text hover:bg-surface-overlay"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmId(e.id)}
+                  aria-label="Remove entry"
+                  className="shrink-0 rounded px-2 py-1 text-danger hover:text-danger/80"
+                >
+                  ✕
+                </button>
+              )}
             </li>
           ))}
         </ul>
