@@ -10,7 +10,7 @@ interface Tag {
   slug: string;
 }
 
-/** Your personal tags for a title — clickable badges (→ /tags/<slug>) plus an
+/** Your personal tags for a title, clickable badges (→ /tags/<slug>) plus an
  *  add box that autocompletes your existing tags or creates a new one. Private. */
 export function TitleTags({ mediaType, tmdbId }: { mediaType: "movie" | "tv"; tmdbId: number }) {
   const { isSignedIn } = useAuth();
@@ -100,74 +100,97 @@ export function TitleTags({ mediaType, tmdbId }: { mediaType: "movie" | "tv"; tm
   const showCreate = ql.length > 0 && !allTags.some((t) => t.name.toLowerCase() === ql);
 
   return (
-    <div ref={boxRef} className="flex flex-wrap items-center gap-2">
-      {tags.map((t) => (
-        <span
-          key={t.id}
-          className="inline-flex items-center gap-1 rounded-full border border-border bg-surface-raised px-2.5 py-1 text-xs"
-        >
-          <Link href={`/tags/${t.slug}`} className="font-medium text-text transition-colors hover:text-accent">
-            #{t.name}
-          </Link>
+    <div ref={boxRef} className="space-y-1.5">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-text-muted">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="size-3.5"
+            aria-hidden
+          >
+            <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+            <circle cx="7.5" cy="7.5" r="1.5" />
+          </svg>
+          Tags
+        </span>
+
+        {tags.map((t) => (
+          <span
+            key={t.id}
+            className="inline-flex items-center gap-1 rounded-full border border-border bg-surface-raised px-2.5 py-1 text-xs"
+          >
+            <Link href={`/tags/${t.slug}`} className="font-medium text-text transition-colors hover:text-accent">
+              #{t.name}
+            </Link>
+            <button
+              type="button"
+              onClick={() => remove(t)}
+              aria-label={`Remove ${t.name}`}
+              className="text-sm leading-none text-text-muted transition-colors hover:text-danger"
+            >
+              ×
+            </button>
+          </span>
+        ))}
+
+        {adding ? (
+          <div className="relative">
+            <input
+              autoFocus
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  add(q);
+                }
+                if (e.key === "Escape") setAdding(false);
+              }}
+              placeholder="Tag name…"
+              className="h-7 w-40 rounded-full border border-border bg-surface px-3 text-xs text-text placeholder:text-text-muted focus:outline-2 focus:outline-accent"
+            />
+            {(suggestions.length > 0 || showCreate) && (
+              <div className="absolute left-0 top-8 z-20 w-52 overflow-hidden rounded-md border border-border bg-surface-raised py-1 shadow-overlay">
+                {suggestions.map((s) => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => add(s.name)}
+                    className="block w-full px-3 py-1.5 text-left text-xs text-text hover:bg-surface-overlay"
+                  >
+                    #{s.name}
+                  </button>
+                ))}
+                {showCreate && (
+                  <button
+                    type="button"
+                    onClick={() => add(q)}
+                    className="block w-full px-3 py-1.5 text-left text-xs font-medium text-accent hover:bg-surface-overlay"
+                  >
+                    Create “{q.trim()}”
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
           <button
             type="button"
-            onClick={() => remove(t)}
-            aria-label={`Remove ${t.name}`}
-            className="text-sm leading-none text-text-muted transition-colors hover:text-danger"
+            onClick={openAdd}
+            className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-1 text-xs font-medium text-text-muted transition-colors hover:border-accent hover:text-text"
           >
-            ×
+            + Add a tag
           </button>
-        </span>
-      ))}
+        )}
+      </div>
 
-      {adding ? (
-        <div className="relative">
-          <input
-            autoFocus
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                add(q);
-              }
-              if (e.key === "Escape") setAdding(false);
-            }}
-            placeholder="Tag name…"
-            className="h-7 w-40 rounded-full border border-border bg-surface px-3 text-xs text-text placeholder:text-text-muted focus:outline-2 focus:outline-accent"
-          />
-          {(suggestions.length > 0 || showCreate) && (
-            <div className="absolute left-0 top-8 z-20 w-52 overflow-hidden rounded-md border border-border bg-surface-raised py-1 shadow-overlay">
-              {suggestions.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => add(s.name)}
-                  className="block w-full px-3 py-1.5 text-left text-xs text-text hover:bg-surface-overlay"
-                >
-                  #{s.name}
-                </button>
-              ))}
-              {showCreate && (
-                <button
-                  type="button"
-                  onClick={() => add(q)}
-                  className="block w-full px-3 py-1.5 text-left text-xs font-medium text-accent hover:bg-surface-overlay"
-                >
-                  Create “{q.trim()}”
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      ) : (
-        <button
-          type="button"
-          onClick={openAdd}
-          className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-1 text-xs font-medium text-text-muted transition-colors hover:border-accent hover:text-text"
-        >
-          + Tag
-        </button>
+      {tags.length === 0 && !adding && (
+        <p className="pl-0.5 text-xs text-text-muted">Organize titles your way. Only you can see these.</p>
       )}
     </div>
   );
