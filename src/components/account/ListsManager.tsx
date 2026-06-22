@@ -127,13 +127,22 @@ export function ListsManager({ initial, siteOrigin }: { initial: ListSummaryVM[]
                   </button>
                 )}
                 {confirmId === l.id ? (
-                  <button
-                    type="button"
-                    onClick={() => remove(l.id)}
-                    className="rounded-md bg-danger px-2.5 py-1.5 text-xs font-medium text-white"
-                  >
-                    Sure?
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => remove(l.id)}
+                      className="rounded-md bg-danger px-2.5 py-1.5 text-xs font-medium text-white"
+                    >
+                      Sure?
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmId(null)}
+                      className="rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-text hover:bg-surface-overlay"
+                    >
+                      Cancel
+                    </button>
+                  </>
                 ) : (
                   <button
                     type="button"
