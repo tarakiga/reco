@@ -122,16 +122,16 @@ export function TitleTags({ mediaType, tmdbId }: { mediaType: "movie" | "tv"; tm
         {tags.map((t) => (
           <span
             key={t.id}
-            className="inline-flex items-center gap-1 rounded-full border border-border bg-surface-raised px-2.5 py-1 text-xs"
+            className="inline-flex items-center gap-1 rounded-full bg-[#22e06b] px-2.5 py-1 text-xs"
           >
-            <Link href={`/tags/${t.slug}`} className="font-medium text-text transition-colors hover:text-accent">
+            <Link href={`/tags/${t.slug}`} className="font-semibold text-black transition-colors hover:text-black/70">
               #{t.name}
             </Link>
             <button
               type="button"
               onClick={() => remove(t)}
               aria-label={`Remove ${t.name}`}
-              className="text-sm leading-none text-text-muted transition-colors hover:text-danger"
+              className="text-sm leading-none text-black/60 transition-colors hover:text-black"
             >
               ×
             </button>
