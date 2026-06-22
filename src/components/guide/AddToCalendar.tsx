@@ -50,13 +50,13 @@ export function AddToCalendar({
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        aria-label="Add to calendar"
+        aria-label="Set a reminder"
         title="Add a reminder to your calendar"
         className="flex size-6 items-center justify-center rounded text-text-muted transition-colors hover:bg-surface-overlay hover:text-accent"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-4" aria-hidden>
-          <rect x="3" y="4" width="18" height="18" rx="2" />
-          <path d="M16 2v4M8 2v4M3 10h18" />
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden>
+          <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
         </svg>
       </button>
       {open && (
