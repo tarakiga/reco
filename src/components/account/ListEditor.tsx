@@ -220,7 +220,10 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
 
       {/* Add titles / episodes */}
       <div className="flex flex-col gap-2">
-        <Input label="Add a movie, show, or episode" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search a title… (then pick episodes from a show)" />
+        <Input label="Add a movie, show, or episode" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search for a title…" />
+        <p className="text-xs font-medium text-warning">
+          For TV show episodes, first search for the show, then pick the episode.
+        </p>
         {results.length > 0 && (
           <ul className="overflow-hidden rounded-md border border-border bg-surface-raised">
             {results.map((r) => {
