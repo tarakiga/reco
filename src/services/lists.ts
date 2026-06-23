@@ -137,8 +137,25 @@ async function touch(listId: string) {
   await db.update(lists).set({ updatedAt: new Date() }).where(eq(lists.id, listId));
 }
 
-export async function addListItem(userId: string, listId: string, titleId: string): Promise<boolean> {
-  if (!(await ownsList(userId, listId))) return false;
+export interface AddListItemArgs {
+  titleId: string;
+  /** A specific TV episode, or omit/null for the whole movie/show. */
+  season?: number | null;
+  episode?: number | null;
+  episodeName?: string | null;
+}
+
+/** Add a title (or one of its episodes) to a list. Returns the new item's id,
+ *  or the existing item's id if it was already present. Null if the list isn't
+ *  the user's. */
+export async function addListItem(
+  userId: string,
+  listId: string,
+  args: AddListItemArgs,
+): Promise<{ id: string } | null> {
+  if (!(await ownsList(userId, listId))) return null;
+  const season = args.season ?? 0;
+  const episode = args.episode ?? 0;
   const [{ max }] = await db
     .select({ max: sql<number>`coalesce(max(${listItems.position}), -1)::int` })
     .from(listItems)
@@ -147,19 +164,40 @@ export async function addListItem(userId: string, listId: string, titleId: strin
   // string-concatenate ("10" -> "101" -> "1011" ...) and eventually overflow the
   // integer column. Coerce to a number before the arithmetic.
   const nextPosition = Number(max ?? -1) + 1;
-  await db
+  const [row] = await db
     .insert(listItems)
-    .values({ listId, titleId, position: nextPosition })
-    .onConflictDoNothing();
+    .values({
+      listId,
+      titleId: args.titleId,
+      seasonNumber: season,
+      episodeNumber: episode,
+      episodeName: args.episodeName?.trim() || null,
+      position: nextPosition,
+    })
+    .onConflictDoNothing()
+    .returning({ id: listItems.id });
   await touch(listId);
-  return true;
+  if (row) return { id: row.id };
+  // Already on the list (unique conflict) — return the existing row's id.
+  const [existing] = await db
+    .select({ id: listItems.id })
+    .from(listItems)
+    .where(
+      and(
+        eq(listItems.listId, listId),
+        eq(listItems.titleId, args.titleId),
+        eq(listItems.seasonNumber, season),
+        eq(listItems.episodeNumber, episode),
+      ),
+    );
+  return existing ? { id: existing.id } : null;
 }
 
-export async function removeListItem(userId: string, listId: string, titleId: string): Promise<boolean> {
+export async function removeListItem(userId: string, listId: string, itemId: string): Promise<boolean> {
   if (!(await ownsList(userId, listId))) return false;
   await db
     .delete(listItems)
-    .where(and(eq(listItems.listId, listId), eq(listItems.titleId, titleId)));
+    .where(and(eq(listItems.listId, listId), eq(listItems.id, itemId)));
   await touch(listId);
   return true;
 }
@@ -167,20 +205,22 @@ export async function removeListItem(userId: string, listId: string, titleId: st
 export async function reorderListItems(
   userId: string,
   listId: string,
-  orderedTitleIds: string[],
+  orderedItemIds: string[],
 ): Promise<boolean> {
   if (!(await ownsList(userId, listId))) return false;
-  for (let i = 0; i < orderedTitleIds.length; i++) {
+  for (let i = 0; i < orderedItemIds.length; i++) {
     await db
       .update(listItems)
       .set({ position: i })
-      .where(and(eq(listItems.listId, listId), eq(listItems.titleId, orderedTitleIds[i])));
+      .where(and(eq(listItems.listId, listId), eq(listItems.id, orderedItemIds[i])));
   }
   await touch(listId);
   return true;
 }
 
 export interface OwnerListItem {
+  /** list_items.id — the stable handle for reorder/remove/note. */
+  id: string;
   titleId: string;
   tmdbId: number;
   mediaType: "movie" | "tv";
@@ -188,6 +228,10 @@ export interface OwnerListItem {
   year: number | null;
   posterUrl: string | null;
   href: string;
+  /** Set when this item is a specific episode (else null = whole movie/show). */
+  season: number | null;
+  episode: number | null;
+  episodeName: string | null;
   note: string | null;
 }
 export interface OwnerList {
@@ -207,6 +251,7 @@ export async function getListForOwner(userId: string, listId: string): Promise<O
   if (!l) return null;
   const rows = await db
     .select({
+      id: listItems.id,
       titleId: titles.id,
       tmdbId: titles.tmdbId,
       mediaType: titles.mediaType,
@@ -214,6 +259,9 @@ export async function getListForOwner(userId: string, listId: string): Promise<O
       year: titles.releaseYear,
       posterPath: titles.posterPath,
       slug: titles.slug,
+      season: listItems.seasonNumber,
+      episode: listItems.episodeNumber,
+      episodeName: listItems.episodeName,
       note: listItems.note,
     })
     .from(listItems)
@@ -226,16 +274,26 @@ export async function getListForOwner(userId: string, listId: string): Promise<O
     subtitle: l.subtitle,
     slug: l.slug,
     published: l.published,
-    items: rows.map((r) => ({
-      titleId: r.titleId,
-      tmdbId: r.tmdbId,
-      mediaType: r.mediaType,
-      title: r.title,
-      year: r.year,
-      posterUrl: posterUrl(r.posterPath),
-      href: `/title/${r.mediaType}/${r.tmdbId}-${r.slug}`,
-      note: r.note ?? null,
-    })),
+    items: rows.map((r) => {
+      // CockroachDB INT8 columns come back as strings via postgres.js.
+      const episode = Number(r.episode ?? 0);
+      const season = Number(r.season ?? 0);
+      const isEpisode = episode > 0;
+      return {
+        id: r.id,
+        titleId: r.titleId,
+        tmdbId: r.tmdbId,
+        mediaType: r.mediaType,
+        title: r.title,
+        year: r.year,
+        posterUrl: posterUrl(r.posterPath),
+        href: `/title/${r.mediaType}/${r.tmdbId}-${r.slug}`,
+        season: isEpisode ? season : null,
+        episode: isEpisode ? episode : null,
+        episodeName: isEpisode ? r.episodeName ?? null : null,
+        note: r.note ?? null,
+      };
+    }),
   };
 }
 
@@ -243,14 +301,14 @@ export async function getListForOwner(userId: string, listId: string): Promise<O
 export async function setListItemNote(
   userId: string,
   listId: string,
-  titleId: string,
+  itemId: string,
   note: string | null,
 ): Promise<boolean> {
   if (!(await ownsList(userId, listId))) return false;
   await db
     .update(listItems)
     .set({ note: note && note.trim() ? note.trim() : null })
-    .where(and(eq(listItems.listId, listId), eq(listItems.titleId, titleId)));
+    .where(and(eq(listItems.listId, listId), eq(listItems.id, itemId)));
   await touch(listId);
   return true;
 }
@@ -277,6 +335,10 @@ export interface ViewListItem {
   runtime: number | null;
   /** TV season count (null for movies). */
   seasons: number | null;
+  /** Set when this item is a specific episode (else null = whole movie/show). */
+  season: number | null;
+  episode: number | null;
+  episodeName: string | null;
 }
 export interface ViewList {
   id: string;
@@ -313,6 +375,9 @@ export async function getListForView(listId: string): Promise<ViewList | null> {
       overview: titles.overview,
       slug: titles.slug,
       metadata: titles.metadata,
+      season: listItems.seasonNumber,
+      episode: listItems.episodeNumber,
+      episodeName: listItems.episodeName,
       note: listItems.note,
     })
     .from(listItems)
@@ -328,6 +393,10 @@ export async function getListForView(listId: string): Promise<ViewList | null> {
     author: l.author,
     items: rows.map((r) => {
       const meta = (r.metadata ?? {}) as TmdbTitleDetail;
+      // CockroachDB INT8 columns come back as strings via postgres.js.
+      const episode = Number(r.episode ?? 0);
+      const season = Number(r.season ?? 0);
+      const isEpisode = episode > 0;
       return {
         tmdbId: r.tmdbId,
         mediaType: r.mediaType,
@@ -342,6 +411,9 @@ export async function getListForView(listId: string): Promise<ViewList | null> {
         rating: meta.vote_average && meta.vote_average > 0 ? meta.vote_average : null,
         runtime: r.mediaType === "movie" ? meta.runtime ?? null : null,
         seasons: r.mediaType === "tv" ? meta.number_of_seasons ?? null : null,
+        season: isEpisode ? season : null,
+        episode: isEpisode ? episode : null,
+        episodeName: isEpisode ? r.episodeName ?? null : null,
       };
     }),
   };

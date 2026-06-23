@@ -160,11 +160,19 @@ export const listItems = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     listId: uuid("list_id").notNull().references(() => lists.id, { onDelete: "cascade" }),
     titleId: uuid("title_id").notNull().references(() => titles.id, { onDelete: "cascade" }),
+    // A specific TV episode of the title, or 0/0 for the whole movie/show. The
+    // 0 sentinel (not NULL) keeps the uniqueness check below simple, since NULLs
+    // would compare distinct and let the same show be added twice.
+    seasonNumber: integer("season_number").notNull().default(0),
+    episodeNumber: integer("episode_number").notNull().default(0),
+    // Episode title captured at add-time so rendering a list needs no live TMDB
+    // call per episode. Null for whole-title items.
+    episodeName: text("episode_name"),
     position: integer("position").notNull().default(0),
     note: text("note"),
     addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [unique("list_items_list_title").on(t.listId, t.titleId)],
+  (t) => [unique("list_items_list_title_ep").on(t.listId, t.titleId, t.seasonNumber, t.episodeNumber)],
 );
 
 export type ListRow = typeof lists.$inferSelect;

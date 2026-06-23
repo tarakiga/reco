@@ -17,6 +17,10 @@ export interface ListCardItem {
   runtime: number | null;
   seasons: number | null;
   note: string | null;
+  /** Set when the pick is a specific episode (else null = whole movie/show). */
+  season: number | null;
+  episode: number | null;
+  episodeName: string | null;
 }
 
 function fmtRuntime(min: number): string {
@@ -31,9 +35,11 @@ function fmtRuntime(min: number): string {
 export function ListCard({ item, index }: { item: ListCardItem; index: number }) {
   const [trailer, setTrailer] = useState(false);
 
+  const isEpisode = item.episode != null;
   const facts = [
     item.runtime ? fmtRuntime(item.runtime) : null,
-    item.seasons ? `${item.seasons} season${item.seasons === 1 ? "" : "s"}` : null,
+    // A season count is misleading on a single-episode pick, so omit it then.
+    !isEpisode && item.seasons ? `${item.seasons} season${item.seasons === 1 ? "" : "s"}` : null,
     ...item.genres,
   ].filter(Boolean).join(" · ");
 
@@ -70,6 +76,12 @@ export function ListCard({ item, index }: { item: ListCardItem; index: number })
           </Link>
           {item.year && <span className="text-sm text-text-muted">{item.year}</span>}
         </div>
+        {isEpisode && (
+          <p className="mt-0.5 text-sm font-medium text-accent">
+            Season {item.season} · Episode {item.episode}
+            {item.episodeName ? ` · ${item.episodeName}` : ""}
+          </p>
+        )}
         {(item.rating || facts) && (
           <p className="mt-0.5 text-xs text-text-muted">
             {item.rating != null && (

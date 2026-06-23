@@ -3,33 +3,37 @@ import { ZodError } from "zod";
 import { getCurrentProfile } from "@/services/profile";
 import { getOrCreateTitle } from "@/services/catalog";
 import { addListItem, removeListItem, reorderListItems, setListItemNote } from "@/services/lists";
-import { titleRef } from "@/lib/contracts/me";
-import { reorderItemsInput, removeItemInput, setItemNoteInput } from "@/lib/contracts/lists";
+import { addListItemInput, reorderItemsInput, removeItemInput, setItemNoteInput } from "@/lib/contracts/lists";
 import { jsonError } from "@/lib/api";
 
 async function requireProfile() {
   return getCurrentProfile();
 }
 
-/** Add a title to the list. */
+/** Add a title, or one of its episodes, to the list. */
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   await connection();
   const profile = await requireProfile();
   if (!profile) return jsonError(401, "Sign in required");
   const { id } = await params;
   try {
-    const input = titleRef.parse(await req.json());
+    const input = addListItemInput.parse(await req.json());
     const title = await getOrCreateTitle(input.mediaType, input.tmdbId);
-    const ok = await addListItem(profile.id, id, title.id);
-    if (!ok) return jsonError(404, "List not found");
-    return NextResponse.json({ ok: true, titleId: title.id });
+    const item = await addListItem(profile.id, id, {
+      titleId: title.id,
+      season: input.season ?? null,
+      episode: input.episode ?? null,
+      episodeName: input.episodeName ?? null,
+    });
+    if (!item) return jsonError(404, "List not found");
+    return NextResponse.json({ ok: true, itemId: item.id, titleId: title.id });
   } catch (err) {
     if (err instanceof ZodError) return jsonError(400, "Validation failed", err.issues);
     return jsonError(400, "Invalid request");
   }
 }
 
-/** Remove a title from the list. */
+/** Remove an item from the list. */
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   await connection();
   const profile = await requireProfile();
@@ -37,7 +41,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   const { id } = await params;
   try {
     const input = removeItemInput.parse(await req.json());
-    const ok = await removeListItem(profile.id, id, input.titleId);
+    const ok = await removeListItem(profile.id, id, input.itemId);
     if (!ok) return jsonError(404, "List not found");
     return NextResponse.json({ ok: true });
   } catch (err) {
@@ -54,7 +58,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params;
   try {
     const input = setItemNoteInput.parse(await req.json());
-    const ok = await setListItemNote(profile.id, id, input.titleId, input.note);
+    const ok = await setListItemNote(profile.id, id, input.itemId, input.note);
     if (!ok) return jsonError(404, "List not found");
     return NextResponse.json({ ok: true });
   } catch (err) {
@@ -71,7 +75,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   const { id } = await params;
   try {
     const input = reorderItemsInput.parse(await req.json());
-    const ok = await reorderListItems(profile.id, id, input.orderedTitleIds);
+    const ok = await reorderListItems(profile.id, id, input.orderedItemIds);
     if (!ok) return jsonError(404, "List not found");
     return NextResponse.json({ ok: true });
   } catch (err) {

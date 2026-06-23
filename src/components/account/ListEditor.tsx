@@ -5,6 +5,7 @@ import { meFetch } from "@/lib/me-client";
 import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { ListEpisodePicker, type EpisodeResult } from "@/components/account/ListEpisodePicker";
 import type { OwnerList, OwnerListItem } from "@/services/lists";
 
 interface TitleResult {
@@ -27,9 +28,12 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
 
   const [q, setQ] = useState("");
   const [results, setResults] = useState<TitleResult[]>([]);
+  // The show whose episode picker is currently open (from a TV search result).
+  const [episodeShow, setEpisodeShow] = useState<TitleResult | null>(null);
 
   const shareUrl = `${siteOrigin}/list/${initial.id}-${initial.slug}`;
-  const have = new Set(items.map((i) => `${i.mediaType}:${i.tmdbId}`));
+  // Whole-title items already on the list (episode === null), for the "Add" state.
+  const haveWhole = new Set(items.filter((i) => i.episode == null).map((i) => `${i.mediaType}:${i.tmdbId}`));
 
   // Debounced search for adding titles.
   useEffect(() => {
@@ -74,7 +78,7 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
     setPublished(next);
     try {
       await meFetch(`/api/v1/me/lists/${initial.id}`, { method: "PATCH", body: { published: next } });
-      toast({ title: next ? "Published — share link is live" : "Unpublished", variant: next ? "success" : "info" });
+      toast({ title: next ? "Published, share link is live" : "Unpublished", variant: next ? "success" : "info" });
     } catch (err) {
       setPublished(!next);
       toast({ title: err instanceof Error ? err.message : "Couldn't update", variant: "danger" });
@@ -83,41 +87,60 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
 
   async function addItem(r: TitleResult) {
     try {
-      const { titleId } = await meFetch<{ titleId: string }>(`/api/v1/me/lists/${initial.id}/items`, {
-        method: "POST",
-        body: { mediaType: r.mediaType, tmdbId: r.tmdbId },
-      });
+      const { itemId, titleId } = await meFetch<{ itemId: string; titleId: string }>(
+        `/api/v1/me/lists/${initial.id}/items`,
+        { method: "POST", body: { mediaType: r.mediaType, tmdbId: r.tmdbId } },
+      );
       setItems((xs) => [
         ...xs,
-        { titleId, tmdbId: r.tmdbId, mediaType: r.mediaType, title: r.title, year: r.year, posterUrl: r.posterUrl, href: r.href, note: null },
+        { id: itemId, titleId, tmdbId: r.tmdbId, mediaType: r.mediaType, title: r.title, year: r.year, posterUrl: r.posterUrl, href: r.href, season: null, episode: null, episodeName: null, note: null },
       ]);
       setQ("");
       setResults([]);
+      setEpisodeShow(null);
     } catch (err) {
       toast({ title: err instanceof Error ? err.message : "Couldn't add", variant: "danger" });
     }
   }
 
-  function onNoteChange(titleId: string, note: string) {
-    setItems((xs) => xs.map((i) => (i.titleId === titleId ? { ...i, note } : i)));
+  async function addEpisode(show: TitleResult, ep: EpisodeResult) {
+    try {
+      const { itemId, titleId } = await meFetch<{ itemId: string; titleId: string }>(
+        `/api/v1/me/lists/${initial.id}/items`,
+        {
+          method: "POST",
+          body: { mediaType: "tv", tmdbId: show.tmdbId, season: ep.seasonNumber, episode: ep.episodeNumber, episodeName: ep.name },
+        },
+      );
+      setItems((xs) => [
+        ...xs,
+        { id: itemId, titleId, tmdbId: show.tmdbId, mediaType: "tv", title: show.title, year: show.year, posterUrl: show.posterUrl, href: show.href, season: ep.seasonNumber, episode: ep.episodeNumber, episodeName: ep.name, note: null },
+      ]);
+    } catch (err) {
+      toast({ title: err instanceof Error ? err.message : "Couldn't add episode", variant: "danger" });
+    }
   }
 
-  async function saveNote(titleId: string, note: string) {
+  function onNoteChange(itemId: string, note: string) {
+    setItems((xs) => xs.map((i) => (i.id === itemId ? { ...i, note } : i)));
+  }
+
+  async function saveNote(itemId: string, note: string) {
     try {
       await meFetch(`/api/v1/me/lists/${initial.id}/items`, {
         method: "PATCH",
-        body: { titleId, note: note.trim() || null },
+        body: { itemId, note: note.trim() || null },
       });
     } catch (err) {
       toast({ title: err instanceof Error ? err.message : "Couldn't save note", variant: "danger" });
     }
   }
 
-  async function removeItem(titleId: string) {
+  async function removeItem(itemId: string) {
     const prev = items;
-    setItems((xs) => xs.filter((i) => i.titleId !== titleId));
+    setItems((xs) => xs.filter((i) => i.id !== itemId));
     try {
-      await meFetch(`/api/v1/me/lists/${initial.id}/items`, { method: "DELETE", body: { titleId } });
+      await meFetch(`/api/v1/me/lists/${initial.id}/items`, { method: "DELETE", body: { itemId } });
     } catch (err) {
       setItems(prev);
       toast({ title: err instanceof Error ? err.message : "Couldn't remove", variant: "danger" });
@@ -133,7 +156,7 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
     try {
       await meFetch(`/api/v1/me/lists/${initial.id}/items`, {
         method: "PUT",
-        body: { orderedTitleIds: next.map((i) => i.titleId) },
+        body: { orderedItemIds: next.map((i) => i.id) },
       });
     } catch (err) {
       toast({ title: err instanceof Error ? err.message : "Couldn't reorder", variant: "danger" });
@@ -148,6 +171,14 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
       toast({ title: "Couldn't copy", variant: "danger" });
     }
   }
+
+  // "season:episode" keys for episodes of the currently-open show, so the picker
+  // can show the ones already on the list as added.
+  const episodeKeysForOpenShow = new Set(
+    episodeShow
+      ? items.filter((i) => i.tmdbId === episodeShow.tmdbId && i.episode != null).map((i) => `${i.season}:${i.episode}`)
+      : [],
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -187,33 +218,56 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
         </div>
       </div>
 
-      {/* Add titles */}
+      {/* Add titles / episodes */}
       <div className="flex flex-col gap-2">
-        <Input label="Add a movie or show" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search to add…" />
+        <Input label="Add a movie, show, or episode" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search a title… (then pick episodes from a show)" />
         {results.length > 0 && (
           <ul className="overflow-hidden rounded-md border border-border bg-surface-raised">
             {results.map((r) => {
-              const added = have.has(`${r.mediaType}:${r.tmdbId}`);
+              const added = haveWhole.has(`${r.mediaType}:${r.tmdbId}`);
+              const pickerOpen = episodeShow?.tmdbId === r.tmdbId && episodeShow?.mediaType === r.mediaType;
               return (
-                <li key={`${r.mediaType}-${r.tmdbId}`} className="flex items-center gap-3 px-3 py-2">
-                  <div className="aspect-2/3 w-8 shrink-0 overflow-hidden rounded border border-border bg-surface-overlay">
-                    {r.posterUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={r.posterUrl} alt="" className="h-full w-full object-cover" />
-                    ) : null}
+                <li key={`${r.mediaType}-${r.tmdbId}`} className="border-b border-border last:border-b-0">
+                  <div className="flex items-center gap-3 px-3 py-2">
+                    <div className="aspect-2/3 w-8 shrink-0 overflow-hidden rounded border border-border bg-surface-overlay">
+                      {r.posterUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={r.posterUrl} alt="" className="h-full w-full object-cover" />
+                      ) : null}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm text-text">{r.title}</p>
+                      <p className="text-xs text-text-muted">{r.mediaType === "tv" ? "TV" : "Movie"}{r.year ? ` · ${r.year}` : ""}</p>
+                    </div>
+                    {r.mediaType === "tv" && (
+                      <button
+                        type="button"
+                        onClick={() => setEpisodeShow(pickerOpen ? null : r)}
+                        className="rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs font-medium text-text hover:bg-surface-overlay"
+                      >
+                        {pickerOpen ? "Close" : "Episodes"}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => addItem(r)}
+                      disabled={added}
+                      className="rounded-md bg-accent px-2.5 py-1.5 text-xs font-medium text-white disabled:opacity-40"
+                    >
+                      {added ? "Added" : r.mediaType === "tv" ? "Add show" : "Add"}
+                    </button>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm text-text">{r.title}</p>
-                    <p className="text-xs text-text-muted">{r.mediaType === "tv" ? "TV" : "Movie"}{r.year ? ` · ${r.year}` : ""}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => addItem(r)}
-                    disabled={added}
-                    className="rounded-md bg-accent px-2.5 py-1.5 text-xs font-medium text-white disabled:opacity-40"
-                  >
-                    {added ? "Added" : "Add"}
-                  </button>
+                  {pickerOpen && (
+                    <div className="px-3 pb-3">
+                      <ListEpisodePicker
+                        tvId={r.tmdbId}
+                        showTitle={r.title}
+                        have={episodeKeysForOpenShow}
+                        onAdd={(ep) => addEpisode(r, ep)}
+                        onClose={() => setEpisodeShow(null)}
+                      />
+                    </div>
+                  )}
                 </li>
               );
             })}
@@ -224,16 +278,16 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
       {/* Items */}
       <div>
         <h3 className="mb-2 text-sm font-semibold text-text">
-          {items.length} {items.length === 1 ? "title" : "titles"}
+          {items.length} {items.length === 1 ? "item" : "items"}
         </h3>
         {items.length === 0 ? (
           <p className="rounded-lg border border-border bg-surface-raised p-4 text-sm text-text-muted">
-            Search above to add titles to your list.
+            Search above to add titles, or pick individual episodes from a show.
           </p>
         ) : (
           <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface-raised">
             {items.map((it, i) => (
-              <li key={it.titleId} className="px-3 py-2.5">
+              <li key={it.id} className="px-3 py-2.5">
                 <div className="flex items-center gap-3">
                   <div className="aspect-2/3 w-9 shrink-0 overflow-hidden rounded border border-border bg-surface-overlay">
                     {it.posterUrl ? (
@@ -243,21 +297,27 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
                   </div>
                   <div className="min-w-0 flex-1">
                     <Link href={it.href} className="truncate text-sm font-medium text-text hover:text-accent">{it.title}</Link>
-                    {it.year && <span className="ml-1 text-xs text-text-muted">{it.year}</span>}
+                    {it.episode != null ? (
+                      <p className="truncate text-xs text-accent">
+                        S{it.season} · E{it.episode}{it.episodeName ? ` · ${it.episodeName}` : ""}
+                      </p>
+                    ) : (
+                      it.year && <span className="ml-1 text-xs text-text-muted">{it.year}</span>
+                    )}
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
                     <button type="button" aria-label="Move up" disabled={i === 0} onClick={() => move(i, -1)} className="rounded px-2 py-1 text-text-muted hover:text-text disabled:opacity-30">↑</button>
                     <button type="button" aria-label="Move down" disabled={i === items.length - 1} onClick={() => move(i, 1)} className="rounded px-2 py-1 text-text-muted hover:text-text disabled:opacity-30">↓</button>
-                    <button type="button" aria-label="Remove" onClick={() => removeItem(it.titleId)} className="rounded px-2 py-1 text-danger hover:text-danger/80">✕</button>
+                    <button type="button" aria-label="Remove" onClick={() => removeItem(it.id)} className="rounded px-2 py-1 text-danger hover:text-danger/80">✕</button>
                   </div>
                 </div>
                 <textarea
                   value={it.note ?? ""}
-                  onChange={(e) => onNoteChange(it.titleId, e.target.value)}
-                  onBlur={(e) => saveNote(it.titleId, e.target.value)}
+                  onChange={(e) => onNoteChange(it.id, e.target.value)}
+                  onBlur={(e) => saveNote(it.id, e.target.value)}
                   maxLength={500}
                   rows={2}
-                  placeholder="Add a note for this pick (optional) — why it's here, where it ranks…"
+                  placeholder="Add a note for this pick (optional), why it's here, where it ranks…"
                   className="mt-2 w-full resize-y rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs text-text placeholder:text-text-muted focus:outline-2 focus:outline-accent"
                 />
               </li>
