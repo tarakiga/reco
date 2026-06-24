@@ -9,8 +9,10 @@ import { posterUrl } from "@/lib/tmdb/images";
 import { defaultEmbedder, type Embedder } from "@/lib/taste/embedder";
 import { parseMediaIntent, type SceneMediaType } from "@/lib/scene/intent";
 import { parseQueryFilters } from "@/lib/scene/filters";
+import { parsePersonQuery } from "@/lib/scene/person-query";
 import { expandSceneQuery } from "@/lib/scene/expand";
 import { discoverSearch } from "./discover-search";
+import { personSearch } from "./person-search";
 
 export interface SceneResult {
   titleId: string;
@@ -94,8 +96,9 @@ export interface SceneSearchOutcome {
   mediaType: SceneMediaType | null;
   /** Media type auto-detected from the raw query text, if any. */
   detected: SceneMediaType | null;
-  /** How the results were produced: structured Discover vs semantic vectors. */
-  mode: "discover" | "semantic";
+  /** How the results were produced: a person's credits, structured Discover, or
+   *  semantic vectors. */
+  mode: "discover" | "semantic" | "person";
   /** Filter summary for the UI when mode = discover (e.g. "1980s · cult"). */
   summary: string | null;
 }
@@ -110,6 +113,26 @@ export async function sceneSearch(
   opts: { limit?: number; override?: SceneMediaType | "all" } = {},
 ): Promise<SceneSearchOutcome> {
   const overrideMt = opts.override === "movie" || opts.override === "tv" ? opts.override : null;
+
+  // Person-attribution ("movies by Harlan Coben", "directed by Nolan") → that
+  // person's real credits, not vibe-similarity. Resolving the name on TMDB is
+  // the confirmation: if it doesn't match a credible person, fall through.
+  const pq = parsePersonQuery(rawQuery);
+  if (pq) {
+    const mt = overrideMt ?? pq.mediaType;
+    const person = await personSearch(pq, { limit: opts.limit ?? 20, mediaType: mt });
+    if (person.results.length > 0) {
+      const verb = person.role === "acting" ? "with" : "by";
+      return {
+        results: person.results,
+        mediaType: mt,
+        detected: pq.mediaType,
+        mode: "person",
+        summary: person.personName ? `${verb} ${person.personName}` : null,
+      };
+    }
+    // no credible person — fall through to catalog / semantic search
+  }
 
   // Catalog/filter queries ("cult classics from the 80s") → structured Discover
   // with a quality sort + vote floor, which beats vector similarity here.

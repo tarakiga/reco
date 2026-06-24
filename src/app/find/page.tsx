@@ -74,7 +74,12 @@ async function SceneResults({ query, override }: { query: string; override: Medi
     <>
       {mode === "discover" && (
         <p className="mt-6 text-sm text-text-muted">
-          Recognised a filter — showing{summary ? <span className="font-medium text-text"> {summary}</span> : ""} from the catalog, ranked by acclaim.
+          Recognised a filter, showing{summary ? <span className="font-medium text-text"> {summary}</span> : ""} from the catalog, ranked by acclaim.
+        </p>
+      )}
+      {mode === "person" && (
+        <p className="mt-6 text-sm text-text-muted">
+          Showing titles{summary ? <span className="font-medium text-text"> {summary}</span> : ""}, by popularity.
         </p>
       )}
       <div className="mt-4 grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
