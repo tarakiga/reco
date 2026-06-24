@@ -578,7 +578,10 @@ const GridRow = memo(function GridRow({
         onClick={() => onToggleFav(channel.channel)}
         title={isFav ? "Remove from your channels" : "Add to your channels"}
         className={`sticky left-0 z-10 flex shrink-0 items-center gap-1 border-r border-border px-2 text-left text-xs font-semibold transition-colors ${
-          isFav ? "bg-success/20 text-success" : "bg-surface text-text hover:bg-surface-overlay"
+          // Opaque green (success at 20% pre-blended over --color-surface). A
+          // translucent bg here lets the scrolling grid show through this sticky
+          // column and makes the channel name unreadable.
+          isFav ? "bg-[#123530] text-success" : "bg-surface text-text hover:bg-surface-overlay"
         }`}
         style={{ width: LABEL_W, height: ROW_H }}
       >
