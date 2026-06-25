@@ -12,6 +12,11 @@ export interface MoodQuery {
   mediaType?: "movie" | "tv"; // default movie
   /** US certification ceiling, e.g. "PG-13" — keeps mature titles out of family/cosy moods. */
   certificationLte?: string;
+  /** Release-date window (ISO "YYYY-MM-DD"), e.g. for an era mood like classic Hollywood. */
+  releaseDateGte?: string;
+  releaseDateLte?: string;
+  /** TMDB original-language code (e.g. "en") — keeps an era mood to its industry. */
+  originalLanguage?: string;
 }
 
 export interface Mood {
@@ -297,6 +302,37 @@ export const MOODS: Mood[] = [
       324786, 9443, 316029, 207, 489,
     ],
     query: { withKeywords: "253695", voteCountGte: 80, sortBy: "vote_count.desc" },
+  },
+  {
+    slug: "classic-hollywood",
+    label: "Classic Hollywood",
+    emoji: "🎩",
+    blurb: "Hollywood's golden age: timeless classics from the 1930s to the 1960s.",
+    kind: "mood",
+    // Hybrid: a verified seed of the canon (a Discover era query alone surfaces
+    // some acclaimed-but-obscure titles and misses the most iconic), pinned ahead
+    // of an era-constrained fill. Seed (curated order):
+    // North by Northwest, Casablanca, Citizen Kane, Gone with the Wind, The Wizard
+    // of Oz, Vertigo, Rear Window, Psycho, Sunset Boulevard, Singin' in the Rain,
+    // 12 Angry Men, Some Like It Hot, Roman Holiday, It's a Wonderful Life, The
+    // Maltese Falcon, Double Indemnity, Notorious, Rebecca, All About Eve, The
+    // Apartment, On the Waterfront, The Bridge on the River Kwai, Lawrence of
+    // Arabia, Breakfast at Tiffany's, To Kill a Mockingbird, Ben-Hur, King Kong,
+    // Modern Times, It Happened One Night, The Philadelphia Story.
+    manual: [
+      213, 289, 15, 770, 630, 426, 567, 539, 599, 872, 389, 239, 804, 1585, 963, 996, 303, 223,
+      705, 284, 654, 826, 947, 164, 595, 665, 244, 3082, 3078, 981,
+    ],
+    // Backfill: acclaimed English-language films of the golden age, by recognition.
+    query: {
+      originalLanguage: "en",
+      releaseDateGte: "1930-01-01",
+      releaseDateLte: "1969-12-31",
+      withoutGenres: "99",
+      voteAverageGte: 7.3,
+      voteCountGte: 600,
+      sortBy: "vote_count.desc",
+    },
   },
   // Occasions — only featured on the home page in their season.
   {

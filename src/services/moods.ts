@@ -22,6 +22,9 @@ function buildParams(q: MoodQuery, page: number): Record<string, string> {
     p.certification_country = "US";
     p["certification.lte"] = q.certificationLte;
   }
+  if (q.releaseDateGte) p["primary_release_date.gte"] = q.releaseDateGte;
+  if (q.releaseDateLte) p["primary_release_date.lte"] = q.releaseDateLte;
+  if (q.originalLanguage) p.with_original_language = q.originalLanguage;
   return p;
 }
 
