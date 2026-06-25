@@ -14,6 +14,7 @@ import { QueryProvider } from "@/components/providers/QueryProvider";
 import { BRAND_NAME, BRAND_TAGLINE, SITE_URL } from "@/lib/brand";
 import { getBrandName, getNavLinks } from "@/services/site-config";
 import { SearchAutocomplete } from "@/components/layout/SearchAutocomplete";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 
 const footerAttribution = (
   <div className="space-y-1">
@@ -88,6 +89,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <ClerkProvider>
       <html lang="en">
         <body className={`${asap.variable} ${geistMono.variable} overflow-x-clip antialiased`}>
+          <GoogleAnalytics />
           <ToastProvider>
             <QueryProvider>
             <Suspense>
