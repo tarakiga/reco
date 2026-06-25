@@ -13,6 +13,7 @@ export const updateListInput = z.object({
   title: z.string().trim().min(1).max(120).optional(),
   subtitle: z.string().trim().max(200).nullable().optional(),
   published: z.boolean().optional(),
+  tiered: z.boolean().optional(),
 });
 
 /** Add a movie/show (no season/episode) or a specific TV episode to a list. */
@@ -41,10 +42,16 @@ export const removeItemInput = z.object({
   itemId: z.string().uuid(),
 });
 
-export const setItemNoteInput = z.object({
-  itemId: z.string().uuid(),
-  note: z.string().max(500).nullable(),
-});
+// One item PATCH covers the note and/or the tier bucket.
+export const patchListItemInput = z
+  .object({
+    itemId: z.string().uuid(),
+    note: z.string().max(500).nullable().optional(),
+    tier: z.enum(["S", "A", "B", "C"]).nullable().optional(),
+  })
+  .refine((v) => v.note !== undefined || v.tier !== undefined, {
+    message: "Provide note and/or tier",
+  });
 
 export type CreateListInput = z.infer<typeof createListInput>;
 export type UpdateListInput = z.infer<typeof updateListInput>;

@@ -2,8 +2,8 @@ import { connection, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { getCurrentProfile } from "@/services/profile";
 import { getOrCreateTitle } from "@/services/catalog";
-import { addListItem, removeListItem, reorderListItems, setListItemNote } from "@/services/lists";
-import { addListItemInput, reorderItemsInput, removeItemInput, setItemNoteInput } from "@/lib/contracts/lists";
+import { addListItem, removeListItem, reorderListItems, setListItemNote, setListItemTier } from "@/services/lists";
+import { addListItemInput, reorderItemsInput, removeItemInput, patchListItemInput } from "@/lib/contracts/lists";
 import { jsonError } from "@/lib/api";
 
 async function requireProfile() {
@@ -50,15 +50,17 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   }
 }
 
-/** Set/clear a curator's note for one item. */
+/** Update one item: its curator's note and/or its tier bucket. */
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   await connection();
   const profile = await requireProfile();
   if (!profile) return jsonError(401, "Sign in required");
   const { id } = await params;
   try {
-    const input = setItemNoteInput.parse(await req.json());
-    const ok = await setListItemNote(profile.id, id, input.itemId, input.note);
+    const input = patchListItemInput.parse(await req.json());
+    let ok = true;
+    if (input.note !== undefined) ok = await setListItemNote(profile.id, id, input.itemId, input.note);
+    if (ok && input.tier !== undefined) ok = await setListItemTier(profile.id, id, input.itemId, input.tier);
     if (!ok) return jsonError(404, "List not found");
     return NextResponse.json({ ok: true });
   } catch (err) {

@@ -32,7 +32,7 @@ function fmtRuntime(min: number): string {
 
 /** Rich list-item card: poster, genre, year, synopsis, trailer (lightbox) and a
  *  link to the detail page. */
-export function ListCard({ item, index }: { item: ListCardItem; index: number }) {
+export function ListCard({ item, index, showRank = true }: { item: ListCardItem; index: number; showRank?: boolean }) {
   const [trailer, setTrailer] = useState(false);
 
   const isEpisode = item.episode != null;
@@ -70,7 +70,7 @@ export function ListCard({ item, index }: { item: ListCardItem; index: number })
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2">
-          <span className="text-sm font-semibold text-text-muted">{index + 1}.</span>
+          {showRank && <span className="text-sm font-semibold text-text-muted">{index + 1}.</span>}
           <Link href={item.href} className="text-base font-semibold text-text transition-colors hover:text-accent">
             {item.title}
           </Link>

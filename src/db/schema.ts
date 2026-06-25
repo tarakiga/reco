@@ -150,6 +150,8 @@ export const lists = pgTable("lists", {
   subtitle: text("subtitle"),
   slug: text("slug").notNull(),
   published: boolean("published").notNull().default(false),
+  // When true the list renders as a tier list (items grouped S/A/B/C).
+  tiered: boolean("tiered").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -168,6 +170,9 @@ export const listItems = pgTable(
     // Episode title captured at add-time so rendering a list needs no live TMDB
     // call per episode. Null for whole-title items.
     episodeName: text("episode_name"),
+    // Tier-list bucket ("S"|"A"|"B"|"C"), or null = unranked. Only meaningful
+    // when the parent list has `tiered` on.
+    tier: text("tier"),
     position: integer("position").notNull().default(0),
     note: text("note"),
     addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),

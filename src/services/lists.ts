@@ -5,6 +5,7 @@ import { lists, listItems, titles, profiles, tags, titleTags } from "@/db/schema
 import { slugify } from "@/lib/slug";
 import { posterUrl } from "@/lib/tmdb/images";
 import { pickTrailerKey } from "@/lib/tmdb/detail";
+import { isTier, type Tier } from "@/lib/lists/tiers";
 import type { TmdbTitleDetail } from "@/lib/tmdb/types";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -100,7 +101,7 @@ export async function createListFromTag(
 export async function updateList(
   userId: string,
   listId: string,
-  fields: { title?: string; subtitle?: string | null; published?: boolean },
+  fields: { title?: string; subtitle?: string | null; published?: boolean; tiered?: boolean },
 ): Promise<boolean> {
   const set: Record<string, unknown> = { updatedAt: new Date() };
   if (fields.title !== undefined) {
@@ -109,6 +110,7 @@ export async function updateList(
   }
   if (fields.subtitle !== undefined) set.subtitle = fields.subtitle;
   if (fields.published !== undefined) set.published = fields.published;
+  if (fields.tiered !== undefined) set.tiered = fields.tiered;
   const res = await db
     .update(lists)
     .set(set)
@@ -232,6 +234,8 @@ export interface OwnerListItem {
   season: number | null;
   episode: number | null;
   episodeName: string | null;
+  /** Tier bucket when the list is a tier list (else null = unranked). */
+  tier: Tier | null;
   note: string | null;
 }
 export interface OwnerList {
@@ -240,6 +244,7 @@ export interface OwnerList {
   subtitle: string | null;
   slug: string;
   published: boolean;
+  tiered: boolean;
   items: OwnerListItem[];
 }
 
@@ -262,6 +267,7 @@ export async function getListForOwner(userId: string, listId: string): Promise<O
       season: listItems.seasonNumber,
       episode: listItems.episodeNumber,
       episodeName: listItems.episodeName,
+      tier: listItems.tier,
       note: listItems.note,
     })
     .from(listItems)
@@ -274,6 +280,7 @@ export async function getListForOwner(userId: string, listId: string): Promise<O
     subtitle: l.subtitle,
     slug: l.slug,
     published: l.published,
+    tiered: l.tiered,
     items: rows.map((r) => {
       // CockroachDB INT8 columns come back as strings via postgres.js.
       const episode = Number(r.episode ?? 0);
@@ -291,6 +298,7 @@ export async function getListForOwner(userId: string, listId: string): Promise<O
         season: isEpisode ? season : null,
         episode: isEpisode ? episode : null,
         episodeName: isEpisode ? r.episodeName ?? null : null,
+        tier: isTier(r.tier) ? r.tier : null,
         note: r.note ?? null,
       };
     }),
@@ -308,6 +316,22 @@ export async function setListItemNote(
   await db
     .update(listItems)
     .set({ note: note && note.trim() ? note.trim() : null })
+    .where(and(eq(listItems.listId, listId), eq(listItems.id, itemId)));
+  await touch(listId);
+  return true;
+}
+
+/** Set (or clear, with null) the tier bucket for one item. */
+export async function setListItemTier(
+  userId: string,
+  listId: string,
+  itemId: string,
+  tier: Tier | null,
+): Promise<boolean> {
+  if (!(await ownsList(userId, listId))) return false;
+  await db
+    .update(listItems)
+    .set({ tier: tier && isTier(tier) ? tier : null })
     .where(and(eq(listItems.listId, listId), eq(listItems.id, itemId)));
   await touch(listId);
   return true;
@@ -339,6 +363,8 @@ export interface ViewListItem {
   season: number | null;
   episode: number | null;
   episodeName: string | null;
+  /** Tier bucket when the list is a tier list (else null = unranked). */
+  tier: Tier | null;
 }
 export interface ViewList {
   id: string;
@@ -346,6 +372,7 @@ export interface ViewList {
   subtitle: string | null;
   slug: string;
   author: string;
+  tiered: boolean;
   items: ViewListItem[];
 }
 
@@ -358,6 +385,7 @@ export async function getListForView(listId: string): Promise<ViewList | null> {
       subtitle: lists.subtitle,
       slug: lists.slug,
       published: lists.published,
+      tiered: lists.tiered,
       author: profiles.username,
     })
     .from(lists)
@@ -378,6 +406,7 @@ export async function getListForView(listId: string): Promise<ViewList | null> {
       season: listItems.seasonNumber,
       episode: listItems.episodeNumber,
       episodeName: listItems.episodeName,
+      tier: listItems.tier,
       note: listItems.note,
     })
     .from(listItems)
@@ -391,6 +420,7 @@ export async function getListForView(listId: string): Promise<ViewList | null> {
     subtitle: l.subtitle,
     slug: l.slug,
     author: l.author,
+    tiered: l.tiered,
     items: rows.map((r) => {
       const meta = (r.metadata ?? {}) as TmdbTitleDetail;
       // CockroachDB INT8 columns come back as strings via postgres.js.
@@ -414,6 +444,7 @@ export async function getListForView(listId: string): Promise<ViewList | null> {
         season: isEpisode ? season : null,
         episode: isEpisode ? episode : null,
         episodeName: isEpisode ? r.episodeName ?? null : null,
+        tier: isTier(r.tier) ? r.tier : null,
       };
     }),
   };

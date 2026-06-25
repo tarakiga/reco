@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ListEpisodePicker, type EpisodeResult } from "@/components/account/ListEpisodePicker";
+import { TIERS, tierColor, type Tier } from "@/lib/lists/tiers";
 import type { OwnerList, OwnerListItem } from "@/services/lists";
 
 interface TitleResult {
@@ -23,6 +24,7 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
   const [title, setTitle] = useState(initial.title);
   const [subtitle, setSubtitle] = useState(initial.subtitle ?? "");
   const [published, setPublished] = useState(initial.published);
+  const [tiered, setTiered] = useState(initial.tiered);
   const [items, setItems] = useState<OwnerListItem[]>(initial.items);
   const [savingMeta, setSavingMeta] = useState(false);
 
@@ -85,6 +87,16 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
     }
   }
 
+  async function toggleTiered(next: boolean) {
+    setTiered(next);
+    try {
+      await meFetch(`/api/v1/me/lists/${initial.id}`, { method: "PATCH", body: { tiered: next } });
+    } catch (err) {
+      setTiered(!next);
+      toast({ title: err instanceof Error ? err.message : "Couldn't update", variant: "danger" });
+    }
+  }
+
   async function addItem(r: TitleResult) {
     try {
       const { itemId, titleId } = await meFetch<{ itemId: string; titleId: string }>(
@@ -93,7 +105,7 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
       );
       setItems((xs) => [
         ...xs,
-        { id: itemId, titleId, tmdbId: r.tmdbId, mediaType: r.mediaType, title: r.title, year: r.year, posterUrl: r.posterUrl, href: r.href, season: null, episode: null, episodeName: null, note: null },
+        { id: itemId, titleId, tmdbId: r.tmdbId, mediaType: r.mediaType, title: r.title, year: r.year, posterUrl: r.posterUrl, href: r.href, season: null, episode: null, episodeName: null, tier: null, note: null },
       ]);
       setQ("");
       setResults([]);
@@ -114,7 +126,7 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
       );
       setItems((xs) => [
         ...xs,
-        { id: itemId, titleId, tmdbId: show.tmdbId, mediaType: "tv", title: show.title, year: show.year, posterUrl: show.posterUrl, href: show.href, season: ep.seasonNumber, episode: ep.episodeNumber, episodeName: ep.name, note: null },
+        { id: itemId, titleId, tmdbId: show.tmdbId, mediaType: "tv", title: show.title, year: show.year, posterUrl: show.posterUrl, href: show.href, season: ep.seasonNumber, episode: ep.episodeNumber, episodeName: ep.name, tier: null, note: null },
       ]);
     } catch (err) {
       toast({ title: err instanceof Error ? err.message : "Couldn't add episode", variant: "danger" });
@@ -136,6 +148,17 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
     }
   }
 
+  async function setTier(item: OwnerListItem, tier: Tier | null) {
+    const prev = items;
+    setItems((xs) => xs.map((i) => (i.id === item.id ? { ...i, tier } : i)));
+    try {
+      await meFetch(`/api/v1/me/lists/${initial.id}/items`, { method: "PATCH", body: { itemId: item.id, tier } });
+    } catch (err) {
+      setItems(prev);
+      toast({ title: err instanceof Error ? err.message : "Couldn't set tier", variant: "danger" });
+    }
+  }
+
   async function removeItem(itemId: string) {
     const prev = items;
     setItems((xs) => xs.filter((i) => i.id !== itemId));
@@ -147,17 +170,21 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
     }
   }
 
-  async function move(index: number, dir: -1 | 1) {
-    const j = index + dir;
+  // Swap an item with its neighbour. In tier mode the neighbour is the next item
+  // in the SAME tier (so reordering stays within a band); otherwise it's adjacent.
+  async function move(item: OwnerListItem, dir: -1 | 1) {
+    const idx = items.findIndex((i) => i.id === item.id);
+    if (idx < 0) return;
+    let j = idx + dir;
+    if (tiered) {
+      while (j >= 0 && j < items.length && (items[j].tier ?? null) !== (item.tier ?? null)) j += dir;
+    }
     if (j < 0 || j >= items.length) return;
     const next = [...items];
-    [next[index], next[j]] = [next[j], next[index]];
+    [next[idx], next[j]] = [next[j], next[idx]];
     setItems(next);
     try {
-      await meFetch(`/api/v1/me/lists/${initial.id}/items`, {
-        method: "PUT",
-        body: { orderedItemIds: next.map((i) => i.id) },
-      });
+      await meFetch(`/api/v1/me/lists/${initial.id}/items`, { method: "PUT", body: { orderedItemIds: next.map((i) => i.id) } });
     } catch (err) {
       toast({ title: err instanceof Error ? err.message : "Couldn't reorder", variant: "danger" });
     }
@@ -172,13 +199,75 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
     }
   }
 
-  // "season:episode" keys for episodes of the currently-open show, so the picker
-  // can show the ones already on the list as added.
   const episodeKeysForOpenShow = new Set(
     episodeShow
       ? items.filter((i) => i.tmdbId === episodeShow.tmdbId && i.episode != null).map((i) => `${i.season}:${i.episode}`)
       : [],
   );
+
+  function itemRow(it: OwnerListItem, canUp: boolean, canDown: boolean) {
+    return (
+      <li key={it.id} className="px-3 py-2.5">
+        <div className="flex items-center gap-3">
+          <div className="aspect-2/3 w-9 shrink-0 overflow-hidden rounded border border-border bg-surface-overlay">
+            {it.posterUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={it.posterUrl} alt="" className="h-full w-full object-cover" />
+            ) : null}
+          </div>
+          <div className="min-w-0 flex-1">
+            <Link href={it.href} className="truncate text-sm font-medium text-text hover:text-accent">{it.title}</Link>
+            {it.episode != null ? (
+              <p className="truncate text-xs text-accent">
+                S{it.season} · E{it.episode}{it.episodeName ? ` · ${it.episodeName}` : ""}
+              </p>
+            ) : (
+              it.year && <span className="ml-1 text-xs text-text-muted">{it.year}</span>
+            )}
+            {tiered && (
+              <div className="mt-1.5 flex items-center gap-1">
+                {TIERS.map((t) => {
+                  const active = it.tier === t;
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setTier(it, active ? null : t)}
+                      aria-label={`Tier ${t}`}
+                      style={{ backgroundColor: active ? tierColor(t) : "transparent", borderColor: tierColor(t) }}
+                      className={`h-5 w-6 rounded border text-[11px] font-bold ${active ? "text-black" : "text-text-muted"}`}
+                    >
+                      {t}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <button type="button" aria-label="Move up" disabled={!canUp} onClick={() => move(it, -1)} className="rounded px-2 py-1 text-text-muted hover:text-text disabled:opacity-30">↑</button>
+            <button type="button" aria-label="Move down" disabled={!canDown} onClick={() => move(it, 1)} className="rounded px-2 py-1 text-text-muted hover:text-text disabled:opacity-30">↓</button>
+            <button type="button" aria-label="Remove" onClick={() => removeItem(it.id)} className="rounded px-2 py-1 text-danger hover:text-danger/80">✕</button>
+          </div>
+        </div>
+        <textarea
+          value={it.note ?? ""}
+          onChange={(e) => onNoteChange(it.id, e.target.value)}
+          onBlur={(e) => saveNote(it.id, e.target.value)}
+          maxLength={500}
+          rows={2}
+          placeholder="Add a note for this pick (optional), why it's here, where it ranks…"
+          className="mt-2 w-full resize-y rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs text-text placeholder:text-text-muted focus:outline-2 focus:outline-accent"
+        />
+      </li>
+    );
+  }
+
+  // Tier groups (S, A, B, C, then Unranked), preserving item order within each.
+  const groups: { tier: Tier | null; items: OwnerListItem[] }[] = [
+    ...TIERS.map((t) => ({ tier: t as Tier | null, items: items.filter((i) => i.tier === t) })),
+    { tier: null, items: items.filter((i) => !i.tier) },
+  ];
 
   return (
     <div className="flex flex-col gap-6">
@@ -186,6 +275,11 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
       <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface-raised p-4">
         <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
         <Input label="Subtitle" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} placeholder="A list of movies I think you'll like" />
+        <label className="flex items-center gap-2.5">
+          <input type="checkbox" checked={tiered} onChange={(e) => toggleTiered(e.target.checked)} className="size-4 accent-accent" />
+          <span className="text-sm font-medium text-text">Tier list</span>
+          <span className="text-xs text-text-muted">Group items into S / A / B / C tiers.</span>
+        </label>
         <div className="flex justify-end">
           <Button onClick={saveMeta} loading={savingMeta} disabled={!title.trim()}>
             Save details
@@ -287,44 +381,29 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
           <p className="rounded-lg border border-border bg-surface-raised p-4 text-sm text-text-muted">
             Search above to add titles, or pick individual episodes from a show.
           </p>
+        ) : tiered ? (
+          <div className="space-y-3">
+            {groups.map((g) => (
+              <div key={g.tier ?? "unranked"} className="overflow-hidden rounded-lg border border-border">
+                <div className="flex items-center gap-2 px-3 py-1.5" style={{ backgroundColor: tierColor(g.tier) }}>
+                  <span className={`text-sm font-extrabold ${g.tier ? "text-black" : "text-text"}`}>{g.tier ?? "Unranked"}</span>
+                  <span className={`text-xs font-medium ${g.tier ? "text-black/70" : "text-text-muted"}`}>{g.items.length}</span>
+                </div>
+                {g.items.length === 0 ? (
+                  <p className="bg-surface-raised px-3 py-2 text-xs text-text-muted">
+                    Tap the {g.tier ?? "S/A/B/C"} button on an item to place it here.
+                  </p>
+                ) : (
+                  <ul className="divide-y divide-border bg-surface-raised">
+                    {g.items.map((it, idx) => itemRow(it, idx > 0, idx < g.items.length - 1))}
+                  </ul>
+                )}
+              </div>
+            ))}
+          </div>
         ) : (
           <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface-raised">
-            {items.map((it, i) => (
-              <li key={it.id} className="px-3 py-2.5">
-                <div className="flex items-center gap-3">
-                  <div className="aspect-2/3 w-9 shrink-0 overflow-hidden rounded border border-border bg-surface-overlay">
-                    {it.posterUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={it.posterUrl} alt="" className="h-full w-full object-cover" />
-                    ) : null}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <Link href={it.href} className="truncate text-sm font-medium text-text hover:text-accent">{it.title}</Link>
-                    {it.episode != null ? (
-                      <p className="truncate text-xs text-accent">
-                        S{it.season} · E{it.episode}{it.episodeName ? ` · ${it.episodeName}` : ""}
-                      </p>
-                    ) : (
-                      it.year && <span className="ml-1 text-xs text-text-muted">{it.year}</span>
-                    )}
-                  </div>
-                  <div className="flex shrink-0 items-center gap-1">
-                    <button type="button" aria-label="Move up" disabled={i === 0} onClick={() => move(i, -1)} className="rounded px-2 py-1 text-text-muted hover:text-text disabled:opacity-30">↑</button>
-                    <button type="button" aria-label="Move down" disabled={i === items.length - 1} onClick={() => move(i, 1)} className="rounded px-2 py-1 text-text-muted hover:text-text disabled:opacity-30">↓</button>
-                    <button type="button" aria-label="Remove" onClick={() => removeItem(it.id)} className="rounded px-2 py-1 text-danger hover:text-danger/80">✕</button>
-                  </div>
-                </div>
-                <textarea
-                  value={it.note ?? ""}
-                  onChange={(e) => onNoteChange(it.id, e.target.value)}
-                  onBlur={(e) => saveNote(it.id, e.target.value)}
-                  maxLength={500}
-                  rows={2}
-                  placeholder="Add a note for this pick (optional), why it's here, where it ranks…"
-                  className="mt-2 w-full resize-y rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs text-text placeholder:text-text-muted focus:outline-2 focus:outline-accent"
-                />
-              </li>
-            ))}
+            {items.map((it, i) => itemRow(it, i > 0, i < items.length - 1))}
           </ul>
         )}
       </div>
