@@ -75,8 +75,8 @@ function TierGroups({ items }: { items: ViewListItem[] }) {
   return (
     <div className="space-y-5">
       {groups.map((g) => (
-        <section key={g.tier ?? "unranked"} className="overflow-hidden rounded-xl border border-border">
-          <div className="flex items-baseline gap-2 px-4 py-2" style={{ backgroundColor: tierColor(g.tier) }}>
+        <section key={g.tier ?? "unranked"} className="overflow-hidden rounded-xl border border-border" style={{ backgroundColor: tierColor(g.tier) }}>
+          <div className="flex items-baseline gap-2 px-4 py-2">
             <span className={`text-lg font-extrabold ${g.tier ? "text-black" : "text-text"}`}>{g.tier ?? "Unranked"}</span>
             <span className={`text-sm font-medium ${g.tier ? "text-black/70" : "text-text-muted"}`}>
               {g.items.length} {g.items.length === 1 ? "pick" : "picks"}

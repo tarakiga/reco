@@ -205,9 +205,9 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
       : [],
   );
 
-  function itemRow(it: OwnerListItem, canUp: boolean, canDown: boolean) {
+  function rowInner(it: OwnerListItem, canUp: boolean, canDown: boolean) {
     return (
-      <li key={it.id} className="px-3 py-2.5">
+      <>
         <div className="flex items-center gap-3">
           <div className="aspect-2/3 w-9 shrink-0 overflow-hidden rounded border border-border bg-surface-overlay">
             {it.posterUrl ? (
@@ -259,7 +259,7 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
           placeholder="Add a note for this pick (optional), why it's here, where it ranks…"
           className="mt-2 w-full resize-y rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs text-text placeholder:text-text-muted focus:outline-2 focus:outline-accent"
         />
-      </li>
+      </>
     );
   }
 
@@ -384,29 +384,44 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
         ) : tiered ? (
           <div className="space-y-3">
             {groups.map((g) => (
-              <div key={g.tier ?? "unranked"} className="overflow-hidden rounded-lg border border-border">
-                <div className="flex items-center gap-2 px-3 py-1.5" style={{ backgroundColor: tierColor(g.tier) }}>
+              <div key={g.tier ?? "unranked"} className="overflow-hidden rounded-lg border border-border" style={{ backgroundColor: tierColor(g.tier) }}>
+                <div className="flex items-center gap-2 px-3 py-1.5">
                   <span className={`text-sm font-extrabold ${g.tier ? "text-black" : "text-text"}`}>{g.tier ?? "Unranked"}</span>
                   <span className={`text-xs font-medium ${g.tier ? "text-black/70" : "text-text-muted"}`}>{g.items.length}</span>
                 </div>
-                {g.items.length === 0 ? (
-                  <p className="bg-surface-raised px-3 py-2 text-xs text-text-muted">
-                    Tap the {g.tier ?? "S/A/B/C"} button on an item to place it here.
-                  </p>
-                ) : (
-                  <ul className="divide-y divide-border bg-surface-raised">
-                    {g.items.map((it, idx) => itemRow(it, idx > 0, idx < g.items.length - 1))}
-                  </ul>
-                )}
+                <div className="space-y-2 px-2 pb-2">
+                  {g.items.length === 0 ? (
+                    <p className={`px-1 py-1 text-xs ${g.tier ? "text-black/70" : "text-text-muted"}`}>
+                      Tap the {g.tier ?? "S/A/B/C"} button on an item to place it here.
+                    </p>
+                  ) : (
+                    g.items.map((it, idx) => (
+                      <div key={it.id} className="rounded-md bg-surface-raised px-3 py-2.5">
+                        {rowInner(it, idx > 0, idx < g.items.length - 1)}
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
             ))}
           </div>
         ) : (
           <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-surface-raised">
-            {items.map((it, i) => itemRow(it, i > 0, i < items.length - 1))}
+            {items.map((it, i) => (
+              <li key={it.id} className="px-3 py-2.5">{rowInner(it, i > 0, i < items.length - 1)}</li>
+            ))}
           </ul>
         )}
       </div>
+
+      {/* Bottom save, so you don't scroll up after editing a long list. */}
+      {items.length > 0 && (
+        <div className="flex justify-end">
+          <Button onClick={saveMeta} loading={savingMeta} disabled={!title.trim()}>
+            Save list
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
