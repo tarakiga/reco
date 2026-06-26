@@ -139,6 +139,10 @@ export function GuideClient() {
         lastBroadcast.current = c;
       }
     }
+    // Restore the List/Grid choice so the grid (with its time ruler + now-line)
+    // persists across visits instead of resetting to List each load.
+    const v = localStorage.getItem("guide:view");
+    if (v === "grid" || v === "list") setView(v);
   }, []);
 
   // Load the saved DB picks once (signed-in), then reflect the current region.
@@ -358,7 +362,10 @@ export function GuideClient() {
               <button
                 key={v}
                 type="button"
-                onClick={() => setView(v)}
+                onClick={() => {
+                  setView(v);
+                  localStorage.setItem("guide:view", v);
+                }}
                 className={`px-3 text-sm font-medium transition-colors ${
                   view === v ? "bg-accent text-white" : "bg-surface text-text-muted hover:text-text"
                 }`}
