@@ -4,7 +4,7 @@ import Link from "next/link";
 import { parseListId, getListForView, type ViewListItem } from "@/services/lists";
 import { ListCard } from "@/components/lists/ListCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { TIERS, tierColor, type Tier } from "@/lib/lists/tiers";
+import { TIERS, tierColor, TIER_NAME, type Tier } from "@/lib/lists/tiers";
 
 export async function generateMetadata({ params }: { params: Promise<{ idSlug: string }> }) {
   const { idSlug } = await params;
@@ -75,14 +75,21 @@ function TierGroups({ items }: { items: ViewListItem[] }) {
   return (
     <div className="space-y-5">
       {groups.map((g) => (
-        <section key={g.tier ?? "unranked"} className="overflow-hidden rounded-xl border border-border" style={{ backgroundColor: tierColor(g.tier) }}>
-          <div className="flex items-baseline gap-2 px-4 py-2">
+        <section key={g.tier ?? "unranked"}>
+          {/* Sticky band: stays pinned (below the nav) while you scroll its tier,
+              then the next tier's band takes over. No overflow-hidden ancestor,
+              or sticky breaks. */}
+          <div
+            className="sticky top-16 z-20 flex items-baseline gap-2 rounded-t-xl px-4 py-2.5"
+            style={{ backgroundColor: tierColor(g.tier) }}
+          >
             <span className={`text-lg font-extrabold ${g.tier ? "text-black" : "text-text"}`}>{g.tier ?? "Unranked"}</span>
-            <span className={`text-sm font-medium ${g.tier ? "text-black/70" : "text-text-muted"}`}>
+            {g.tier && <span className="text-sm font-semibold text-black/80">· {TIER_NAME[g.tier]}</span>}
+            <span className={`ml-auto text-sm font-medium ${g.tier ? "text-black/70" : "text-text-muted"}`}>
               {g.items.length} {g.items.length === 1 ? "pick" : "picks"}
             </span>
           </div>
-          <div className="space-y-3 p-3">
+          <div className="space-y-3 rounded-b-xl p-3" style={{ backgroundColor: tierColor(g.tier) }}>
             {g.items.map((item, i) => (
               <ListCard key={`${item.mediaType}-${item.tmdbId}-${i}`} item={item} index={i} showRank={false} />
             ))}

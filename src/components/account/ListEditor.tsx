@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ListEpisodePicker, type EpisodeResult } from "@/components/account/ListEpisodePicker";
-import { TIERS, tierColor, type Tier } from "@/lib/lists/tiers";
+import { TIERS, tierColor, TIER_NAME, type Tier } from "@/lib/lists/tiers";
 import type { OwnerList, OwnerListItem } from "@/services/lists";
 
 interface TitleResult {
@@ -387,7 +387,8 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
               <div key={g.tier ?? "unranked"} className="overflow-hidden rounded-lg border border-border" style={{ backgroundColor: tierColor(g.tier) }}>
                 <div className="flex items-center gap-2 px-3 py-1.5">
                   <span className={`text-sm font-extrabold ${g.tier ? "text-black" : "text-text"}`}>{g.tier ?? "Unranked"}</span>
-                  <span className={`text-xs font-medium ${g.tier ? "text-black/70" : "text-text-muted"}`}>{g.items.length}</span>
+                  {g.tier && <span className="text-xs font-semibold text-black/80">· {TIER_NAME[g.tier]}</span>}
+                  <span className={`ml-auto text-xs font-medium ${g.tier ? "text-black/70" : "text-text-muted"}`}>{g.items.length}</span>
                 </div>
                 <div className="space-y-2 px-2 pb-2">
                   {g.items.length === 0 ? (

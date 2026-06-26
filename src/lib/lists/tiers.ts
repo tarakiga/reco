@@ -24,6 +24,14 @@ export const TIER_COLOR: Record<Tier, string> = {
   B: "#ffff7f",
   C: "#7fff7f",
 };
+
+/** Plain-language label for each tier, since not everyone reads S/A/B/C. */
+export const TIER_NAME: Record<Tier, string> = {
+  S: "Best",
+  A: "Great",
+  B: "Good",
+  C: "Okay",
+};
 export const UNRANKED_COLOR = "#39414f";
 
 /** Colour for a tier band (or the Unranked bucket when null). */
