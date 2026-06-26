@@ -5,8 +5,10 @@ import Script from "next/script";
 const GA_ID = process.env.NEXT_PUBLIC_GA_ID || "G-PFP32LMLWD";
 
 /**
- * Google Analytics 4 (gtag.js). Loaded on deployed builds only — skipped in
- * local development so dev/test traffic never pollutes the analytics.
+ * Google Analytics 4 (gtag.js) with Consent Mode v2. Loaded on deployed builds
+ * only (skipped in local development). Consent defaults to DENIED, so until the
+ * visitor accepts via the banner, GA runs cookieless and stores nothing on the
+ * device; ConsentBanner flips analytics_storage to "granted" on accept.
  */
 export function GoogleAnalytics() {
   if (!GA_ID || process.env.NODE_ENV !== "production") return null;
@@ -14,7 +16,7 @@ export function GoogleAnalytics() {
     <>
       <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`} strategy="afterInteractive" />
       <Script id="ga-init" strategy="afterInteractive">
-        {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${GA_ID}');`}
+        {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('consent','default',{ad_storage:'denied',ad_user_data:'denied',ad_personalization:'denied',analytics_storage:'denied',wait_for_update:500});gtag('js',new Date());gtag('config','${GA_ID}');`}
       </Script>
     </>
   );

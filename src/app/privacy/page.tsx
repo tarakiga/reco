@@ -62,9 +62,19 @@ export default function PrivacyPage() {
       <Section title="Cookies and similar technologies">
         <p>
           We use cookies and similar technologies that are necessary for the site to work, including
-          keeping you signed in, and to understand aggregate usage so we can improve the service. You
-          can control cookies through your browser settings, though some features may not work
-          without them.
+          keeping you signed in. You can control cookies through your browser settings, though some
+          features may not work without them.
+        </p>
+        <p>
+          We also use <span className="font-medium text-text">Google Analytics</span> to understand
+          how the site is used (for example, which pages and features are popular, and where things
+          are slow) so we can improve it. These analytics cookies are optional: they are off by
+          default, and we only set them after you accept the consent banner. Until you accept, Google
+          Analytics runs in a cookieless mode that stores nothing on your device, and if you decline
+          it stays that way. The data collected is aggregate and anonymous, such as the pages you
+          visit, your approximate region, and your device type; we do not use it to identify you or
+          sell it. You can change your choice anytime by clearing this site&apos;s data in your
+          browser, which brings the banner back.
         </p>
       </Section>
 
@@ -80,6 +90,10 @@ export default function PrivacyPage() {
           </li>
           <li>
             <span className="font-medium text-text">JustWatch</span> for streaming availability data.
+          </li>
+          <li>
+            <span className="font-medium text-text">Google Analytics</span> for anonymous,
+            consent-based usage measurement (see Cookies and similar technologies above).
           </li>
           <li>
             <span className="font-medium text-text">Hosting and infrastructure providers</span> that
