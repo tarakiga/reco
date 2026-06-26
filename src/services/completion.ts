@@ -172,6 +172,12 @@ export interface FranchiseProgress {
   seen: CompletionItem[];
 }
 
+export interface CompletedFranchise {
+  collectionId: number;
+  name: string;
+  items: CompletionItem[];
+}
+
 /**
  * Franchises the user has started: their watched movies grouped by TMDB
  * collection, with per-collection progress. Returns in-progress (watched < all)
@@ -179,7 +185,7 @@ export interface FranchiseProgress {
  */
 export async function franchisesInProgress(
   userId: string,
-): Promise<{ inProgress: FranchiseProgress[]; completed: string[] }> {
+): Promise<{ inProgress: FranchiseProgress[]; completed: CompletedFranchise[] }> {
   const ids = await watchedTitleIds(userId);
   if (ids.length === 0) return { inProgress: [], completed: [] };
 
@@ -199,7 +205,7 @@ export async function franchisesInProgress(
   }
 
   const inProgress: FranchiseProgress[] = [];
-  const completed: string[] = [];
+  const completed: CompletedFranchise[] = [];
   for (const [collectionId, g] of groups) {
     // Only count what's actually out, so an announced sequel can't keep a
     // finished franchise stuck "in progress".
@@ -208,7 +214,7 @@ export async function franchisesInProgress(
     const watchedKeys = new Set([...g.watched].map((id) => `movie:${id}`));
     const { total, watched, remaining, seen } = progressFor(items, watchedKeys);
     if (watched === 0) continue;
-    if (remaining.length === 0) completed.push(g.name);
+    if (remaining.length === 0) completed.push({ collectionId, name: g.name, items: seen });
     else inProgress.push({ collectionId, name: g.name, total, watched, remaining, seen });
   }
   inProgress.sort((a, b) => a.remaining.length - b.remaining.length || b.watched - a.watched);
