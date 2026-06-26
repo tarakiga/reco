@@ -19,6 +19,7 @@ function applyConsent(choice: Choice) {
  */
 export function ConsentBanner() {
   const [show, setShow] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   useEffect(() => {
     if (process.env.NODE_ENV !== "production") return;
@@ -57,17 +58,29 @@ export function ConsentBanner() {
       >
         <p className="text-sm font-semibold text-text">Help us improve Haystackk</p>
         <p className="mt-1.5 text-xs leading-relaxed text-text-muted">
-          We&apos;d like to use Google Analytics to understand how Haystackk is used: which pages and
-          features people reach for, what&apos;s slow, and what to build next, so we can keep making it
-          better. It sets analytics cookies and collects anonymous usage data such as the pages you
-          visit, your approximate region, and your device type. We never sell your data or use it to
-          identify you, and until you choose, analytics runs in a cookieless mode that stores nothing on
-          your device. You can change your mind anytime. See our{" "}
-          <Link href="/privacy" className="underline hover:text-text">
-            Privacy policy
-          </Link>{" "}
-          for the full detail.
+          We&apos;d like to use Google Analytics to understand how Haystackk is used.{" "}
+          {!expanded && (
+            <button type="button" onClick={() => setExpanded(true)} className="font-medium text-accent hover:underline">
+              Read more
+            </button>
+          )}
         </p>
+        {expanded && (
+          <p className="mt-1.5 text-xs leading-relaxed text-text-muted">
+            Specifically: which pages and features people reach for, what&apos;s slow, and what to build
+            next, so we can keep making it better. It sets analytics cookies and collects anonymous usage
+            data such as the pages you visit, your approximate region, and your device type. We never
+            sell your data or use it to identify you, and until you choose, analytics runs in a cookieless
+            mode that stores nothing on your device. You can change your mind anytime. See our{" "}
+            <Link href="/privacy" className="underline hover:text-text">
+              Privacy policy
+            </Link>{" "}
+            for the full detail.{" "}
+            <button type="button" onClick={() => setExpanded(false)} className="font-medium text-accent hover:underline">
+              Show less
+            </button>
+          </p>
+        )}
         <div className="mt-3 flex items-center justify-end gap-2">
           <button
             type="button"
