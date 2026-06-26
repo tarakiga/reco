@@ -25,6 +25,7 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
   const [subtitle, setSubtitle] = useState(initial.subtitle ?? "");
   const [published, setPublished] = useState(initial.published);
   const [tiered, setTiered] = useState(initial.tiered);
+  const [showAuthor, setShowAuthor] = useState(initial.showAuthor);
   const [items, setItems] = useState<OwnerListItem[]>(initial.items);
   const [savingMeta, setSavingMeta] = useState(false);
 
@@ -93,6 +94,16 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
       await meFetch(`/api/v1/me/lists/${initial.id}`, { method: "PATCH", body: { tiered: next } });
     } catch (err) {
       setTiered(!next);
+      toast({ title: err instanceof Error ? err.message : "Couldn't update", variant: "danger" });
+    }
+  }
+
+  async function toggleShowAuthor(next: boolean) {
+    setShowAuthor(next);
+    try {
+      await meFetch(`/api/v1/me/lists/${initial.id}`, { method: "PATCH", body: { showAuthor: next } });
+    } catch (err) {
+      setShowAuthor(!next);
       toast({ title: err instanceof Error ? err.message : "Couldn't update", variant: "danger" });
     }
   }
@@ -279,6 +290,11 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
           <input type="checkbox" checked={tiered} onChange={(e) => toggleTiered(e.target.checked)} className="size-4 accent-accent" />
           <span className="text-sm font-medium text-text">Tier list</span>
           <span className="text-xs text-text-muted">Group items into S / A / B / C tiers.</span>
+        </label>
+        <label className="flex items-center gap-2.5">
+          <input type="checkbox" checked={showAuthor} onChange={(e) => toggleShowAuthor(e.target.checked)} className="size-4 accent-accent" />
+          <span className="text-sm font-medium text-text">Show byline</span>
+          <span className="text-xs text-text-muted">Show the &ldquo;A list by you&rdquo; line at the top of the shared page.</span>
         </label>
         <div className="flex justify-end">
           <Button onClick={saveMeta} loading={savingMeta} disabled={!title.trim()}>

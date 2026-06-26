@@ -14,6 +14,7 @@ export const updateListInput = z.object({
   subtitle: z.string().trim().max(200).nullable().optional(),
   published: z.boolean().optional(),
   tiered: z.boolean().optional(),
+  showAuthor: z.boolean().optional(),
 });
 
 /** Add a movie/show (no season/episode) or a specific TV episode to a list. */

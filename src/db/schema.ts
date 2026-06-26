@@ -152,6 +152,8 @@ export const lists = pgTable("lists", {
   published: boolean("published").notNull().default(false),
   // When true the list renders as a tier list (items grouped S/A/B/C).
   tiered: boolean("tiered").notNull().default(false),
+  // When false, the "A list by <author>" byline is hidden on the shared page.
+  showAuthor: boolean("show_author").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

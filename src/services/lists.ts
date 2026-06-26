@@ -101,7 +101,7 @@ export async function createListFromTag(
 export async function updateList(
   userId: string,
   listId: string,
-  fields: { title?: string; subtitle?: string | null; published?: boolean; tiered?: boolean },
+  fields: { title?: string; subtitle?: string | null; published?: boolean; tiered?: boolean; showAuthor?: boolean },
 ): Promise<boolean> {
   const set: Record<string, unknown> = { updatedAt: new Date() };
   if (fields.title !== undefined) {
@@ -111,6 +111,7 @@ export async function updateList(
   if (fields.subtitle !== undefined) set.subtitle = fields.subtitle;
   if (fields.published !== undefined) set.published = fields.published;
   if (fields.tiered !== undefined) set.tiered = fields.tiered;
+  if (fields.showAuthor !== undefined) set.showAuthor = fields.showAuthor;
   const res = await db
     .update(lists)
     .set(set)
@@ -245,6 +246,7 @@ export interface OwnerList {
   slug: string;
   published: boolean;
   tiered: boolean;
+  showAuthor: boolean;
   items: OwnerListItem[];
 }
 
@@ -281,6 +283,7 @@ export async function getListForOwner(userId: string, listId: string): Promise<O
     slug: l.slug,
     published: l.published,
     tiered: l.tiered,
+    showAuthor: l.showAuthor,
     items: rows.map((r) => {
       // CockroachDB INT8 columns come back as strings via postgres.js.
       const episode = Number(r.episode ?? 0);
@@ -373,6 +376,7 @@ export interface ViewList {
   slug: string;
   author: string;
   tiered: boolean;
+  showAuthor: boolean;
   items: ViewListItem[];
 }
 
@@ -386,6 +390,7 @@ export async function getListForView(listId: string): Promise<ViewList | null> {
       slug: lists.slug,
       published: lists.published,
       tiered: lists.tiered,
+      showAuthor: lists.showAuthor,
       author: profiles.username,
     })
     .from(lists)
@@ -421,6 +426,7 @@ export async function getListForView(listId: string): Promise<ViewList | null> {
     slug: l.slug,
     author: l.author,
     tiered: l.tiered,
+    showAuthor: l.showAuthor,
     items: rows.map((r) => {
       const meta = (r.metadata ?? {}) as TmdbTitleDetail;
       // CockroachDB INT8 columns come back as strings via postgres.js.

@@ -12,7 +12,8 @@ export async function generateMetadata({ params }: { params: Promise<{ idSlug: s
   if (!id) return {};
   const list = await getListForView(id);
   if (!list) return {};
-  const description = list.subtitle ?? `A list by ${list.author} on Haystackk.`;
+  const description =
+    list.subtitle ?? (list.showAuthor ? `A list by ${list.author} on Haystackk.` : "A list on Haystackk.");
   return {
     title: list.title,
     description,
@@ -33,7 +34,9 @@ export default async function ListPage({ params }: { params: Promise<{ idSlug: s
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <header className="mb-8">
-        <p className="text-sm font-medium uppercase tracking-wide text-text-muted">A list by {list.author}</p>
+        {list.showAuthor && (
+          <p className="text-sm font-medium uppercase tracking-wide text-text-muted">A list by {list.author}</p>
+        )}
         <h1 className="mt-1 text-3xl font-bold text-text sm:text-4xl">{list.title}</h1>
         {list.subtitle && <p className="mt-2 text-lg text-text-muted">{list.subtitle}</p>}
         <p className="mt-3 text-sm text-text-muted">
