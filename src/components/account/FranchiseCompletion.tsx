@@ -27,7 +27,7 @@ export function FranchiseCompletion({
         <section key={f.collectionId} className="rounded-lg border border-border bg-surface-raised p-4">
           <CompletionBar label={f.name} watched={f.watched} total={f.total} />
           <p className="mb-3 mt-2 text-xs text-text-muted">
-            {f.remaining.length} to go — finish what you started
+            {f.remaining.length} to go. Finish what you started.
           </p>
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
             {f.remaining.map((t) => (

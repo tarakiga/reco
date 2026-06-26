@@ -14,6 +14,8 @@ export interface CompletionItem {
   tmdbId: number;
   title: string;
   year: number | null;
+  /** ISO date ("YYYY-MM-DD") or null — used to drop not-yet-released titles. */
+  releaseDate: string | null;
   posterUrl: string | null;
   href: string;
 }
@@ -24,11 +26,18 @@ export interface Progress {
   remaining: CompletionItem[];
 }
 
-const WRITER_JOBS = new Set(["Writer", "Screenplay", "Story", "Author", "Novel"]);
+const WRITER_JOBS = new Set([
+  "Writer", "Screenplay", "Story", "Author", "Novel", "Teleplay", "Characters", "Comic Book", "Book",
+]);
+const DIRECTOR_JOBS = new Set(["Director", "Co-Director"]);
+// Talk-show / documentary "as themselves" credits aren't really part of an
+// actor's body of work, and they badly inflate the "seen" denominator.
+const SELF_ROLE = /\b(self|himself|herself|themselves)\b/i;
 
 function toItem(c: TmdbSearchItem): CompletionItem | null {
   const mt = c.media_type;
   if (mt !== "movie" && mt !== "tv") return null;
+  if (c.adult) return null;
   const name = c.title ?? c.name ?? "Untitled";
   const date = c.release_date ?? c.first_air_date ?? "";
   const year = date.length >= 4 ? Number(date.slice(0, 4)) : null;
@@ -38,9 +47,20 @@ function toItem(c: TmdbSearchItem): CompletionItem | null {
     tmdbId: c.id,
     title: name,
     year: Number.isFinite(year) ? year : null,
+    releaseDate: date || null,
     posterUrl: posterUrl(c.poster_path),
     href: `/title/${mt}/${c.id}-${titleSlug(name, date || null)}`,
   };
+}
+
+/**
+ * Drop not-yet-released titles (future-dated) so the completion denominator only
+ * counts what you can actually watch. Undated titles are kept (usually old
+ * catalogue, not upcoming). Call at request time, not inside a cached function.
+ */
+export function releasedItems(items: CompletionItem[]): CompletionItem[] {
+  const today = new Date().toISOString().slice(0, 10);
+  return items.filter((i) => !i.releaseDate || i.releaseDate <= today);
 }
 
 function dedupe(items: (CompletionItem | null)[]): CompletionItem[] {
@@ -108,8 +128,8 @@ export async function personSets(personId: number): Promise<PersonSets> {
     const cast = data.combined_credits?.cast ?? [];
     const crew = data.combined_credits?.crew ?? [];
     return {
-      acted: dedupe(cast.map(toItem)),
-      directed: dedupe(crew.filter((c) => c.job === "Director").map(toItem)),
+      acted: dedupe(cast.filter((c) => !(c.character && SELF_ROLE.test(c.character))).map(toItem)),
+      directed: dedupe(crew.filter((c) => c.job && DIRECTOR_JOBS.has(c.job)).map(toItem)),
       wrote: dedupe(crew.filter((c) => c.job && WRITER_JOBS.has(c.job)).map(toItem)),
     };
   } catch {
@@ -176,8 +196,10 @@ export async function franchisesInProgress(
   const inProgress: FranchiseProgress[] = [];
   const completed: string[] = [];
   for (const [collectionId, g] of groups) {
-    const items = await collectionItems(collectionId);
-    if (items.length < 2) continue; // not really a franchise
+    // Only count what's actually out, so an announced sequel can't keep a
+    // finished franchise stuck "in progress".
+    const items = releasedItems(await collectionItems(collectionId));
+    if (items.length < 2) continue; // not really a franchise (or only one out yet)
     const watchedKeys = new Set([...g.watched].map((id) => `movie:${id}`));
     const { total, watched, remaining } = progressFor(items, watchedKeys);
     if (watched === 0) continue;

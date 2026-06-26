@@ -1,4 +1,4 @@
-import { personSets, progressFor } from "@/services/completion";
+import { personSets, progressFor, releasedItems } from "@/services/completion";
 import { CompletionBar } from "@/components/completion/CompletionBar";
 
 /**
@@ -11,9 +11,9 @@ export async function PersonCompletion({ personId, watched }: { personId: number
   const sets = await personSets(personId);
   const rows = (
     [
-      { label: "Films & shows seen", items: sets.acted },
-      { label: "Directed", items: sets.directed },
-      { label: "Written", items: sets.wrote },
+      { label: "Films & shows seen", items: releasedItems(sets.acted) },
+      { label: "Directed", items: releasedItems(sets.directed) },
+      { label: "Written", items: releasedItems(sets.wrote) },
     ] as const
   ).filter((r) => r.items.length >= 2);
   if (rows.length === 0) return null;
