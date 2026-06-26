@@ -15,6 +15,8 @@ import { PollsManager } from "@/components/account/PollsManager";
 import { franchisesInProgress } from "@/services/completion";
 import { cardActionContext } from "@/services/favourites";
 import { FranchiseCompletion } from "@/components/account/FranchiseCompletion";
+import { Achievements } from "@/components/account/Achievements";
+import { computeBadges } from "@/lib/achievements";
 import { posterUrl } from "@/lib/tmdb/images";
 import { SITE_URL } from "@/lib/brand";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -115,7 +117,20 @@ export default async function AccountPage() {
     {
       id: "completion",
       label: "Completion",
-      content: <FranchiseCompletion data={franchiseData} ctx={cardCtx} />,
+      content: (
+        <div className="space-y-6">
+          <Achievements
+            badges={computeBadges({
+              diary: diaryEntries.length,
+              favourites: favourites.length,
+              lists: userLists.length,
+              tags: userTags.length,
+              franchisesCompleted: franchiseData.completed.length,
+            })}
+          />
+          <FranchiseCompletion data={franchiseData} ctx={cardCtx} />
+        </div>
+      ),
     },
     {
       id: "vote",

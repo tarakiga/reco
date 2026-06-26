@@ -18,6 +18,8 @@ export interface QueryFilters {
   sort: string; // TMDB sort_by
   voteFloor: number;
   voteCeil: number | null;
+  /** Max runtime in minutes, e.g. from "under 90 minutes" / "short films". */
+  runtimeLte: number | null;
   /** True when the query is mostly filters (route to Discover, not vectors). */
   isCatalog: boolean;
   /** Human-readable filter summary for the UI, e.g. "1980s · cult · Sci-Fi". */
@@ -151,6 +153,25 @@ export function parseQueryFilters(raw: string): QueryFilters {
     }
   }
 
+  // --- runtime cap ("under 90 minutes", "less than 2 hours", "short films") ---
+  let runtimeLte: number | null = null;
+  const rt = working.match(
+    /\b(?:under|below|less\s+than|at\s+most|max(?:imum)?|<)\s*(\d{1,3})\s*(hours?|hrs?|h|minutes?|mins?|m)\b/i,
+  );
+  const rt2 = runtimeLte == null ? working.match(/\b(\d{1,3})\s*(hours?|hrs?|h|minutes?|mins?|m)\s*(?:or\s+(?:less|under)|max)\b/i) : null;
+  const rtMatch = rt ?? rt2;
+  if (rtMatch) {
+    const n = Number(rtMatch[1]);
+    const isHours = /^h/i.test(rtMatch[2]);
+    runtimeLte = isHours ? n * 60 : n;
+    working = strip(working, new RegExp(rtMatch[0].replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
+    summary.push(`under ${runtimeLte} min`);
+  } else if (/\bshort\s+(?:films?|movies?)\b/i.test(working)) {
+    runtimeLte = 45;
+    working = strip(working, /\bshort\s+(?:films?|movies?)\b/);
+    summary.push("short");
+  }
+
   // --- leftover descriptive words ---
   const leftover = working
     .replace(/[^a-z0-9\s]/gi, " ")
@@ -158,7 +179,7 @@ export function parseQueryFilters(raw: string): QueryFilters {
     .filter((w) => w && !STOP.has(w));
 
   const isCatalog =
-    (yearGte != null || genreIds.length > 0 || hasReputation) && leftover.length <= 1;
+    (yearGte != null || genreIds.length > 0 || hasReputation || runtimeLte != null) && leftover.length <= 1;
 
   // Keep Documentary (99) + Music (10402) out of acclaim-ranked lists unless the
   // user asked for them — otherwise concert films/docs top a "cult classics" list.
@@ -175,6 +196,7 @@ export function parseQueryFilters(raw: string): QueryFilters {
     sort,
     voteFloor,
     voteCeil,
+    runtimeLte,
     isCatalog,
     summary: summary.join(" · "),
   };
