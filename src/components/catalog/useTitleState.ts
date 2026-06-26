@@ -38,6 +38,14 @@ export function useSetRating(mediaType: "movie" | "tv", tmdbId: number) {
   });
 }
 
+export function useRemoveRating(mediaType: "movie" | "tv", tmdbId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => meFetch("/api/v1/me/ratings", { method: "DELETE", body: { mediaType, tmdbId } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["title-state", mediaType, tmdbId] }),
+  });
+}
+
 export function useToggleFavourite(mediaType: "movie" | "tv", tmdbId: number) {
   const qc = useQueryClient();
   return useMutation({
