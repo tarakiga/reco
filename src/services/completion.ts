@@ -23,7 +23,10 @@ export interface CompletionItem {
 export interface Progress {
   total: number;
   watched: number;
+  /** Titles still to watch, in order. */
   remaining: CompletionItem[];
+  /** Titles already seen, in order. */
+  seen: CompletionItem[];
 }
 
 const WRITER_JOBS = new Set([
@@ -76,8 +79,9 @@ function dedupe(items: (CompletionItem | null)[]): CompletionItem[] {
 
 /** Compute a watched/total split for a set against the user's watched keys. */
 export function progressFor(items: CompletionItem[], watched: Set<string>): Progress {
+  const seen = items.filter((i) => watched.has(i.key));
   const remaining = items.filter((i) => !watched.has(i.key));
-  return { total: items.length, watched: items.length - remaining.length, remaining };
+  return { total: items.length, watched: seen.length, remaining, seen };
 }
 
 // ---------------------------------------------------------------------------
@@ -165,6 +169,7 @@ export interface FranchiseProgress {
   total: number;
   watched: number;
   remaining: CompletionItem[];
+  seen: CompletionItem[];
 }
 
 /**
@@ -201,10 +206,10 @@ export async function franchisesInProgress(
     const items = releasedItems(await collectionItems(collectionId));
     if (items.length < 2) continue; // not really a franchise (or only one out yet)
     const watchedKeys = new Set([...g.watched].map((id) => `movie:${id}`));
-    const { total, watched, remaining } = progressFor(items, watchedKeys);
+    const { total, watched, remaining, seen } = progressFor(items, watchedKeys);
     if (watched === 0) continue;
     if (remaining.length === 0) completed.push(g.name);
-    else inProgress.push({ collectionId, name: g.name, total, watched, remaining });
+    else inProgress.push({ collectionId, name: g.name, total, watched, remaining, seen });
   }
   inProgress.sort((a, b) => a.remaining.length - b.remaining.length || b.watched - a.watched);
   return { inProgress, completed };

@@ -29,6 +29,8 @@ export function FranchiseCompletion({
           <p className="mb-3 mt-2 text-xs text-text-muted">
             {f.remaining.length} to go. Finish what you started.
           </p>
+
+          <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-text-muted">To watch</p>
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
             {f.remaining.map((t) => (
               <TitleCard
@@ -42,6 +44,33 @@ export function FranchiseCompletion({
               />
             ))}
           </div>
+
+          {f.seen.length > 0 && (
+            <>
+              <p className="mb-1.5 mt-4 text-xs font-medium uppercase tracking-wide text-text-muted">
+                Seen ({f.seen.length})
+              </p>
+              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
+                {f.seen.map((t) => (
+                  <div key={t.tmdbId} className="relative">
+                    <span className="absolute right-1 top-1 z-10 rounded-full bg-success px-1.5 py-0.5 text-[10px] font-bold text-black">
+                      ✓
+                    </span>
+                    <div className="opacity-70">
+                      <TitleCard
+                        href={t.href}
+                        title={t.title}
+                        year={t.year}
+                        posterUrl={t.posterUrl}
+                        favourite={favouriteProp(ctx, t.mediaType, t.tmdbId)}
+                        watchlist={watchlistProp(ctx, t.mediaType, t.tmdbId)}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </section>
       ))}
 
