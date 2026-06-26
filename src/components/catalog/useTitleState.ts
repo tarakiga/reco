@@ -46,6 +46,43 @@ export function useRemoveRating(mediaType: "movie" | "tv", tmdbId: number) {
   });
 }
 
+interface DiaryDate {
+  id: string;
+  watchedOn: string;
+}
+
+export function useDiaryDates(mediaType: "movie" | "tv", tmdbId: number) {
+  return useQuery({
+    queryKey: ["diary-dates", mediaType, tmdbId],
+    queryFn: () =>
+      meFetch<{ dates: DiaryDate[] }>(`/api/v1/me/diary?mediaType=${mediaType}&tmdbId=${tmdbId}`),
+  });
+}
+
+export function useLogDiary(mediaType: "movie" | "tv", tmdbId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (date: string) =>
+      meFetch("/api/v1/me/diary", { method: "POST", body: { mediaType, tmdbId, date } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["diary-dates", mediaType, tmdbId] });
+      qc.invalidateQueries({ queryKey: ["title-state", mediaType, tmdbId] });
+    },
+  });
+}
+
+export function useRemoveDiary(mediaType: "movie" | "tv", tmdbId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (entryId: string) =>
+      meFetch("/api/v1/me/diary", { method: "DELETE", body: { entryId } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["diary-dates", mediaType, tmdbId] });
+      qc.invalidateQueries({ queryKey: ["title-state", mediaType, tmdbId] });
+    },
+  });
+}
+
 export function useToggleFavourite(mediaType: "movie" | "tv", tmdbId: number) {
   const qc = useQueryClient();
   return useMutation({
