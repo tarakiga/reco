@@ -142,6 +142,19 @@ export type WatchlistItemRow = typeof watchlistItems.$inferSelect;
 export type RatingRow = typeof ratings.$inferSelect;
 export type FavouriteRow = typeof favourites.$inferSelect;
 
+// Per-episode "watched" markers for TV series progress tracking.
+export const episodeWatches = pgTable(
+  "episode_watches",
+  {
+    userId: uuid("user_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+    titleId: uuid("title_id").notNull().references(() => titles.id, { onDelete: "cascade" }),
+    seasonNumber: integer("season_number").notNull(),
+    episodeNumber: integer("episode_number").notNull(),
+    watchedAt: timestamp("watched_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.titleId, t.seasonNumber, t.episodeNumber] })],
+);
+
 // User-created shareable lists (e.g. "My Top Ten Mind Movies").
 export const lists = pgTable("lists", {
   id: uuid("id").defaultRandom().primaryKey(),

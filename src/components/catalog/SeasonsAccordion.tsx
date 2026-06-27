@@ -2,7 +2,29 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@clerk/nextjs";
+import { meFetch } from "@/lib/me-client";
+import { CompletionBar } from "@/components/completion/CompletionBar";
 import type { SeasonSummary, EpisodeVM, EpisodeCastMember } from "@/lib/tmdb/episodes";
+
+function CheckButton({ watched, onClick }: { watched: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={watched}
+      aria-label={watched ? "Mark unwatched" : "Mark watched"}
+      title={watched ? "Watched" : "Mark watched"}
+      className={`flex size-6 shrink-0 items-center justify-center rounded-full border transition-colors ${
+        watched ? "border-success bg-success text-black" : "border-border text-text-muted hover:border-accent hover:text-accent"
+      }`}
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="size-3.5" aria-hidden>
+        <path d="M20 6 9 17l-5-5" />
+      </svg>
+    </button>
+  );
+}
 
 function fmtDate(iso: string | null): string | null {
   if (!iso) return null;
@@ -93,11 +115,17 @@ function EpisodeRow({
   ep,
   seasonNumber,
   highlight,
+  watched,
+  onToggle,
+  signedIn,
 }: {
   ep: EpisodeVM;
   seasonNumber: number;
   /** Deep-link target: scroll into view on mount and flash a ring briefly. */
   highlight: boolean;
+  watched: boolean;
+  onToggle: () => void;
+  signedIn: boolean;
 }) {
   const [showCast, setShowCast] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -136,6 +164,7 @@ function EpisodeRow({
               {ep.episodeNumber}. {ep.name}
             </h4>
             <div className="flex shrink-0 items-center gap-1.5">
+              {signedIn && <CheckButton watched={watched} onClick={onToggle} />}
               <span className="opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
                 <CopyLinkButton hash={`s${seasonNumber}e${ep.episodeNumber}`} label="Copy link to this episode" />
               </span>
@@ -195,6 +224,10 @@ function SeasonItem({
   defaultOpen,
   isTarget,
   targetEpisode,
+  watched,
+  onToggle,
+  onMarkSeason,
+  signedIn,
 }: {
   tvId: number;
   season: SeasonSummary;
@@ -203,6 +236,10 @@ function SeasonItem({
   isTarget: boolean;
   /** Episode number to scroll to within this season, or null for season-only. */
   targetEpisode: number | null;
+  watched: Set<string>;
+  onToggle: (season: number, episode: number) => void;
+  onMarkSeason: (season: number, episodes: number[], watched: boolean) => void;
+  signedIn: boolean;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -218,6 +255,9 @@ function SeasonItem({
     staleTime: 60 * 60 * 1000,
   });
   const episodes = data?.episodes ?? [];
+  const seasonWatchedCount = signedIn
+    ? [...watched].filter((k) => k.startsWith(`${season.seasonNumber}:`)).length
+    : 0;
 
   // Becoming the deep-link target: open this season. Runs after mount (not during
   // render) so the server/client first paint match — no hydration mismatch.
@@ -263,6 +303,9 @@ function SeasonItem({
             {season.episodeCount} {season.episodeCount === 1 ? "episode" : "episodes"}
             {season.year ? ` · ${season.year}` : ""}
           </span>
+          {signedIn && seasonWatchedCount > 0 && (
+            <span className="text-xs font-medium text-success">{seasonWatchedCount}/{season.episodeCount} seen</span>
+          )}
         </button>
         <CopyLinkButton hash={`s${season.seasonNumber}`} label="Copy link to this season" />
       </div>
@@ -285,16 +328,33 @@ function SeasonItem({
           ) : episodes.length === 0 ? (
             <p className="text-sm text-text-muted">No episode details available.</p>
           ) : (
-            <ul className="space-y-3">
-              {episodes.map((ep) => (
-                <EpisodeRow
-                  key={ep.episodeNumber}
-                  ep={ep}
-                  seasonNumber={season.seasonNumber}
-                  highlight={ep.episodeNumber === flashEp}
-                />
-              ))}
-            </ul>
+            <>
+              {signedIn && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const allWatched = episodes.every((e) => watched.has(`${season.seasonNumber}:${e.episodeNumber}`));
+                    onMarkSeason(season.seasonNumber, episodes.map((e) => e.episodeNumber), !allWatched);
+                  }}
+                  className="mb-3 rounded-md border border-border bg-surface px-2.5 py-1 text-xs font-medium text-text-muted transition-colors hover:border-accent hover:text-accent"
+                >
+                  {episodes.every((e) => watched.has(`${season.seasonNumber}:${e.episodeNumber}`)) ? "Unmark all" : "Mark season watched"}
+                </button>
+              )}
+              <ul className="space-y-3">
+                {episodes.map((ep) => (
+                  <EpisodeRow
+                    key={ep.episodeNumber}
+                    ep={ep}
+                    seasonNumber={season.seasonNumber}
+                    highlight={ep.episodeNumber === flashEp}
+                    watched={watched.has(`${season.seasonNumber}:${ep.episodeNumber}`)}
+                    onToggle={() => onToggle(season.seasonNumber, ep.episodeNumber)}
+                    signedIn={signedIn}
+                  />
+                ))}
+              </ul>
+            </>
           )}
         </div>
       )}
@@ -304,6 +364,40 @@ function SeasonItem({
 
 export function SeasonsAccordion({ tvId, seasons }: { tvId: number; seasons: SeasonSummary[] }) {
   const [target, setTarget] = useState<HashTarget | null>(null);
+  const { isSignedIn } = useAuth();
+  const signedIn = isSignedIn ?? false;
+  const [watched, setWatched] = useState<Set<string>>(new Set());
+
+  const { data: watchedData } = useQuery({
+    queryKey: ["episode-watches", tvId],
+    queryFn: () => meFetch<{ episodes: { season: number; episode: number }[] }>(`/api/v1/me/episodes?tmdbId=${tvId}`),
+    enabled: signedIn,
+    staleTime: 5 * 60 * 1000,
+  });
+  useEffect(() => {
+    if (watchedData) setWatched(new Set(watchedData.episodes.map((e) => `${e.season}:${e.episode}`)));
+  }, [watchedData]);
+
+  // Optimistic local toggles; the API call is fire-and-forget.
+  function toggle(seasonNumber: number, episode: number) {
+    const key = `${seasonNumber}:${episode}`;
+    const isWatched = watched.has(key);
+    const next = new Set(watched);
+    if (isWatched) next.delete(key);
+    else next.add(key);
+    setWatched(next);
+    meFetch("/api/v1/me/episodes", { method: "POST", body: { tmdbId: tvId, season: seasonNumber, episode, watched: !isWatched } }).catch(() => {});
+  }
+  function markSeason(seasonNumber: number, eps: number[], watchedFlag: boolean) {
+    const next = new Set(watched);
+    for (const e of eps) {
+      const k = `${seasonNumber}:${e}`;
+      if (watchedFlag) next.add(k);
+      else next.delete(k);
+    }
+    setWatched(next);
+    meFetch("/api/v1/me/episodes", { method: "POST", body: { tmdbId: tvId, season: seasonNumber, episodes: eps, watched: watchedFlag } }).catch(() => {});
+  }
 
   // Resolve the deep-link target from the URL hash, and keep it in sync if the
   // hash changes (in-page link click, pasted URL). Effect-only → no SSR hash read.
@@ -318,21 +412,34 @@ export function SeasonsAccordion({ tvId, seasons }: { tvId: number; seasons: Sea
   }, [seasons]);
 
   if (seasons.length === 0) return null;
+  const totalEpisodes = seasons.reduce((sum, s) => sum + (s.episodeCount || 0), 0);
+
   return (
-    <div className="divide-y divide-border rounded-lg border border-border bg-surface-raised px-4">
-      {seasons.map((s, i) => {
-        const isTarget = target?.season === s.seasonNumber;
-        return (
-          <SeasonItem
-            key={s.seasonNumber}
-            tvId={tvId}
-            season={s}
-            defaultOpen={target ? isTarget : i === 0}
-            isTarget={!!isTarget}
-            targetEpisode={isTarget ? target!.episode : null}
-          />
-        );
-      })}
+    <div>
+      {signedIn && totalEpisodes > 0 && (
+        <div className="mb-3">
+          <CompletionBar label="Episodes watched" watched={Math.min(watched.size, totalEpisodes)} total={totalEpisodes} />
+        </div>
+      )}
+      <div className="divide-y divide-border rounded-lg border border-border bg-surface-raised px-4">
+        {seasons.map((s, i) => {
+          const isTarget = target?.season === s.seasonNumber;
+          return (
+            <SeasonItem
+              key={s.seasonNumber}
+              tvId={tvId}
+              season={s}
+              defaultOpen={target ? isTarget : i === 0}
+              isTarget={!!isTarget}
+              targetEpisode={isTarget ? target!.episode : null}
+              watched={watched}
+              onToggle={toggle}
+              onMarkSeason={markSeason}
+              signedIn={signedIn}
+            />
+          );
+        })}
+      </div>
     </div>
   );
 }
