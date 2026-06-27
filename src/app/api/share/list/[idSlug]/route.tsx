@@ -60,23 +60,40 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
     });
 
   // Post-image variant — fixed 1200×900 (4:3), for a Reddit/forum image post.
-  // Tiers stack to fill the height; a dense tier shows "+N" since the canvas is
-  // fixed. Footer credits the name (left) and the web address (right).
+  // Posters shrink to a size where EVERY title fits (wrapping within each tier),
+  // so nothing is cropped. Footer credits the name (left) and address (right).
   if (format === "banner") {
     const BW = 1200;
     const BH = 900;
     const BPAD = 36;
     const RGAP = 12;
     const BGAP = 8;
+    const labelW = 80;
     const titleH = list.showAuthor ? 72 : 50;
     const footerH = 40;
     const n = groups.length;
     const usableH = BH - BPAD * 2 - titleH - footerH - 22;
-    const rowH = Math.floor((usableH - RGAP * (n - 1)) / n);
-    const posterW = Math.round(rowH * (2 / 3));
-    const labelW = Math.min(rowH, 96);
     const areaW = BW - BPAD * 2 - labelW - 16;
-    const maxPer = Math.max(1, Math.floor((areaW + BGAP) / (posterW + BGAP)));
+
+    // For a poster width, lay every tier out wrapped and measure total height.
+    // blockH includes the trailing row gap so it matches the rendered DOM.
+    const layoutFor = (pw: number) => {
+      const ph = Math.round(pw * 1.5);
+      const cols = Math.max(1, Math.floor((areaW + BGAP) / (pw + BGAP)));
+      const blocks = groups.map((g) => Math.max(1, Math.ceil(g.items.length / cols)) * (ph + BGAP));
+      const total = blocks.reduce((a, h) => a + h, 0) + RGAP * (n - 1);
+      return { pw, ph, blocks, total };
+    };
+    // Largest poster width (capped) at which everything fits the fixed height.
+    let L = layoutFor(20);
+    for (let pw = 122; pw >= 20; pw -= 2) {
+      const cand = layoutFor(pw);
+      if (cand.total <= usableH) {
+        L = cand;
+        break;
+      }
+    }
+
     return new ImageResponse(
       (
         <div
@@ -99,18 +116,18 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
           </div>
           <div style={{ display: "flex", flexDirection: "column", marginTop: 14 }}>
             {groups.map((g, gi) => (
-              <div key={gi} style={{ display: "flex", alignItems: "center", height: rowH, marginBottom: gi < n - 1 ? RGAP : 0 }}>
+              <div key={gi} style={{ display: "flex", alignItems: "flex-start", marginBottom: gi < n - 1 ? RGAP : 0 }}>
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     width: labelW,
-                    height: rowH,
+                    height: L.blocks[gi] - BGAP,
                     borderRadius: 12,
                     backgroundColor: g.tier ? TIER_COLOR[g.tier] : UNRANKED,
                     color: g.tier ? "#000" : TEXT,
-                    fontSize: Math.min(40, Math.round(rowH * 0.5)),
+                    fontSize: 34,
                     fontWeight: 800,
                     marginRight: 16,
                     flexShrink: 0,
@@ -118,16 +135,17 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
                 >
                   {g.tier ?? "—"}
                 </div>
-                <div style={{ display: "flex", alignItems: "center", overflow: "hidden", width: areaW }}>
-                  {g.items.slice(0, maxPer).map((it, i) => (
+                <div style={{ display: "flex", flexWrap: "wrap", width: areaW, alignContent: "flex-start" }}>
+                  {g.items.map((it, i) => (
                     <div
                       key={i}
                       style={{
                         display: "flex",
-                        width: posterW,
-                        height: rowH,
+                        width: L.pw,
+                        height: L.ph,
                         marginRight: BGAP,
-                        borderRadius: 6,
+                        marginBottom: BGAP,
+                        borderRadius: 5,
                         overflow: "hidden",
                         backgroundColor: "#1d2130",
                         flexShrink: 0,
@@ -135,15 +153,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
                     >
                       {it.posterUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={it.posterUrl} alt="" width={posterW} height={rowH} style={{ objectFit: "cover" }} />
+                        <img src={it.posterUrl} alt="" width={L.pw} height={L.ph} style={{ objectFit: "cover" }} />
                       ) : null}
                     </div>
                   ))}
-                  {g.items.length > maxPer && (
-                    <div style={{ display: "flex", alignItems: "center", color: MUTED, fontSize: 24, marginLeft: 8 }}>
-                      +{g.items.length - maxPer}
-                    </div>
-                  )}
                 </div>
               </div>
             ))}
