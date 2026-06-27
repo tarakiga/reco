@@ -15,6 +15,7 @@ import { BRAND_NAME, BRAND_TAGLINE, SITE_URL } from "@/lib/brand";
 import { getBrandName, getNavLinks } from "@/services/site-config";
 import { SearchAutocomplete } from "@/components/layout/SearchAutocomplete";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
+import { CommandPalette } from "@/components/layout/CommandPalette";
 import { ConsentBanner } from "@/components/analytics/ConsentBanner";
 
 const footerAttribution = (
@@ -92,6 +93,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <body className={`${asap.variable} ${geistMono.variable} overflow-x-clip antialiased`}>
           <GoogleAnalytics />
           <ConsentBanner />
+          <CommandPalette />
           <ToastProvider>
             <QueryProvider>
             <Suspense>
