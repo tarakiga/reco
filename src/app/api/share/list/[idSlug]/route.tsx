@@ -87,12 +87,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
       return { ...g, visualH, slotH: rows * (POSTER_H + GAP) };
     });
 
-  // Post-image variant — fixed 1200×900 (4:3), for a Reddit/forum image post.
+  // Post-image variant — fixed 1200×628 (~1.91:1), for social / link-preview posts.
   // Posters shrink to a size where EVERY title fits (wrapping within each tier),
   // so nothing is cropped. Footer credits the name (left) and address (right).
   if (format === "banner") {
     const BW = 1200 * SCALE;
-    const BH = 900 * SCALE;
+    const BH = 628 * SCALE;
     const BPAD = 36 * SCALE;
     const RGAP = 12 * SCALE;
     const BGAP = 8 * SCALE;
