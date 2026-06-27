@@ -30,6 +30,7 @@ import { ShareButton } from "@/components/catalog/ShareButton";
 import { TitleActions } from "@/components/catalog/TitleActions";
 import { TitleTags } from "@/components/catalog/TitleTags";
 import { SimilarBut } from "@/components/catalog/SimilarBut";
+import { NotifyButton } from "@/components/catalog/NotifyButton";
 import { HeroBackdrop } from "@/components/catalog/HeroBackdrop";
 import { AmbientBackground } from "@/components/catalog/AmbientBackground";
 import { FactsPanel } from "@/components/catalog/FactsPanel";
@@ -257,6 +258,10 @@ export default async function TitlePage({
           )}
 
           <SimilarBut title={title.title} mediaType={mediaType} />
+
+          <div className="mb-8">
+            <NotifyButton mediaType={mediaType} tmdbId={id} />
+          </div>
 
           <AdSlot placement="title-inline" className="mb-8" />
 

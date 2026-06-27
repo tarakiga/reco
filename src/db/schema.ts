@@ -155,6 +155,27 @@ export const episodeWatches = pgTable(
   (t) => [primaryKey({ columns: [t.userId, t.titleId, t.seasonNumber, t.episodeNumber] })],
 );
 
+// Web-push subscriptions (one per device/browser) for notifications.
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+// "Notify me when this is on" — titles a user wants a heads-up about.
+export const notifyAlerts = pgTable(
+  "notify_alerts",
+  {
+    userId: uuid("user_id").notNull().references(() => profiles.id, { onDelete: "cascade" }),
+    titleId: uuid("title_id").notNull().references(() => titles.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.userId, t.titleId] })],
+);
+
 // User-created shareable lists (e.g. "My Top Ten Mind Movies").
 export const lists = pgTable("lists", {
   id: uuid("id").defaultRandom().primaryKey(),
