@@ -8,19 +8,20 @@ const SURFACE = "#0b0d12";
 const TEXT = "#f2f4f8";
 const MUTED = "#9aa3b2";
 const UNRANKED = "#39414f";
+// Pixel-density multiplier. Every dimension is authored at 1x and multiplied by
+// SCALE so the output is higher resolution (no CSS transform — Satori drops
+// <img> elements under a transformed ancestor).
+const SCALE = 2;
 // Poster grid geometry — posters wrap across rows so a tier never crops.
-const WIDTH = 1200;
-const PAD = 40;
-const LABEL_W = 104;
-const LABEL_GAP = 16;
-const POSTER_W = 86;
-const POSTER_H = 128;
-const GAP = 8;
+const WIDTH = 1200 * SCALE;
+const PAD = 40 * SCALE;
+const LABEL_W = 104 * SCALE;
+const LABEL_GAP = 16 * SCALE;
+const POSTER_W = 86 * SCALE;
+const POSTER_H = 128 * SCALE;
+const GAP = 8 * SCALE;
 const POSTERS_W = WIDTH - PAD * 2 - LABEL_W - LABEL_GAP;
 const COLS = Math.max(1, Math.floor((POSTERS_W + GAP) / (POSTER_W + GAP)));
-// Render at this pixel density. The layout is authored at 1x and scaled up so
-// text/edges stay crisp (vector) — output is SCALE× the base dimensions.
-const SCALE = 2;
 
 // Inlining many posters + rendering at 2x can take a few seconds on big lists.
 export const maxDuration = 60;
@@ -87,17 +88,17 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
   // Posters shrink to a size where EVERY title fits (wrapping within each tier),
   // so nothing is cropped. Footer credits the name (left) and address (right).
   if (format === "banner") {
-    const BW = 1200;
-    const BH = 900;
-    const BPAD = 36;
-    const RGAP = 12;
-    const BGAP = 8;
-    const labelW = 80;
-    const titleH = list.showAuthor ? 72 : 50;
-    const footerH = 40;
+    const BW = 1200 * SCALE;
+    const BH = 900 * SCALE;
+    const BPAD = 36 * SCALE;
+    const RGAP = 12 * SCALE;
+    const BGAP = 8 * SCALE;
+    const labelW = 80 * SCALE;
+    const titleH = (list.showAuthor ? 72 : 50) * SCALE;
+    const footerH = 40 * SCALE;
     const n = groups.length;
-    const usableH = BH - BPAD * 2 - titleH - footerH - 22;
-    const areaW = BW - BPAD * 2 - labelW - 16;
+    const usableH = BH - BPAD * 2 - titleH - footerH - 22 * SCALE;
+    const areaW = BW - BPAD * 2 - labelW - 16 * SCALE;
 
     // For a poster width, lay every tier out wrapped and measure total height.
     // blockH includes the trailing row gap so it matches the rendered DOM.
@@ -109,8 +110,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
       return { pw, ph, blocks, total };
     };
     // Largest poster width (capped) at which everything fits the fixed height.
-    let L = layoutFor(20);
-    for (let pw = 122; pw >= 20; pw -= 2) {
+    let L = layoutFor(20 * SCALE);
+    for (let pw = 122 * SCALE; pw >= 20 * SCALE; pw -= 2 * SCALE) {
       const cand = layoutFor(pw);
       if (cand.total <= usableH) {
         L = cand;
@@ -120,13 +121,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
 
     return new ImageResponse(
       (
-        <div style={{ width: BW * SCALE, height: BH * SCALE, display: "flex", backgroundColor: SURFACE }}>
         <div
           style={{
-            width: BW,
-            height: BH,
-            transform: `scale(${SCALE})`,
-            transformOrigin: "top left",
+            width: "100%",
+            height: "100%",
             display: "flex",
             flexDirection: "column",
             backgroundColor: SURFACE,
@@ -136,12 +134,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
           }}
         >
           <div style={{ display: "flex", flexDirection: "column", height: titleH }}>
-            <div style={{ display: "flex", fontSize: 40, fontWeight: 800, letterSpacing: -1 }}>{list.title}</div>
+            <div style={{ display: "flex", fontSize: 40 * SCALE, fontWeight: 800, letterSpacing: -1 * SCALE }}>{list.title}</div>
             {list.showAuthor && (
-              <div style={{ display: "flex", fontSize: 20, color: MUTED, marginTop: 2 }}>A list by {list.author}</div>
+              <div style={{ display: "flex", fontSize: 20 * SCALE, color: MUTED, marginTop: 2 * SCALE }}>A list by {list.author}</div>
             )}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", marginTop: 14 }}>
+          <div style={{ display: "flex", flexDirection: "column", marginTop: 14 * SCALE }}>
             {groups.map((g, gi) => (
               <div key={gi} style={{ display: "flex", alignItems: "flex-start", marginBottom: gi < n - 1 ? RGAP : 0 }}>
                 <div
@@ -151,12 +149,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
                     justifyContent: "center",
                     width: labelW,
                     height: L.blocks[gi] - BGAP,
-                    borderRadius: 12,
+                    borderRadius: 12 * SCALE,
                     backgroundColor: g.tier ? TIER_COLOR[g.tier] : UNRANKED,
                     color: g.tier ? "#000" : TEXT,
-                    fontSize: 34,
+                    fontSize: 34 * SCALE,
                     fontWeight: 800,
-                    marginRight: 16,
+                    marginRight: 16 * SCALE,
                     flexShrink: 0,
                   }}
                 >
@@ -172,7 +170,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
                         height: L.ph,
                         marginRight: BGAP,
                         marginBottom: BGAP,
-                        borderRadius: 5,
+                        borderRadius: 5 * SCALE,
                         overflow: "hidden",
                         backgroundColor: "#1d2130",
                         flexShrink: 0,
@@ -189,32 +187,28 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
             ))}
           </div>
           <div style={{ display: "flex", marginTop: "auto", alignItems: "baseline", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", fontSize: 28, fontWeight: 700 }}>
+            <div style={{ display: "flex", fontSize: 28 * SCALE, fontWeight: 700 }}>
               Haystackk<span style={{ display: "flex", color: "#e63946" }}>.</span>
             </div>
-            <div style={{ display: "flex", fontSize: 24, fontWeight: 600, color: MUTED }}>haystackk.com</div>
+            <div style={{ display: "flex", fontSize: 24 * SCALE, fontWeight: 600, color: MUTED }}>haystackk.com</div>
           </div>
         </div>
-        </div>
       ),
-      { width: BW * SCALE, height: BH * SCALE },
+      { width: BW, height: BH },
     );
   }
 
-  const headerH = list.showAuthor ? 112 : 76;
-  const footerH = 56;
-  const bodyH = groups.reduce((acc, g) => acc + g.slotH + 14, 0);
+  const headerH = (list.showAuthor ? 112 : 76) * SCALE;
+  const footerH = 56 * SCALE;
+  const bodyH = groups.reduce((acc, g) => acc + g.slotH + 14 * SCALE, 0);
   const height = PAD * 2 + headerH + bodyH + footerH;
 
   return new ImageResponse(
     (
-      <div style={{ width: WIDTH * SCALE, height: height * SCALE, display: "flex", backgroundColor: SURFACE }}>
       <div
         style={{
-          width: WIDTH,
-          height,
-          transform: `scale(${SCALE})`,
-          transformOrigin: "top left",
+          width: "100%",
+          height: "100%",
           display: "flex",
           flexDirection: "column",
           backgroundColor: SURFACE,
@@ -223,15 +217,15 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
           padding: PAD,
         }}
       >
-        <div style={{ display: "flex", flexDirection: "column", marginBottom: 18 }}>
-          <div style={{ display: "flex", fontSize: 50, fontWeight: 800, letterSpacing: -1 }}>{list.title}</div>
+        <div style={{ display: "flex", flexDirection: "column", marginBottom: 18 * SCALE }}>
+          <div style={{ display: "flex", fontSize: 50 * SCALE, fontWeight: 800, letterSpacing: -1 * SCALE }}>{list.title}</div>
           {list.showAuthor && (
-            <div style={{ display: "flex", fontSize: 24, color: MUTED, marginTop: 4 }}>A list by {list.author}</div>
+            <div style={{ display: "flex", fontSize: 24 * SCALE, color: MUTED, marginTop: 4 * SCALE }}>A list by {list.author}</div>
           )}
         </div>
 
         {groups.map((g, gi) => (
-          <div key={gi} style={{ display: "flex", alignItems: "flex-start", marginBottom: 14 }}>
+          <div key={gi} style={{ display: "flex", alignItems: "flex-start", marginBottom: 14 * SCALE }}>
             <div
               style={{
                 display: "flex",
@@ -239,10 +233,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
                 justifyContent: "center",
                 width: LABEL_W,
                 height: g.visualH,
-                borderRadius: 12,
+                borderRadius: 12 * SCALE,
                 backgroundColor: g.tier ? TIER_COLOR[g.tier] : UNRANKED,
                 color: g.tier ? "#000" : TEXT,
-                fontSize: 42,
+                fontSize: 42 * SCALE,
                 fontWeight: 800,
                 marginRight: LABEL_GAP,
                 flexShrink: 0,
@@ -260,7 +254,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
                     height: POSTER_H,
                     marginRight: GAP,
                     marginBottom: GAP,
-                    borderRadius: 6,
+                    borderRadius: 6 * SCALE,
                     overflow: "hidden",
                     backgroundColor: "#1d2130",
                     flexShrink: 0,
@@ -277,14 +271,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
         ))}
 
         <div style={{ display: "flex", marginTop: "auto", alignItems: "baseline", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", fontSize: 26, fontWeight: 700 }}>
+          <div style={{ display: "flex", fontSize: 26 * SCALE, fontWeight: 700 }}>
             Haystackk<span style={{ display: "flex", color: "#e63946" }}>.</span>
           </div>
-          <div style={{ display: "flex", fontSize: 22, fontWeight: 600, color: MUTED }}>haystackk.com</div>
+          <div style={{ display: "flex", fontSize: 22 * SCALE, fontWeight: 600, color: MUTED }}>haystackk.com</div>
         </div>
       </div>
-      </div>
     ),
-    { width: WIDTH * SCALE, height: height * SCALE },
+    { width: WIDTH, height },
   );
 }
