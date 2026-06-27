@@ -18,6 +18,9 @@ const POSTER_H = 128;
 const GAP = 8;
 const POSTERS_W = WIDTH - PAD * 2 - LABEL_W - LABEL_GAP;
 const COLS = Math.max(1, Math.floor((POSTERS_W + GAP) / (POSTER_W + GAP)));
+// Render at this pixel density. The layout is authored at 1x and scaled up so
+// text/edges stay crisp (vector) — output is SCALE× the base dimensions.
+const SCALE = 2;
 
 export async function GET(req: Request, { params }: { params: Promise<{ idSlug: string }> }) {
   const { idSlug } = await params;
@@ -96,10 +99,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
 
     return new ImageResponse(
       (
+        <div style={{ width: BW * SCALE, height: BH * SCALE, display: "flex", backgroundColor: SURFACE }}>
         <div
           style={{
-            width: "100%",
-            height: "100%",
+            width: BW,
+            height: BH,
+            transform: `scale(${SCALE})`,
+            transformOrigin: "top left",
             display: "flex",
             flexDirection: "column",
             backgroundColor: SURFACE,
@@ -168,8 +174,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
             <div style={{ display: "flex", fontSize: 24, fontWeight: 600, color: MUTED }}>haystackk.com</div>
           </div>
         </div>
+        </div>
       ),
-      { width: BW, height: BH },
+      { width: BW * SCALE, height: BH * SCALE },
     );
   }
 
@@ -180,10 +187,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
 
   return new ImageResponse(
     (
+      <div style={{ width: WIDTH * SCALE, height: height * SCALE, display: "flex", backgroundColor: SURFACE }}>
       <div
         style={{
-          width: "100%",
-          height: "100%",
+          width: WIDTH,
+          height,
+          transform: `scale(${SCALE})`,
+          transformOrigin: "top left",
           display: "flex",
           flexDirection: "column",
           backgroundColor: SURFACE,
@@ -252,7 +262,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
           <div style={{ display: "flex", fontSize: 22, fontWeight: 600, color: MUTED }}>haystackk.com</div>
         </div>
       </div>
+      </div>
     ),
-    { width: WIDTH, height },
+    { width: WIDTH * SCALE, height: height * SCALE },
   );
 }
