@@ -36,8 +36,20 @@ export const CHALLENGES: Challenge[] = [
     slug: "disney-animation",
     name: "Disney Animation",
     emoji: "🏰",
-    blurb: "Walt Disney Animation Studios features.",
-    discover: { with_companies: "6125", sort_by: "primary_release_date.asc" },
+    blurb: "Walt Disney's animated feature canon, from Snow White onward.",
+    // Disney's animation arm was renamed across eras, so the catalogue is split
+    // over three company ids: Walt Disney Animation Studios (6125, modern), Walt
+    // Disney Feature Animation (171656, the 80s–2000s renaissance), and Walt
+    // Disney Productions (3166, the classics). OR them, keep to animated features
+    // (genre 16, runtime >= 70) and filter out shorts/obscurities by vote count.
+    discover: {
+      with_companies: "6125|171656|3166",
+      with_genres: "16",
+      with_original_language: "en",
+      "with_runtime.gte": "70",
+      "vote_count.gte": "400",
+      sort_by: "primary_release_date.asc",
+    },
   },
   {
     slug: "dreamworks",
