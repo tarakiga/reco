@@ -9,9 +9,9 @@ import { MatchBadge } from "@/components/catalog/MatchBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PosterGridSkeleton } from "@/components/catalog/Skeletons";
 import { TasteOnboarding } from "@/components/onboarding/TasteOnboarding";
-import type { ForYouItem } from "@/services/for-you";
+import type { ForYouItem, WhyReason } from "@/services/for-you";
 
-type FeedItem = ForYouItem & { favourite?: boolean; watchlist?: boolean };
+type FeedItem = ForYouItem & { favourite?: boolean; watchlist?: boolean; why?: WhyReason | null };
 interface FeedResponse { needsMoreRatings: boolean; have?: number; need?: number; items: FeedItem[] }
 const PAGE_SIZE = 24;
 
@@ -97,6 +97,15 @@ export function ForYouGrid() {
               favourite={{ mediaType: item.mediaType, tmdbId: item.tmdbId, initial: item.favourite ?? false, signedIn: true }}
               watchlist={{ mediaType: item.mediaType, tmdbId: item.tmdbId, initial: item.watchlist ?? false, signedIn: true }}
             />
+            {item.why && (
+              <Link
+                href={item.why.href}
+                title={`Because you liked ${item.why.title}`}
+                className="mt-1 block truncate text-[11px] text-text-muted transition-colors hover:text-accent"
+              >
+                <span className="text-accent">♥</span> {item.why.title}
+              </Link>
+            )}
           </div>
         ))}
       </div>

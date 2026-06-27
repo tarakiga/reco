@@ -1,7 +1,7 @@
 import { connection, NextResponse } from "next/server";
 import { getCurrentProfile } from "@/services/profile";
 import { getTaste } from "@/services/taste";
-import { forYou } from "@/services/for-you";
+import { forYou, whyForTitles } from "@/services/for-you";
 import { listFavouriteKeys, listWatchlistKeys } from "@/services/user-catalog";
 import { jsonError } from "@/lib/api";
 
@@ -25,11 +25,14 @@ export async function GET(req: Request) {
   ]);
   const favSet = new Set(favKeys);
   const watchSet = new Set(watchKeys);
+  // "Why this?" — the user's most similar liked title per recommendation.
+  const why = await whyForTitles(profile.id, items.map((i) => i.titleId));
   // Seed each card's quick-action state so the heart/bookmark show as already set.
   const enriched = items.map((it) => ({
     ...it,
     favourite: favSet.has(`${it.mediaType}:${it.tmdbId}`),
     watchlist: watchSet.has(`${it.mediaType}:${it.tmdbId}`),
+    why: why[it.titleId] ?? null,
   }));
   return NextResponse.json({ needsMoreRatings: false, items: enriched });
 }
