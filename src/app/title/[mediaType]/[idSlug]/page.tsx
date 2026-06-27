@@ -29,6 +29,7 @@ import { AffiliateLinks } from "@/components/catalog/AffiliateLinks";
 import { ShareButton } from "@/components/catalog/ShareButton";
 import { TitleActions } from "@/components/catalog/TitleActions";
 import { TitleTags } from "@/components/catalog/TitleTags";
+import { SimilarBut } from "@/components/catalog/SimilarBut";
 import { HeroBackdrop } from "@/components/catalog/HeroBackdrop";
 import { AmbientBackground } from "@/components/catalog/AmbientBackground";
 import { FactsPanel } from "@/components/catalog/FactsPanel";
@@ -254,6 +255,8 @@ export default async function TitlePage({
           {title.overview && (
             <p className="mb-8 leading-relaxed text-text-muted">{title.overview}</p>
           )}
+
+          <SimilarBut title={title.title} mediaType={mediaType} />
 
           <AdSlot placement="title-inline" className="mb-8" />
 

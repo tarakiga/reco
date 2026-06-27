@@ -42,6 +42,18 @@ export default async function ListPage({ params }: { params: Promise<{ idSlug: s
         <p className="mt-3 text-sm text-text-muted">
           {list.items.length} {list.items.length === 1 ? "title" : "titles"}
         </p>
+        {list.tiered && (
+          <a
+            href={`/api/share/list/${idSlug}`}
+            download={`${list.slug || "tier-list"}.png`}
+            className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-sm font-medium text-text transition-colors hover:border-accent hover:text-accent"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+            </svg>
+            Download tier image
+          </a>
+        )}
       </header>
 
       {list.items.length === 0 ? (
