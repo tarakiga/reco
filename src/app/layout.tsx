@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Asap, Geist_Mono } from "next/font/google";
 import "./globals.css";
@@ -16,6 +16,7 @@ import { getBrandName, getNavLinks } from "@/services/site-config";
 import { SearchAutocomplete } from "@/components/layout/SearchAutocomplete";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import { CommandPalette } from "@/components/layout/CommandPalette";
+import { PWARegister } from "@/components/layout/PWARegister";
 import { ConsentBanner } from "@/components/analytics/ConsentBanner";
 
 const footerAttribution = (
@@ -64,6 +65,8 @@ const headerSearch = <SearchAutocomplete />;
 const asap = Asap({ variable: "--font-asap", subsets: ["latin"], display: "swap" });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
+export const viewport: Viewport = { themeColor: "#0b0d12" };
+
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
@@ -94,6 +97,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <GoogleAnalytics />
           <ConsentBanner />
           <CommandPalette />
+          <PWARegister />
           <ToastProvider>
             <QueryProvider>
             <Suspense>
