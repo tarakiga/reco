@@ -46,7 +46,7 @@ export default async function ListPage({ params }: { params: Promise<{ idSlug: s
         {list.tiered && (
           <div className="mt-3 flex flex-wrap gap-2">
             <DownloadTierImage idSlug={idSlug} slug={list.slug} label="Download tier image" />
-            <DownloadTierImage idSlug={idSlug} slug={list.slug} format="banner" label="Banner (1920×384)" />
+            <DownloadTierImage idSlug={idSlug} slug={list.slug} format="banner" label="Post image (1200×900)" />
           </div>
         )}
       </header>

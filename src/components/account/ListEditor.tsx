@@ -316,7 +316,7 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
           {tiered && (
             <>
               <DownloadTierImage idSlug={`${initial.id}-${initial.slug}`} slug={initial.slug} label="Download image" />
-              <DownloadTierImage idSlug={`${initial.id}-${initial.slug}`} slug={initial.slug} format="banner" label="Banner (1920×384)" />
+              <DownloadTierImage idSlug={`${initial.id}-${initial.slug}`} slug={initial.slug} format="banner" label="Post image (1200×900)" />
             </>
           )}
           {published && (

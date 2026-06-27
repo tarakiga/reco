@@ -59,22 +59,23 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
       return { ...g, visualH, slotH: rows * (POSTER_H + GAP) };
     });
 
-  // Banner variant — fixed 1920×384 (5:1), for a subreddit banner / wide post.
-  // Tiers stack to fill the height; each row scales posters to fit and shows a
-  // "+N" when a dense tier overflows the fixed width.
+  // Post-image variant — fixed 1200×900 (4:3), for a Reddit/forum image post.
+  // Tiers stack to fill the height; a dense tier shows "+N" since the canvas is
+  // fixed. Footer credits the name (left) and the web address (right).
   if (format === "banner") {
-    const BW = 1920;
-    const BH = 384;
-    const BPAD = 28;
-    const RGAP = 10;
+    const BW = 1200;
+    const BH = 900;
+    const BPAD = 36;
+    const RGAP = 12;
     const BGAP = 8;
-    const titleH = 44;
+    const titleH = list.showAuthor ? 72 : 50;
+    const footerH = 40;
     const n = groups.length;
-    const usableH = BH - BPAD * 2 - titleH - 12;
+    const usableH = BH - BPAD * 2 - titleH - footerH - 22;
     const rowH = Math.floor((usableH - RGAP * (n - 1)) / n);
     const posterW = Math.round(rowH * (2 / 3));
-    const labelW = Math.min(rowH, 76);
-    const areaW = BW - BPAD * 2 - labelW - 14;
+    const labelW = Math.min(rowH, 96);
+    const areaW = BW - BPAD * 2 - labelW - 16;
     const maxPer = Math.max(1, Math.floor((areaW + BGAP) / (posterW + BGAP)));
     return new ImageResponse(
       (
@@ -90,13 +91,13 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
             padding: BPAD,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", height: titleH }}>
-            <div style={{ display: "flex", fontSize: 30, fontWeight: 800, letterSpacing: -1 }}>{list.title}</div>
-            <div style={{ display: "flex", fontSize: 24, fontWeight: 700 }}>
-              Haystackk<span style={{ display: "flex", color: "#e63946" }}>.</span>
-            </div>
+          <div style={{ display: "flex", flexDirection: "column", height: titleH }}>
+            <div style={{ display: "flex", fontSize: 40, fontWeight: 800, letterSpacing: -1 }}>{list.title}</div>
+            {list.showAuthor && (
+              <div style={{ display: "flex", fontSize: 20, color: MUTED, marginTop: 2 }}>A list by {list.author}</div>
+            )}
           </div>
-          <div style={{ display: "flex", flexDirection: "column", marginTop: 12 }}>
+          <div style={{ display: "flex", flexDirection: "column", marginTop: 14 }}>
             {groups.map((g, gi) => (
               <div key={gi} style={{ display: "flex", alignItems: "center", height: rowH, marginBottom: gi < n - 1 ? RGAP : 0 }}>
                 <div
@@ -106,12 +107,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
                     justifyContent: "center",
                     width: labelW,
                     height: rowH,
-                    borderRadius: 10,
+                    borderRadius: 12,
                     backgroundColor: g.tier ? TIER_COLOR[g.tier] : UNRANKED,
                     color: g.tier ? "#000" : TEXT,
-                    fontSize: Math.min(34, Math.round(rowH * 0.5)),
+                    fontSize: Math.min(40, Math.round(rowH * 0.5)),
                     fontWeight: 800,
-                    marginRight: 14,
+                    marginRight: 16,
                     flexShrink: 0,
                   }}
                 >
@@ -126,7 +127,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
                         width: posterW,
                         height: rowH,
                         marginRight: BGAP,
-                        borderRadius: 5,
+                        borderRadius: 6,
                         overflow: "hidden",
                         backgroundColor: "#1d2130",
                         flexShrink: 0,
@@ -139,13 +140,19 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
                     </div>
                   ))}
                   {g.items.length > maxPer && (
-                    <div style={{ display: "flex", alignItems: "center", color: MUTED, fontSize: 22, marginLeft: 6 }}>
+                    <div style={{ display: "flex", alignItems: "center", color: MUTED, fontSize: 24, marginLeft: 8 }}>
                       +{g.items.length - maxPer}
                     </div>
                   )}
                 </div>
               </div>
             ))}
+          </div>
+          <div style={{ display: "flex", marginTop: "auto", alignItems: "baseline", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", fontSize: 28, fontWeight: 700 }}>
+              Haystackk<span style={{ display: "flex", color: "#e63946" }}>.</span>
+            </div>
+            <div style={{ display: "flex", fontSize: 24, fontWeight: 600, color: MUTED }}>haystackk.com</div>
           </div>
         </div>
       ),
@@ -225,8 +232,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
           </div>
         ))}
 
-        <div style={{ display: "flex", marginTop: "auto", fontSize: 26, fontWeight: 700 }}>
-          Haystackk<span style={{ display: "flex", color: "#e63946" }}>.</span>
+        <div style={{ display: "flex", marginTop: "auto", alignItems: "baseline", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", fontSize: 26, fontWeight: 700 }}>
+            Haystackk<span style={{ display: "flex", color: "#e63946" }}>.</span>
+          </div>
+          <div style={{ display: "flex", fontSize: 22, fontWeight: 600, color: MUTED }}>haystackk.com</div>
         </div>
       </div>
     ),
