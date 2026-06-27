@@ -16,21 +16,36 @@ export const CHALLENGES: Challenge[] = [
     name: "Studio Ghibli",
     emoji: "🌿",
     blurb: "Every feature from the legendary Japanese animation house.",
-    discover: { with_companies: "10342", sort_by: "primary_release_date.asc" },
+    // Genre 16 + runtime drops the museum shorts and making-of documentaries the
+    // company id otherwise pulls in.
+    discover: {
+      with_companies: "10342",
+      with_genres: "16",
+      "with_runtime.gte": "70",
+      "vote_count.gte": "50",
+      sort_by: "primary_release_date.asc",
+    },
   },
   {
     slug: "a24",
     name: "A24 essentials",
     emoji: "🎟️",
     blurb: "The acclaimed indie distributor's most-loved films.",
-    discover: { with_companies: "41077", sort_by: "vote_count.desc", "vote_count.gte": "200" },
+    discover: { with_companies: "41077", "with_runtime.gte": "60", sort_by: "vote_count.desc", "vote_count.gte": "200" },
   },
   {
     slug: "pixar",
     name: "Pixar",
     emoji: "💡",
     blurb: "Pixar's feature filmography, oldest first.",
-    discover: { with_companies: "3", sort_by: "primary_release_date.asc" },
+    // Runtime floor is essential here — Pixar's company id is mostly shorts
+    // (Luxo Jr., Geri's Game, the Mater spin-offs).
+    discover: {
+      with_companies: "3",
+      "with_runtime.gte": "70",
+      "vote_count.gte": "100",
+      sort_by: "primary_release_date.asc",
+    },
   },
   {
     slug: "disney-animation",
@@ -56,7 +71,8 @@ export const CHALLENGES: Challenge[] = [
     name: "DreamWorks Animation",
     emoji: "🐉",
     blurb: "Shrek, How to Train Your Dragon, Kung Fu Panda and the rest.",
-    discover: { with_companies: "521", sort_by: "vote_count.desc", "vote_count.gte": "100" },
+    // Runtime floor drops most of the franchise TV specials / holiday shorts.
+    discover: { with_companies: "521", "with_runtime.gte": "70", sort_by: "vote_count.desc", "vote_count.gte": "100" },
   },
 ];
 
