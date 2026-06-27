@@ -13,6 +13,7 @@ import { GenreTiles } from "@/components/home/GenreTiles";
 import { MoodRails } from "@/components/home/MoodRails";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { SceneSearchBar } from "@/components/search/SceneSearchBar";
+import { WrappedBanner } from "@/components/home/WrappedBanner";
 
 async function getTrending(): Promise<TitleResult[]> {
   "use cache";
@@ -156,6 +157,9 @@ export default async function Home() {
           </p>
         </section>
       )}
+
+      {/* December-only "Your Year in Film" promo (personalized when signed in). */}
+      <WrappedBanner />
 
       {/* Two compact CTAs, side by side on desktop and equal height. Red Shuffle
           + amber "describe a scene". */}

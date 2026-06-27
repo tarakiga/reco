@@ -55,7 +55,7 @@ export function NotifyButton({ mediaType, tmdbId }: { mediaType: "movie" | "tv";
         await meFetch("/api/v1/me/push", { method: "POST", body: { subscription: sub.toJSON() } });
         await meFetch("/api/v1/me/notify", { method: "POST", body: { mediaType, tmdbId } });
         setOn(true);
-        toast({ title: "We'll notify you when it's next on", variant: "success" });
+        toast({ title: "We'll notify you when it's next on TV", variant: "success" });
       } else {
         await meFetch("/api/v1/me/notify", { method: "DELETE", body: { mediaType, tmdbId } });
         setOn(false);
@@ -79,7 +79,7 @@ export function NotifyButton({ mediaType, tmdbId }: { mediaType: "movie" | "tv";
       }`}
     >
       <span aria-hidden>🔔</span>
-      {on ? "Notifying when it's on" : "Notify me when it's on"}
+      {on ? "Notifying you when it's on TV" : "Notify me when it's next on TV"}
     </button>
   );
 }
