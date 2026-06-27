@@ -31,7 +31,7 @@ export const CHALLENGES: Challenge[] = [
     name: "A24 essentials",
     emoji: "🎟️",
     blurb: "The acclaimed indie distributor's most-loved films.",
-    discover: { with_companies: "41077", "with_runtime.gte": "60", sort_by: "vote_count.desc", "vote_count.gte": "200" },
+    discover: { with_companies: "41077", "with_runtime.gte": "60", "vote_count.gte": "200", sort_by: "primary_release_date.asc" },
   },
   {
     slug: "pixar",
@@ -72,7 +72,7 @@ export const CHALLENGES: Challenge[] = [
     emoji: "🐉",
     blurb: "Shrek, How to Train Your Dragon, Kung Fu Panda and the rest.",
     // Runtime floor drops most of the franchise TV specials / holiday shorts.
-    discover: { with_companies: "521", "with_runtime.gte": "70", sort_by: "vote_count.desc", "vote_count.gte": "100" },
+    discover: { with_companies: "521", "with_runtime.gte": "70", "vote_count.gte": "100", sort_by: "primary_release_date.asc" },
   },
 ];
 
