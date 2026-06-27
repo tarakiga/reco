@@ -35,6 +35,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
         ? jsonError(503, "The movie database is busy right now. Please try again in a moment.")
         : jsonError(404, "That title couldn't be found.");
     }
+    // Don't swallow silently — a generic 400 hides the real cause (DB, etc.).
+    console.error(`[lists/items POST] list=${id}`, err);
     return jsonError(400, "Invalid request");
   }
 }

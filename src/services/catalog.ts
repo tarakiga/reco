@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { titles, people, type TitleRow, type PersonRow } from "@/db/schema";
 import { tmdb, TmdbError } from "@/lib/tmdb/client";
+import type { TmdbTitleDetail } from "@/lib/tmdb/types";
 import { slimTitleMetadata, slimPersonMetadata } from "@/lib/tmdb/slim";
 import { isSuppressedTitle } from "@/lib/tmdb/suppressed";
 import { titleSlug, slugify } from "@/lib/slug";
@@ -37,7 +38,21 @@ export async function getOrCreateTitle(
     .where(and(eq(titles.tmdbId, tmdbId), eq(titles.mediaType, mediaType)));
   if (existing && isFresh(existing.refreshedAt)) return existing;
 
-  const data = await tmdb.getTitle(mediaType, tmdbId);
+  // The rich detail fetch (append_to_response) is the part of the TMDB API that
+  // flakes most under load. Don't let that block a user action like adding to a
+  // list: on a transient 5xx, reuse a stale catalog row if we have one, else
+  // build the record from a minimal fetch and mark it stale so a later access
+  // refreshes it fully.
+  let data: TmdbTitleDetail;
+  let minimal = false;
+  try {
+    data = await tmdb.getTitle(mediaType, tmdbId);
+  } catch (err) {
+    if (!(err instanceof TmdbError) || err.status === 404) throw err;
+    if (existing) return existing;
+    data = (await tmdb.titleBrief(mediaType, tmdbId)) as TmdbTitleDetail;
+    minimal = true;
+  }
   const name = data.title ?? data.name ?? "Untitled";
   const date = data.release_date ?? data.first_air_date ?? null;
   const year = date && date.length >= 4 ? Number(date.slice(0, 4)) : null;
@@ -51,7 +66,9 @@ export async function getOrCreateTitle(
     backdropPath: data.backdrop_path ?? null,
     overview: data.overview ?? null,
     metadata: slimTitleMetadata(data),
-    refreshedAt: new Date(),
+    // A minimal fallback record is marked stale (epoch) so the next access
+    // re-fetches the full detail once TMDB recovers.
+    refreshedAt: minimal ? new Date(0) : new Date(),
   };
   // Never persist anonymous renders, and never persist adult titles (so a stray
   // adult parody can't re-enter the catalog via a view or backfill).
