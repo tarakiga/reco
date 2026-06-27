@@ -2,6 +2,7 @@ import { connection, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { getCurrentProfile } from "@/services/profile";
 import { getOrCreateTitle } from "@/services/catalog";
+import { TmdbError } from "@/lib/tmdb/client";
 import { addListItem, removeListItem, reorderListItems, setListItemNote, setListItemTier } from "@/services/lists";
 import { addListItemInput, reorderItemsInput, removeItemInput, patchListItemInput } from "@/lib/contracts/lists";
 import { jsonError } from "@/lib/api";
@@ -29,6 +30,11 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     return NextResponse.json({ ok: true, itemId: item.id, titleId: title.id });
   } catch (err) {
     if (err instanceof ZodError) return jsonError(400, "Validation failed", err.issues);
+    if (err instanceof TmdbError) {
+      return err.status >= 500 || err.status === 429
+        ? jsonError(503, "The movie database is busy right now. Please try again in a moment.")
+        : jsonError(404, "That title couldn't be found.");
+    }
     return jsonError(400, "Invalid request");
   }
 }
