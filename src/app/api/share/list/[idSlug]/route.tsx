@@ -22,6 +22,9 @@ const COLS = Math.max(1, Math.floor((POSTERS_W + GAP) / (POSTER_W + GAP)));
 // text/edges stay crisp (vector) — output is SCALE× the base dimensions.
 const SCALE = 2;
 
+// Inlining many posters + rendering at 2x can take a few seconds on big lists.
+export const maxDuration = 60;
+
 export async function GET(req: Request, { params }: { params: Promise<{ idSlug: string }> }) {
   const { idSlug } = await params;
   const format = new URL(req.url).searchParams.get("format");
@@ -48,6 +51,24 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
     }
   }
   if (!list || !list.tiered) return new Response("Not a tier list", { status: 404 });
+
+  // Satori can't fetch remote <img> here — inline each poster as a base64 data
+  // URI (w342 is plenty for the on-image sizes and keeps the payload smaller).
+  const posterData = new Map<string, string>();
+  const uniqueUrls = [...new Set(list.items.map((i) => i.posterUrl).filter((u): u is string => !!u))];
+  await Promise.all(
+    uniqueUrls.map(async (u) => {
+      try {
+        const res = await fetch(u.replace("/w500/", "/w342/"));
+        if (res.ok) {
+          const buf = Buffer.from(await res.arrayBuffer());
+          posterData.set(u, `data:${res.headers.get("content-type") ?? "image/jpeg"};base64,${buf.toString("base64")}`);
+        }
+      } catch {
+        /* skip a poster that fails to load */
+      }
+    }),
+  );
 
   const groups = [
     ...TIERS.map((t) => ({ tier: t as Tier | null, items: list.items.filter((i) => i.tier === t) })),
@@ -157,9 +178,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
                         flexShrink: 0,
                       }}
                     >
-                      {it.posterUrl ? (
+                      {it.posterUrl && posterData.get(it.posterUrl) ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={it.posterUrl} alt="" width={L.pw} height={L.ph} style={{ objectFit: "cover" }} />
+                        <img src={posterData.get(it.posterUrl)} alt="" width={L.pw} height={L.ph} style={{ objectFit: "cover" }} />
                       ) : null}
                     </div>
                   ))}
@@ -245,9 +266,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
                     flexShrink: 0,
                   }}
                 >
-                  {it.posterUrl ? (
+                  {it.posterUrl && posterData.get(it.posterUrl) ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={it.posterUrl} alt="" width={POSTER_W} height={POSTER_H} style={{ objectFit: "cover" }} />
+                    <img src={posterData.get(it.posterUrl)} alt="" width={POSTER_W} height={POSTER_H} style={{ objectFit: "cover" }} />
                   ) : null}
                 </div>
               ))}
