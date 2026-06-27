@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/Toast";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { ListEpisodePicker, type EpisodeResult } from "@/components/account/ListEpisodePicker";
+import { DownloadTierImage } from "@/components/lists/DownloadTierImage";
 import { TIERS, tierColor, TIER_NAME, type Tier } from "@/lib/lists/tiers";
 import type { OwnerList, OwnerListItem } from "@/services/lists";
 
@@ -313,16 +314,10 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
         </div>
         <div className="flex items-center gap-2">
           {tiered && (
-            <a
-              href={`/api/share/list/${initial.id}-${initial.slug}`}
-              download={`${initial.slug || "tier-list"}.png`}
-              className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-2 text-sm font-medium text-text hover:bg-surface-overlay"
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden="true">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
-              </svg>
-              Download image
-            </a>
+            <>
+              <DownloadTierImage idSlug={`${initial.id}-${initial.slug}`} slug={initial.slug} label="Download image" />
+              <DownloadTierImage idSlug={`${initial.id}-${initial.slug}`} slug={initial.slug} format="banner" label="Banner (1920×384)" />
+            </>
           )}
           {published && (
             <>

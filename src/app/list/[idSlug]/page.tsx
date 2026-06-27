@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { parseListId, getListForView, type ViewListItem } from "@/services/lists";
 import { ListCard } from "@/components/lists/ListCard";
+import { DownloadTierImage } from "@/components/lists/DownloadTierImage";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TIERS, tierColor, TIER_NAME, type Tier } from "@/lib/lists/tiers";
 
@@ -43,16 +44,10 @@ export default async function ListPage({ params }: { params: Promise<{ idSlug: s
           {list.items.length} {list.items.length === 1 ? "title" : "titles"}
         </p>
         {list.tiered && (
-          <a
-            href={`/api/share/list/${idSlug}`}
-            download={`${list.slug || "tier-list"}.png`}
-            className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-surface px-3 text-sm font-medium text-text transition-colors hover:border-accent hover:text-accent"
-          >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden="true">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
-            </svg>
-            Download tier image
-          </a>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <DownloadTierImage idSlug={idSlug} slug={list.slug} label="Download tier image" />
+            <DownloadTierImage idSlug={idSlug} slug={list.slug} format="banner" label="Banner (1920×384)" />
+          </div>
         )}
       </header>
 
