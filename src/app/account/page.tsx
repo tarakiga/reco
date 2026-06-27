@@ -183,6 +183,27 @@ export default async function AccountPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-4 py-8">
       <AccountHeader username={profile.username} memberSince={memberSince} />
+      <div className="grid gap-3 sm:grid-cols-3">
+        {[
+          { href: "/challenges", emoji: "🎯", title: "Challenges", sub: "Watch-the-set goals" },
+          { href: "/rank", emoji: "🆚", title: "Rank these", sub: "Sort titles head-to-head" },
+          { href: "/wrapped", emoji: "✨", title: "Your Year in Film", sub: "Your viewing, summed up" },
+        ].map((t) => (
+          <Link
+            key={t.href}
+            href={t.href}
+            className="group flex items-center gap-3 rounded-lg border border-border bg-surface-raised p-4 transition-colors hover:border-accent"
+          >
+            <span className="text-2xl" aria-hidden>
+              {t.emoji}
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold text-text group-hover:text-accent">{t.title}</span>
+              <span className="block text-xs text-text-muted">{t.sub}</span>
+            </span>
+          </Link>
+        ))}
+      </div>
       <AccountTabs tabs={tabs} />
     </div>
   );

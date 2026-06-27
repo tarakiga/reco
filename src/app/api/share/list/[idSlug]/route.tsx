@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
-import { parseListId, getListForView } from "@/services/lists";
+import { parseListId, getListForView, getListForOwner } from "@/services/lists";
+import { getCurrentProfile } from "@/services/profile";
 import { TIERS, TIER_COLOR, type Tier } from "@/lib/lists/tiers";
 
 // Downloadable PNG of a tier list — coloured S/A/B/C bands with poster strips.
@@ -12,7 +13,27 @@ const MAX_PER_TIER = 11;
 export async function GET(_req: Request, { params }: { params: Promise<{ idSlug: string }> }) {
   const { idSlug } = await params;
   const id = parseListId(idSlug);
-  const list = id ? await getListForView(id) : null;
+  // Published lists export for anyone; the owner can also export their own draft.
+  const pub = id ? await getListForView(id) : null;
+  type ExportList = {
+    title: string;
+    author: string;
+    showAuthor: boolean;
+    tiered: boolean;
+    items: { posterUrl: string | null; tier: Tier | null }[];
+  };
+  let list: ExportList | null = pub
+    ? { title: pub.title, author: pub.author, showAuthor: pub.showAuthor, tiered: pub.tiered, items: pub.items }
+    : null;
+  if (!list && id) {
+    const profile = await getCurrentProfile();
+    if (profile) {
+      const owned = await getListForOwner(profile.id, id);
+      if (owned) {
+        list = { title: owned.title, author: profile.username ?? "you", showAuthor: owned.showAuthor, tiered: owned.tiered, items: owned.items };
+      }
+    }
+  }
   if (!list || !list.tiered) return new Response("Not a tier list", { status: 404 });
 
   const groups = [

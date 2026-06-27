@@ -258,6 +258,12 @@ function SeasonItem({
   const seasonWatchedCount = signedIn
     ? [...watched].filter((k) => k.startsWith(`${season.seasonNumber}:`)).length
     : 0;
+  // "Mark season watched" only makes sense once the season has fully aired — every
+  // loaded episode has an air date in the past. An ongoing/upcoming season hides
+  // the bulk action; individual episode checks still work.
+  const seasonComplete =
+    episodes.length > 0 &&
+    episodes.every((e) => e.airDate != null && new Date(e.airDate).getTime() <= Date.now());
 
   // Becoming the deep-link target: open this season. Runs after mount (not during
   // render) so the server/client first paint match — no hydration mismatch.
@@ -329,7 +335,7 @@ function SeasonItem({
             <p className="text-sm text-text-muted">No episode details available.</p>
           ) : (
             <>
-              {signedIn && (
+              {signedIn && seasonComplete && (
                 <button
                   type="button"
                   onClick={() => {
@@ -340,6 +346,9 @@ function SeasonItem({
                 >
                   {episodes.every((e) => watched.has(`${season.seasonNumber}:${e.episodeNumber}`)) ? "Unmark all" : "Mark season watched"}
                 </button>
+              )}
+              {signedIn && !seasonComplete && episodes.length > 0 && (
+                <p className="mb-3 text-xs text-text-muted">Mark season unlocks once the finale has aired.</p>
               )}
               <ul className="space-y-3">
                 {episodes.map((ep) => (
