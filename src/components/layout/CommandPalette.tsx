@@ -16,6 +16,7 @@ const NAV: Cmd[] = [
   { label: "TV Guide", href: "/guide", sub: "What's on, with reminders" },
   { label: "Moods", href: "/moods", sub: "Browse by mood" },
   { label: "Rank these", href: "/rank", sub: "Build a ranking by this-or-that" },
+  { label: "Your Year in Film", href: "/wrapped", sub: "Your year, wrapped up" },
   { label: "Movies", href: "/movies" },
   { label: "Your account", href: "/account" },
 ];
