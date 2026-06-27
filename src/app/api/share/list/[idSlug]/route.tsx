@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import sharp from "sharp";
 import { parseListId, getListForView, getListForOwner } from "@/services/lists";
 import { getCurrentProfile } from "@/services/profile";
 import { TIERS, TIER_COLOR, type Tier } from "@/lib/lists/tiers";
@@ -53,8 +54,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
   }
   if (!list || !list.tiered) return new Response("Not a tier list", { status: 404 });
 
-  // Satori can't fetch remote <img> here — inline each poster as a base64 data
-  // URI (w342 is plenty for the on-image sizes and keeps the payload smaller).
+  // Satori can't fetch remote <img> here, and it doesn't honour object-fit, so
+  // posters whose source isn't 2:3 get stretched. Fetch each, crop to a true 2:3
+  // with sharp, and inline as a base64 data URI — uniform shape, no distortion.
   const posterData = new Map<string, string>();
   const uniqueUrls = [...new Set(list.items.map((i) => i.posterUrl).filter((u): u is string => !!u))];
   await Promise.all(
@@ -62,8 +64,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
       try {
         const res = await fetch(u.replace("/w500/", "/w342/"));
         if (res.ok) {
-          const buf = Buffer.from(await res.arrayBuffer());
-          posterData.set(u, `data:${res.headers.get("content-type") ?? "image/jpeg"};base64,${buf.toString("base64")}`);
+          const raw = Buffer.from(await res.arrayBuffer());
+          const buf = await sharp(raw).resize(400, 600, { fit: "cover" }).jpeg({ quality: 82 }).toBuffer();
+          posterData.set(u, `data:image/jpeg;base64,${buf.toString("base64")}`);
         }
       } catch {
         /* skip a poster that fails to load */
