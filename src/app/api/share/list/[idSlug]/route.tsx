@@ -13,6 +13,9 @@ const UNRANKED = "#39414f";
 // SCALE so the output is higher resolution (no CSS transform — Satori drops
 // <img> elements under a transformed ancestor).
 const SCALE = 2;
+// The post-image variant is a small fixed canvas, so it can render at a higher
+// density than the unbounded full grid without blowing up render time.
+const POST_SCALE = 3;
 // Poster grid geometry — posters wrap across rows so a tier never crops.
 const WIDTH = 1200 * SCALE;
 const PAD = 40 * SCALE;
@@ -24,8 +27,9 @@ const GAP = 8 * SCALE;
 const POSTERS_W = WIDTH - PAD * 2 - LABEL_W - LABEL_GAP;
 const COLS = Math.max(1, Math.floor((POSTERS_W + GAP) / (POSTER_W + GAP)));
 
-// Inlining many posters + rendering at 2x can take a few seconds on big lists.
-export const maxDuration = 60;
+// Rasterising many posters is image-bound (~0.2 MP/s), so a big full-grid list
+// can take over a minute. Allow headroom (Vercel caps to the plan's max).
+export const maxDuration = 300;
 
 export async function GET(req: Request, { params }: { params: Promise<{ idSlug: string }> }) {
   const { idSlug } = await params;
@@ -62,7 +66,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
   await Promise.all(
     uniqueUrls.map(async (u) => {
       try {
-        const res = await fetch(u.replace("/w500/", "/w342/"));
+        const res = await fetch(u);
         if (res.ok) {
           const raw = Buffer.from(await res.arrayBuffer());
           const buf = await sharp(raw).resize(400, 600, { fit: "cover" }).jpeg({ quality: 82 }).toBuffer();
@@ -91,6 +95,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ idSlug: 
   // Posters shrink to a size where EVERY title fits (wrapping within each tier),
   // so nothing is cropped. Footer credits the name (left) and address (right).
   if (format === "banner") {
+    // Shadow the module SCALE — the bounded post image renders at POST_SCALE.
+    const SCALE = POST_SCALE;
     const BW = 1200 * SCALE;
     const BH = 628 * SCALE;
     const BPAD = 36 * SCALE;
