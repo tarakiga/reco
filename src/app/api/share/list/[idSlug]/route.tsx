@@ -8,7 +8,16 @@ const SURFACE = "#0b0d12";
 const TEXT = "#f2f4f8";
 const MUTED = "#9aa3b2";
 const UNRANKED = "#39414f";
-const MAX_PER_TIER = 11;
+// Poster grid geometry — posters wrap across rows so a tier never crops.
+const WIDTH = 1200;
+const PAD = 40;
+const LABEL_W = 104;
+const LABEL_GAP = 16;
+const POSTER_W = 86;
+const POSTER_H = 128;
+const GAP = 8;
+const POSTERS_W = WIDTH - PAD * 2 - LABEL_W - LABEL_GAP;
+const COLS = Math.max(1, Math.floor((POSTERS_W + GAP) / (POSTER_W + GAP)));
 
 export async function GET(_req: Request, { params }: { params: Promise<{ idSlug: string }> }) {
   const { idSlug } = await params;
@@ -39,12 +48,20 @@ export async function GET(_req: Request, { params }: { params: Promise<{ idSlug:
   const groups = [
     ...TIERS.map((t) => ({ tier: t as Tier | null, items: list.items.filter((i) => i.tier === t) })),
     { tier: null as Tier | null, items: list.items.filter((i) => !i.tier) },
-  ].filter((g) => g.items.length > 0);
+  ]
+    .filter((g) => g.items.length > 0)
+    .map((g) => {
+      const rows = Math.max(1, Math.ceil(g.items.length / COLS));
+      // Visual extent of the wrapped poster block (label matches this height);
+      // slot adds the trailing row gap so the canvas never clips a tier.
+      const visualH = rows * POSTER_H + (rows - 1) * GAP;
+      return { ...g, visualH, slotH: rows * (POSTER_H + GAP) };
+    });
 
-  const width = 1200;
-  const rowH = 150;
-  const headerH = 130;
-  const height = headerH + groups.length * (rowH + 12) + 60;
+  const headerH = list.showAuthor ? 112 : 76;
+  const footerH = 56;
+  const bodyH = groups.reduce((acc, g) => acc + g.slotH + 14, 0);
+  const height = PAD * 2 + headerH + bodyH + footerH;
 
   return new ImageResponse(
     (
@@ -57,7 +74,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ idSlug:
           backgroundColor: SURFACE,
           color: TEXT,
           fontFamily: "sans-serif",
-          padding: 40,
+          padding: PAD,
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", marginBottom: 18 }}>
@@ -68,34 +85,35 @@ export async function GET(_req: Request, { params }: { params: Promise<{ idSlug:
         </div>
 
         {groups.map((g, gi) => (
-          <div key={gi} style={{ display: "flex", alignItems: "center", marginBottom: 12, height: rowH }}>
+          <div key={gi} style={{ display: "flex", alignItems: "flex-start", marginBottom: 14 }}>
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                width: 110,
-                height: rowH,
+                width: LABEL_W,
+                height: g.visualH,
                 borderRadius: 12,
                 backgroundColor: g.tier ? TIER_COLOR[g.tier] : UNRANKED,
                 color: g.tier ? "#000" : TEXT,
-                fontSize: 46,
+                fontSize: 42,
                 fontWeight: 800,
-                marginRight: 16,
+                marginRight: LABEL_GAP,
                 flexShrink: 0,
               }}
             >
               {g.tier ?? "—"}
             </div>
-            <div style={{ display: "flex", flex: 1, alignItems: "center", overflow: "hidden" }}>
-              {g.items.slice(0, MAX_PER_TIER).map((it, i) => (
+            <div style={{ display: "flex", flexWrap: "wrap", width: POSTERS_W, alignContent: "flex-start" }}>
+              {g.items.map((it, i) => (
                 <div
                   key={i}
                   style={{
                     display: "flex",
-                    width: 90,
-                    height: rowH - 10,
-                    marginRight: 8,
+                    width: POSTER_W,
+                    height: POSTER_H,
+                    marginRight: GAP,
+                    marginBottom: GAP,
                     borderRadius: 6,
                     overflow: "hidden",
                     backgroundColor: "#1d2130",
@@ -104,15 +122,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ idSlug:
                 >
                   {it.posterUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={it.posterUrl} alt="" width={90} height={rowH - 10} style={{ objectFit: "cover" }} />
+                    <img src={it.posterUrl} alt="" width={POSTER_W} height={POSTER_H} style={{ objectFit: "cover" }} />
                   ) : null}
                 </div>
               ))}
-              {g.items.length > MAX_PER_TIER && (
-                <div style={{ display: "flex", alignItems: "center", color: MUTED, fontSize: 28, marginLeft: 6 }}>
-                  +{g.items.length - MAX_PER_TIER}
-                </div>
-              )}
             </div>
           </div>
         ))}
@@ -122,6 +135,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ idSlug:
         </div>
       </div>
     ),
-    { width, height },
+    { width: WIDTH, height },
   );
 }
