@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { db } from "@/db";
 import { titles, titleEmbeddings, userTaste, ratings, watchlistItems, favourites } from "@/db/schema";
 import { toVectorLiteral } from "@/db/vector";
+import { nearestTitles } from "@/db/vector-search";
 import { matchPercent } from "@/lib/taste/match";
 import { titleSlug } from "@/lib/slug";
 import { posterUrl } from "@/lib/tmdb/images";
@@ -37,35 +38,22 @@ export async function forYou(userId: string, limit = 24, offset = 0): Promise<Fo
   const excluded = new Set(exRows.map((r) => r.title_id as string));
 
   // Over-fetch nearest neighbours so offset+limit still remain after excluding.
-  // cosine similarity = 1 - cosine distance (<=>); ORDER BY <=> LIMIT uses the index.
   const fetchLimit = offset + limit + excluded.size + EXCLUDE_BUFFER;
-  const result = await db.execute(sql`
-    SELECT t.id, t.tmdb_id, t.media_type, t.title, t.release_year, t.poster_path,
-           1 - (te.embedding <=> ${vec}::vector) AS cos
-    FROM ${titleEmbeddings} te
-    JOIN ${titles} t ON t.id = te.title_id
-    ORDER BY te.embedding <=> ${vec}::vector
-    LIMIT ${fetchLimit}
-  `);
-
-  const rows = (((result as { rows?: Record<string, unknown>[] }).rows ?? result) as Record<string, unknown>[])
-    .filter((r) => !excluded.has(r.id as string))
+  const rows = (await nearestTitles(vec, fetchLimit))
+    .filter((r) => !excluded.has(r.id))
     .slice(offset, offset + limit);
 
   return rows.map((r) => {
-    const title = r.title as string;
-    const year = (r.release_year as number | null) ?? null;
-    const mediaType = r.media_type as "movie" | "tv";
-    const tmdbId = r.tmdb_id as number;
+    const year = r.release_year;
     return {
-      titleId: r.id as string,
-      tmdbId,
-      mediaType,
-      title,
+      titleId: r.id,
+      tmdbId: r.tmdb_id,
+      mediaType: r.media_type,
+      title: r.title,
       year,
-      posterUrl: posterUrl(r.poster_path as string | null),
-      href: `/title/${mediaType}/${tmdbId}-${titleSlug(title, year ? `${year}` : null)}`,
-      match: matchPercent(r.cos as number),
+      posterUrl: posterUrl(r.poster_path),
+      href: `/title/${r.media_type}/${r.tmdb_id}-${titleSlug(r.title, year ? `${year}` : null)}`,
+      match: matchPercent(r.cos),
     };
   });
 }

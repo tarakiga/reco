@@ -1,8 +1,6 @@
 import "server-only";
-import { sql } from "drizzle-orm";
-import { db } from "@/db";
-import { titles, titleEmbeddings } from "@/db/schema";
 import { toVectorLiteral } from "@/db/vector";
+import { nearestTitles } from "@/db/vector-search";
 import { matchPercent } from "@/lib/taste/match";
 import { titleSlug } from "@/lib/slug";
 import { posterUrl } from "@/lib/tmdb/images";
@@ -53,39 +51,26 @@ export async function searchByScene(
   }
   const vec = toVectorLiteral(qvec);
 
-  // When filtering by media type, over-fetch and filter in app so the cosine
-  // index is still used — a join-table filter (t.media_type) would force a
-  // brute-force scan. Near-exact for discovery; cheap (indexed) regardless.
+  // When filtering by media type, over-fetch then filter in app: the ANN search
+  // runs over embeddings alone (so the cosine index is used) and can't pre-filter
+  // by t.media_type without forcing a brute-force scan.
   const fetchLimit = opts.mediaType ? Math.min(limit * 8, 200) : limit;
 
-  const result = await db.execute(sql`
-    SELECT t.id, t.tmdb_id, t.media_type, t.title, t.release_year, t.poster_path,
-           1 - (te.embedding <=> ${vec}::vector) AS cos
-    FROM ${titleEmbeddings} te
-    JOIN ${titles} t ON t.id = te.title_id
-    ORDER BY te.embedding <=> ${vec}::vector
-    LIMIT ${fetchLimit}
-  `);
-  const rows = ((result as { rows?: Record<string, unknown>[] }).rows ?? result) as Record<string, unknown>[];
-
-  return rows
-    .filter((r) => (r.cos as number) >= MIN_SIMILARITY)
+  return (await nearestTitles(vec, fetchLimit))
+    .filter((r) => r.cos >= MIN_SIMILARITY)
     .filter((r) => !opts.mediaType || r.media_type === opts.mediaType)
     .slice(0, limit)
     .map((r) => {
-      const title = r.title as string;
-      const year = (r.release_year as number | null) ?? null;
-      const mediaType = r.media_type as "movie" | "tv";
-      const tmdbId = r.tmdb_id as number;
+      const year = r.release_year;
       return {
-        titleId: r.id as string,
-        tmdbId,
-        mediaType,
-        title,
+        titleId: r.id,
+        tmdbId: r.tmdb_id,
+        mediaType: r.media_type,
+        title: r.title,
         year,
-        posterUrl: posterUrl(r.poster_path as string | null),
-        href: `/title/${mediaType}/${tmdbId}-${titleSlug(title, year ? `${year}` : null)}`,
-        match: matchPercent(r.cos as number),
+        posterUrl: posterUrl(r.poster_path),
+        href: `/title/${r.media_type}/${r.tmdb_id}-${titleSlug(r.title, year ? `${year}` : null)}`,
+        match: matchPercent(r.cos),
       };
     });
 }
