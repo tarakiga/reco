@@ -1,4 +1,5 @@
 import "server-only";
+import { cacheLife } from "next/cache";
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
 import { titleSlug } from "@/lib/slug";
@@ -49,9 +50,13 @@ const titleHref = (r: Record<string, unknown>): TitleStat => {
   };
 };
 
-/** Aggregate analytics for the admin dashboard. Read-only; all queries are cheap
- *  aggregations over small tables (ratings/watchlist) plus a couple of counts. */
+/** Aggregate analytics for the admin dashboard. Read-only and global (not
+ *  per-user), so the whole result is cached for a few minutes: the catalog-wide
+ *  count(*) / metadata-size scans here are the priciest reads in the app, and
+ *  admins refreshing (or leaving the tab open) shouldn't re-run them each load. */
 export async function getAnalytics(): Promise<Analytics> {
+  "use cache";
+  cacheLife("minutes");
   const [
     usersTotal, usersRated, usersWatchlisted, usersOnboarded,
     totRatings, totWatchlist, totFav,
@@ -65,15 +70,17 @@ export async function getAnalytics(): Promise<Analytics> {
     db.execute(sql`SELECT count(*)::int n FROM ratings`),
     db.execute(sql`SELECT count(*)::int n FROM watchlist_items`),
     db.execute(sql`SELECT count(*)::int n FROM favourites`),
-    db.execute(sql`SELECT
-        (SELECT count(*)::int FROM titles) AS titles,
-        (SELECT count(*)::int FROM people) AS people,
-        (SELECT count(*)::int FROM title_embeddings) AS embeddings,
-        (
-          (SELECT count(*) FROM titles) * (SELECT COALESCE(avg(octet_length(metadata::text)), 0) FROM (SELECT metadata FROM titles WHERE metadata IS NOT NULL LIMIT 2000) a)
-          + (SELECT count(*) FROM people) * (SELECT COALESCE(avg(octet_length(metadata::text)), 0) FROM (SELECT metadata FROM people WHERE metadata IS NOT NULL LIMIT 2000) b)
-          + (SELECT count(*) FROM title_embeddings) * 4096
-        )::float8 AS est_bytes`),
+    db.execute(sql`WITH c AS (
+        SELECT
+          (SELECT count(*)::int FROM titles) AS titles,
+          (SELECT count(*)::int FROM people) AS people,
+          (SELECT count(*)::int FROM title_embeddings) AS embeddings,
+          (SELECT COALESCE(avg(octet_length(metadata::text)), 0) FROM (SELECT metadata FROM titles WHERE metadata IS NOT NULL LIMIT 2000) a) AS t_avg,
+          (SELECT COALESCE(avg(octet_length(metadata::text)), 0) FROM (SELECT metadata FROM people WHERE metadata IS NOT NULL LIMIT 2000) b) AS p_avg
+      )
+      SELECT titles, people, embeddings,
+        (titles * t_avg + people * p_avg + embeddings * 4096)::float8 AS est_bytes
+      FROM c`),
     db.execute(sql`SELECT score::text AS label, count(*)::int n FROM ratings GROUP BY score ORDER BY score DESC`),
     db.execute(sql`SELECT status AS label, count(*)::int n FROM watchlist_items GROUP BY status`),
     db.execute(sql`SELECT to_char(date_trunc('week', created_at), 'Mon DD') AS label, count(*)::int n

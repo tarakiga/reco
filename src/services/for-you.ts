@@ -21,6 +21,17 @@ export interface ForYouItem {
 
 const EXCLUDE_BUFFER = 5;
 
+const rowsOf = (r: unknown) => ((r as { rows?: Record<string, unknown>[] }).rows ?? r) as Record<string, unknown>[];
+const parseVec = (s: string): number[] => s.slice(1, -1).split(",").map(Number);
+function dot(a: number[], b: number[]): number {
+  let s = 0;
+  for (let i = 0; i < a.length; i++) s += a[i] * b[i];
+  return s;
+}
+function norm(a: number[]): number {
+  return Math.sqrt(dot(a, a));
+}
+
 export async function forYou(userId: string, limit = 24, offset = 0): Promise<ForYouItem[]> {
   const [taste] = await db.select().from(userTaste).where(sql`${userTaste.userId} = ${userId}`);
   if (!taste) return [];
@@ -65,8 +76,10 @@ export interface WhyReason {
 
 /**
  * "Why this?" — for each recommended title, the user's most similar liked title
- * (high rating or favourite). One nearest-neighbour lookup per rec via a lateral
- * join over the user's liked set. Degrades to {} on any failure.
+ * (high rating or favourite). Both sets are small and bounded (≤60 liked, ≤24
+ * recs), so we fetch each embedding once and pick the nearest liked title per
+ * rec in app code. A CROSS JOIN LATERAL re-scans the whole liked set once per
+ * rec and can't use the vector index. Degrades to {} on any failure.
  */
 export async function whyForTitles(
   userId: string,
@@ -74,40 +87,52 @@ export async function whyForTitles(
 ): Promise<Record<string, WhyReason>> {
   if (titleIds.length === 0) return {};
   try {
-    const likedRes = await db.execute(sql`
-      SELECT title_id FROM ${ratings} WHERE user_id = ${userId} AND score >= 4
-      UNION
-      SELECT title_id FROM ${favourites} WHERE user_id = ${userId}
-      LIMIT 60
-    `);
-    const likedRows = ((likedRes as { rows?: Record<string, unknown>[] }).rows ?? likedRes) as Record<string, unknown>[];
-    const likedIds = likedRows.map((r) => r.title_id as string);
-    if (likedIds.length === 0) return {};
-
     const recList = sql.join(titleIds.map((id) => sql`${id}`), sql`, `);
-    const likedList = sql.join(likedIds.map((id) => sql`${id}`), sql`, `);
-    const res = await db.execute(sql`
-      WITH recs AS (
-        SELECT title_id, embedding FROM ${titleEmbeddings} WHERE title_id IN (${recList})
-      )
-      SELECT recs.title_id AS rec_id, l.tmdb_id, l.media_type, l.title, l.slug
-      FROM recs
-      CROSS JOIN LATERAL (
-        SELECT t.tmdb_id, t.media_type, t.title, t.slug
-        FROM ${titleEmbeddings} te JOIN ${titles} t ON t.id = te.title_id
-        WHERE te.title_id IN (${likedList})
-        ORDER BY te.embedding <=> recs.embedding
-        LIMIT 1
-      ) l
-    `);
-    const rows = ((res as { rows?: Record<string, unknown>[] }).rows ?? res) as Record<string, unknown>[];
+    const [likedRes, recsRes] = await Promise.all([
+      db.execute(sql`
+        SELECT t.tmdb_id, t.media_type, t.title, t.slug, te.embedding::text AS emb
+        FROM (
+          SELECT title_id FROM ${ratings} WHERE user_id = ${userId} AND score >= 4
+          UNION
+          SELECT title_id FROM ${favourites} WHERE user_id = ${userId}
+          LIMIT 60
+        ) liked
+        JOIN ${titles} t ON t.id = liked.title_id
+        JOIN ${titleEmbeddings} te ON te.title_id = liked.title_id
+      `),
+      db.execute(sql`
+        SELECT title_id, embedding::text AS emb FROM ${titleEmbeddings}
+        WHERE title_id IN (${recList})
+      `),
+    ]);
+
+    const liked = rowsOf(likedRes).map((r) => ({
+      tmdbId: r.tmdb_id as number,
+      mediaType: r.media_type as "movie" | "tv",
+      title: r.title as string,
+      slug: (r.slug as string) || "",
+      emb: parseVec(r.emb as string),
+    }));
+    if (liked.length === 0) return {};
+    const likedNorm = liked.map((l) => norm(l.emb) || 1);
+
     const out: Record<string, WhyReason> = {};
-    for (const r of rows) {
-      const title = r.title as string;
-      const mt = r.media_type as "movie" | "tv";
-      const tmdbId = r.tmdb_id as number;
-      const slug = (r.slug as string) || titleSlug(title, null);
-      out[r.rec_id as string] = { title, href: `/title/${mt}/${tmdbId}-${slug}` };
+    for (const rec of rowsOf(recsRes)) {
+      const recEmb = parseVec(rec.emb as string);
+      const recNorm = norm(recEmb) || 1;
+      let best = -Infinity;
+      let bestIdx = -1;
+      for (let i = 0; i < liked.length; i++) {
+        const sim = dot(recEmb, liked[i].emb) / (recNorm * likedNorm[i]);
+        if (sim > best) {
+          best = sim;
+          bestIdx = i;
+        }
+      }
+      if (bestIdx < 0) continue;
+      const l = liked[bestIdx];
+      const slug = l.slug || titleSlug(l.title, null);
+      out[rec.title_id as string] = { title: l.title, href: `/title/${l.mediaType}/${l.tmdbId}-${slug}` };
     }
     return out;
   } catch {
