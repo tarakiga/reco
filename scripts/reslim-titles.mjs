@@ -1,11 +1,6 @@
-import "dotenv/config";
-import { readFileSync } from "node:fs";
-import { neon } from "@neondatabase/serverless";
+import { sql, env } from "./_db.mjs";
 
-// CRON_SECRET lives in .env.local (gitignored), not .env — read it directly.
-const envLocal = readFileSync(new URL("../.env.local", import.meta.url), "utf8");
-const SECRET = envLocal.match(/^CRON_SECRET=(.*)$/m)?.[1]?.trim().replace(/^["']|["']$/g, "");
-const sql = neon(process.env.DATABASE_URL);
+const SECRET = env.CRON_SECRET;
 const BASE = "http://localhost:3000/api/v1/admin/reslim";
 const LIMIT = 250;
 
@@ -32,3 +27,4 @@ for (let i = 0; i < 200; i++) {
 }
 
 console.log("AFTER:", await size(), "| re-slimmed", total, "titles");
+await sql.end();

@@ -1,7 +1,5 @@
-import "dotenv/config";
-import { neon } from "@neondatabase/serverless";
+import { sql } from "./_db.mjs";
 
-const sql = neon(process.env.DATABASE_URL);
 const KEEP_POPULAR = 4000;
 
 const fmt = (r) => `${r.s} · titles ${r.t} · embeddings ${r.e}`;
@@ -37,3 +35,4 @@ await sql`VACUUM (ANALYZE) titles`;
 console.log("vacuumed");
 
 console.log("AFTER:", fmt(await stat()));
+await sql.end();

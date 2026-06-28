@@ -81,4 +81,4 @@ test("rate-limited embedder still persists ALL picks (regression: onboarding col
   } finally {
     await db.delete(profiles).where(eq(profiles.id, uid));
   }
-}, 30000); // live-DB: 6 picks × several Neon round-trips can exceed the 5s default
+}, 30000); // live-DB: 6 picks × several DB round-trips can exceed the 5s default

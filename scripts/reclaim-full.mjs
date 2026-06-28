@@ -1,10 +1,6 @@
-import "dotenv/config";
-import { readFileSync } from "node:fs";
-import { neon } from "@neondatabase/serverless";
+import { sql, env } from "./_db.mjs";
 
-const envLocal = readFileSync(new URL("../.env.local", import.meta.url), "utf8");
-const SECRET = envLocal.match(/^CRON_SECRET=(.*)$/m)?.[1]?.trim().replace(/^["']|["']$/g, "");
-const sql = neon(process.env.DATABASE_URL);
+const SECRET = env.CRON_SECRET;
 const size = async () => (await sql`select pg_size_pretty(pg_database_size(current_database())) s`)[0].s;
 
 console.log("start:", await size());
@@ -36,3 +32,4 @@ console.log("after VACUUM FULL titles:", await size());
 
 await sql`VACUUM FULL title_embeddings`;
 console.log("final:", await size());
+await sql.end();

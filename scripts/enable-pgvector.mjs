@@ -1,7 +1,4 @@
-import "dotenv/config";
-import { neon } from "@neondatabase/serverless";
-
-const sql = neon(process.env.DATABASE_URL);
+import { sql } from "./_db.mjs";
 
 await sql`CREATE EXTENSION IF NOT EXISTS vector`;
 await sql`
@@ -23,3 +20,4 @@ await sql`
   CREATE INDEX IF NOT EXISTS title_embeddings_hnsw
   ON title_embeddings USING hnsw (embedding vector_cosine_ops)`;
 console.log("pgvector ready");
+await sql.end();

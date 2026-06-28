@@ -1,7 +1,4 @@
-import "dotenv/config";
-import { neon } from "@neondatabase/serverless";
-
-const sql = neon(process.env.DATABASE_URL);
+import { sql } from "./_db.mjs";
 
 await sql`
   CREATE TABLE IF NOT EXISTS favourites (
@@ -12,3 +9,4 @@ await sql`
   )`;
 
 console.log("favourites table ready");
+await sql.end();

@@ -1,7 +1,4 @@
-import "dotenv/config";
-import { neon } from "@neondatabase/serverless";
-
-const sql = neon(process.env.DATABASE_URL);
+import { sql } from "./_db.mjs";
 
 // ──────────────────────────────────────────────
 // Nav options (namespace = "nav")
@@ -94,3 +91,4 @@ try {
 }
 
 console.log("Done. Seed complete.");
+await sql.end();

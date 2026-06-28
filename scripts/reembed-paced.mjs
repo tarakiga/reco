@@ -1,23 +1,5 @@
-import { readFileSync } from "node:fs";
-import { neon } from "@neondatabase/serverless";
+import { sql, env } from "./_db.mjs";
 
-// Load env explicitly from the project root (independent of cwd).
-const root = new URL("..", import.meta.url);
-const readEnv = (file) => {
-  try {
-    return Object.fromEntries(
-      readFileSync(new URL(file, root), "utf8")
-        .split("\n")
-        .map((l) => l.match(/^([A-Z_]+)=(.*)$/))
-        .filter(Boolean)
-        .map((m) => [m[1], m[2].trim().replace(/^["']|["']$/g, "")]),
-    );
-  } catch {
-    return {};
-  }
-};
-const env = { ...readEnv(".env"), ...readEnv(".env.local") };
-const sql = neon(env.DATABASE_URL);
 const SECRET = env.CRON_SECRET;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const counts = async () =>
@@ -56,3 +38,4 @@ for (let i = 0; i < 120; i++) {
   }
 }
 console.log("FINAL:", await counts());
+await sql.end();
