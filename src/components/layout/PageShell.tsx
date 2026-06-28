@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { Show } from "@clerk/nextjs";
 import { MobileMenu } from "./MobileMenu";
@@ -29,7 +30,8 @@ export function PageShell({
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-40 border-b border-border bg-surface/90 backdrop-blur">
         <div className="relative mx-auto flex h-16 w-full max-w-(--breakpoint-xl) items-center gap-3 px-4 sm:gap-8">
-          <Link href="/" className="shrink-0 text-xl font-bold text-text">
+          <Link href="/" className="flex shrink-0 items-center gap-2 text-xl font-bold text-text">
+            <Image src="/logo-white.png" alt="" width={28} height={28} className="h-7 w-7" priority />
             {brand}
           </Link>
           {/* Desktop nav + search */}
