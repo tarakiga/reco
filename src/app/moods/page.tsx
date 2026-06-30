@@ -13,7 +13,7 @@ function MoodTile({ slug, emoji, label, blurb }: { slug: string; emoji: string; 
       className="group flex flex-col gap-1 rounded-xl border border-border bg-surface-raised p-4 transition-colors hover:border-accent/40 hover:bg-surface-overlay"
     >
       <span aria-hidden className="text-2xl">{emoji}</span>
-      <span className="font-semibold text-text group-hover:text-accent">{label}</span>
+      <span className="font-semibold text-text group-hover:text-accent-text">{label}</span>
       <span className="text-sm text-text-muted">{blurb}</span>
     </Link>
   );

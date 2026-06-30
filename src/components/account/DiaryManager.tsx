@@ -151,7 +151,7 @@ export function DiaryManager({ initial }: { initial: DiaryEntry[] }) {
               </Link>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm">
-                  <Link href={e.href} className="font-medium text-text hover:text-accent">
+                  <Link href={e.href} className="font-medium text-text hover:text-accent-text">
                     {e.title}
                   </Link>
                   {e.year && <span className="ml-1 text-xs text-text-muted">{e.year}</span>}

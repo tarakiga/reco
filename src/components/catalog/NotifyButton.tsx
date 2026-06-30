@@ -75,7 +75,7 @@ export function NotifyButton({ mediaType, tmdbId }: { mediaType: "movie" | "tv";
       disabled={busy}
       aria-pressed={on}
       className={`inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-sm font-medium transition-colors disabled:opacity-50 ${
-        on ? "border-accent bg-accent/10 text-accent" : "border-border bg-surface text-text hover:border-accent"
+        on ? "border-accent bg-accent/10 text-accent-text" : "border-border bg-surface text-text hover:border-accent"
       }`}
     >
       <span aria-hidden>🔔</span>

@@ -47,7 +47,7 @@ export async function MoodRails() {
           key={mood.slug}
           title={`${mood.emoji} ${mood.label}`}
           action={
-            <Link href={`/mood/${mood.slug}`} className="text-sm font-medium text-accent hover:underline">
+            <Link href={`/mood/${mood.slug}`} className="text-sm font-medium text-accent-text hover:underline">
               See all →
             </Link>
           }

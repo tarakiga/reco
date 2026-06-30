@@ -82,7 +82,7 @@ export function TagsManager({ initial }: { initial: TagVM[] }) {
             </form>
           ) : (
             <>
-              <Link href={`/tags/${t.slug}`} className="min-w-0 flex-1 truncate font-medium text-text hover:text-accent">
+              <Link href={`/tags/${t.slug}`} className="min-w-0 flex-1 truncate font-medium text-text hover:text-accent-text">
                 #{t.name}
               </Link>
               <span className="text-xs text-text-muted">

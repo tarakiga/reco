@@ -14,7 +14,7 @@ export function SimilarBut({ title, mediaType }: { title: string; mediaType: "mo
         <Link
           key={m}
           href={`/find?q=${encodeURIComponent(`${noun} like ${title} but ${m}`)}`}
-          className="rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-text transition-colors hover:border-accent hover:text-accent"
+          className="rounded-full border border-border bg-surface px-3 py-1 text-xs font-medium text-text transition-colors hover:border-accent hover:text-accent-text"
         >
           {m}
         </Link>

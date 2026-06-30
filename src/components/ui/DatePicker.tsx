@@ -273,7 +273,7 @@ export function DatePicker({
                       pickDay(today);
                     }
                   }}
-                  className="font-medium text-accent hover:underline"
+                  className="font-medium text-accent-text hover:underline"
                 >
                   Today
                 </button>

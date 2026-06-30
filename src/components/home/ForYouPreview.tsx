@@ -48,7 +48,7 @@ export function ForYouPreview() {
     <Rail
       title="For you"
       action={
-        <Link href="/for-you" className="text-sm font-medium text-accent hover:underline">
+        <Link href="/for-you" className="text-sm font-medium text-accent-text hover:underline">
           See all
         </Link>
       }

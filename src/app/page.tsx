@@ -110,7 +110,7 @@ export default async function Home() {
             </div>
             <p className="mt-5 text-sm text-white/85">
               New here?{" "}
-              <Link href="/what-can-i-do" className="font-medium text-white underline underline-offset-2 hover:text-accent">
+              <Link href="/what-can-i-do" className="font-medium text-white underline underline-offset-2 hover:text-accent-text">
                 See everything you can do →
               </Link>
             </p>
@@ -121,11 +121,11 @@ export default async function Home() {
             href={hero.href}
             className="group absolute bottom-12 left-5 z-10 max-w-[85%] text-left sm:bottom-16 sm:left-10"
           >
-            <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-accent drop-shadow sm:text-xs">
+            <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-accent-text drop-shadow sm:text-xs">
               <span className="inline-block h-px w-6 bg-accent" aria-hidden />
               {hero.source === "boxoffice" ? "Now #1 at the box office" : "Trending in cinemas"}
             </span>
-            <span className="mt-1.5 block text-3xl font-bold leading-none text-white drop-shadow-lg transition-colors group-hover:text-accent sm:text-5xl">
+            <span className="mt-1.5 block text-3xl font-bold leading-none text-white drop-shadow-lg transition-colors group-hover:text-accent-text sm:text-5xl">
               {hero.title}
             </span>
             <span className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-white/75 transition-colors group-hover:text-white">
@@ -151,7 +151,7 @@ export default async function Home() {
           </div>
           <p className="mt-5 text-sm text-text-muted">
             New here?{" "}
-            <Link href="/what-can-i-do" className="font-medium text-accent hover:underline">
+            <Link href="/what-can-i-do" className="font-medium text-accent-text hover:underline">
               See everything you can do →
             </Link>
           </p>
@@ -165,7 +165,7 @@ export default async function Home() {
           + amber "describe a scene". */}
       <section className="mb-10 grid gap-4 md:grid-cols-2">
         <div className="flex h-full flex-col rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/20 via-surface-raised to-surface-raised p-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-accent">Can&apos;t decide?</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-accent-text">Can&apos;t decide?</p>
           <h2 className="mt-1 text-xl font-bold text-text">We&apos;ll pick something you can watch now</h2>
           <p className="mt-1.5 text-sm text-text-muted">
             Choose your streaming services and we&apos;ll deal a few picks everyone agrees on.

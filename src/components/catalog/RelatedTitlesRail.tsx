@@ -19,7 +19,7 @@ export async function RelatedTitlesRail({
       {related.map((r) => (
         <div key={`${r.mediaType}-${r.tmdbId}`} className="w-28 shrink-0">
           <TitleCard href={r.href} title={r.title} year={r.year} posterUrl={r.posterUrl} />
-          <p className="mt-1 text-[11px] font-medium text-accent">{r.relation}</p>
+          <p className="mt-1 text-[11px] font-medium text-accent-text">{r.relation}</p>
         </div>
       ))}
     </Rail>

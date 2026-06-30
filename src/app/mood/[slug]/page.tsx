@@ -25,7 +25,7 @@ export default async function MoodPage({ params }: { params: Promise<{ slug: str
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <Link href="/moods" className="text-sm font-medium text-accent hover:underline">
+        <Link href="/moods" className="text-sm font-medium text-accent-text hover:underline">
           ← All moods
         </Link>
         <h1 className="text-2xl font-bold text-text">

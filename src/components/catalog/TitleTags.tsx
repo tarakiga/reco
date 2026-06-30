@@ -170,7 +170,7 @@ export function TitleTags({ mediaType, tmdbId }: { mediaType: "movie" | "tv"; tm
                   <button
                     type="button"
                     onClick={() => add(q)}
-                    className="block w-full px-3 py-1.5 text-left text-xs font-medium text-accent hover:bg-surface-overlay"
+                    className="block w-full px-3 py-1.5 text-left text-xs font-medium text-accent-text hover:bg-surface-overlay"
                   >
                     Create “{q.trim()}”
                   </button>

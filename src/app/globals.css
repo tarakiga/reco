@@ -8,8 +8,12 @@
   --color-text: #f2f4f8;
   --color-text-muted: #9aa3b2;
   --color-border: #2a2f3e;
-  --color-accent: #e63946;
-  --color-accent-hover: #f25c67;
+  /* Accent split for WCAG AA: a darker fill (light text on it clears 4.5:1) and
+     a lighter text shade (accent-coloured text on dark surfaces clears 4.5:1).
+     The single mid-tone #e63946 sat in a valley that failed both ways. */
+  --color-accent: #d12835;
+  --color-accent-hover: #d62839;
+  --color-accent-text: #f04a58;
   --color-success: #2dd4a7;
   --color-warning: #f4b740;
   --color-danger: #ef4444;

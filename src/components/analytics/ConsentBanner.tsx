@@ -60,7 +60,7 @@ export function ConsentBanner() {
         <p className="mt-1.5 text-xs leading-relaxed text-text-muted">
           We&apos;d like to use Google Analytics to understand how Haystackk is used.{" "}
           {!expanded && (
-            <button type="button" onClick={() => setExpanded(true)} className="font-medium text-accent hover:underline">
+            <button type="button" onClick={() => setExpanded(true)} className="font-medium text-accent-text hover:underline">
               Read more
             </button>
           )}
@@ -76,7 +76,7 @@ export function ConsentBanner() {
               Privacy policy
             </Link>{" "}
             for the full detail.{" "}
-            <button type="button" onClick={() => setExpanded(false)} className="font-medium text-accent hover:underline">
+            <button type="button" onClick={() => setExpanded(false)} className="font-medium text-accent-text hover:underline">
               Show less
             </button>
           </p>

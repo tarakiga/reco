@@ -73,7 +73,7 @@ export function ListEpisodePicker({
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-text">{ep.name}</p>
           {reason ? (
-            <p className="truncate text-xs text-accent">{reason}</p>
+            <p className="truncate text-xs text-accent-text">{reason}</p>
           ) : ep.overview ? (
             <p className="truncate text-xs text-text-muted">{ep.overview}</p>
           ) : null}
@@ -94,7 +94,7 @@ export function ListEpisodePicker({
     <div className="rounded-md border border-accent/40 bg-surface p-3">
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="text-xs font-semibold text-text">
-          Add episodes of <span className="text-accent">{showTitle}</span>
+          Add episodes of <span className="text-accent-text">{showTitle}</span>
         </p>
         <button type="button" onClick={onClose} aria-label="Close episode picker" className="rounded px-2 py-0.5 text-text-muted hover:text-text">
           ✕

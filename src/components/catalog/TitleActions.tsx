@@ -54,7 +54,7 @@ export function TitleActions({ mediaType, tmdbId, unreleased, releaseDate }: Pro
   if (!data?.signedIn) {
     return (
       <p className="rounded-md border border-border bg-surface-raised px-4 py-3 text-sm text-text-muted">
-        <Link href="/sign-in" className="font-medium text-accent underline underline-offset-2 hover:text-accent/80">
+        <Link href="/sign-in" className="font-medium text-accent-text underline underline-offset-2 hover:text-accent-text/80">
           Sign in
         </Link>{" "}
         to add to your watchlist and rate this title.
@@ -215,7 +215,7 @@ export function TitleActions({ mediaType, tmdbId, unreleased, releaseDate }: Pro
               <button
                 type="button"
                 onClick={() => setSeenModalOpen(true)}
-                className="inline-flex h-9 items-center rounded-md border border-accent bg-accent/10 px-4 text-sm font-medium text-accent transition-colors hover:bg-accent/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                className="inline-flex h-9 items-center rounded-md border border-accent bg-accent/10 px-4 text-sm font-medium text-accent-text transition-colors hover:bg-accent/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
               >
                 Rate this {noun}
               </button>
@@ -233,7 +233,7 @@ export function TitleActions({ mediaType, tmdbId, unreleased, releaseDate }: Pro
             aria-label={data.favourite ? "Remove from favourites" : "Add to favourites"}
             className="inline-flex h-10 items-center gap-2 rounded-md border border-border bg-surface px-4 text-sm font-medium text-text transition-colors hover:bg-surface-overlay focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
           >
-            <span aria-hidden className={data.favourite ? "text-accent" : "text-text-muted"}>
+            <span aria-hidden className={data.favourite ? "text-accent-text" : "text-text-muted"}>
               {data.favourite ? "♥" : "♡"}
             </span>
             {data.favourite ? "Favourited" : "Favourite"}

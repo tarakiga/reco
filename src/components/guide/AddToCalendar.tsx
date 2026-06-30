@@ -52,7 +52,7 @@ export function AddToCalendar({
         onClick={() => setOpen((o) => !o)}
         aria-label="Set a reminder"
         title="Add a reminder to your calendar"
-        className="flex size-6 items-center justify-center rounded text-text-muted transition-colors hover:bg-surface-overlay hover:text-accent"
+        className="flex size-6 items-center justify-center rounded text-text-muted transition-colors hover:bg-surface-overlay hover:text-accent-text"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden>
           <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />

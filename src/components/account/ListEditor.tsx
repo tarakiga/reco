@@ -228,9 +228,9 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
             ) : null}
           </div>
           <div className="min-w-0 flex-1">
-            <Link href={it.href} className="truncate text-sm font-medium text-text hover:text-accent">{it.title}</Link>
+            <Link href={it.href} className="truncate text-sm font-medium text-text hover:text-accent-text">{it.title}</Link>
             {it.episode != null ? (
-              <p className="truncate text-xs text-accent">
+              <p className="truncate text-xs text-accent-text">
                 S{it.season} · E{it.episode}{it.episodeName ? ` · ${it.episodeName}` : ""}
               </p>
             ) : (

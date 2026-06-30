@@ -89,7 +89,7 @@ export function UpcomingEpg({
                         </div>
                         <div className="shrink-0 text-right">
                           <p className="text-xs font-medium text-text">{fmt.format(new Date(`${e.airDate}T00:00:00`))}</p>
-                          <p className={`text-[11px] ${e.today ? "font-semibold text-accent" : "text-text-muted"}`}>
+                          <p className={`text-[11px] ${e.today ? "font-semibold text-accent-text" : "text-text-muted"}`}>
                             {e.rel}
                           </p>
                         </div>
@@ -112,7 +112,7 @@ export function UpcomingEpg({
                         </p>
                         <Link
                           href={e.href}
-                          className="mt-2 inline-block text-sm font-medium text-accent hover:underline"
+                          className="mt-2 inline-block text-sm font-medium text-accent-text hover:underline"
                         >
                           View show →
                         </Link>

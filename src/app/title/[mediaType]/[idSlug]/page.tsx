@@ -220,7 +220,7 @@ export default async function TitlePage({
                           {i > 0 && ", "}
                           <Link
                             href={p.href}
-                            className="underline-offset-2 transition-colors hover:text-accent hover:underline"
+                            className="underline-offset-2 transition-colors hover:text-accent-text hover:underline"
                           >
                             {p.name}
                           </Link>

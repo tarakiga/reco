@@ -16,7 +16,7 @@ function CheckButton({ watched, onClick }: { watched: boolean; onClick: () => vo
       aria-label={watched ? "Mark unwatched" : "Mark watched"}
       title={watched ? "Watched" : "Mark watched"}
       className={`flex size-6 shrink-0 items-center justify-center rounded-full border transition-colors ${
-        watched ? "border-success bg-success text-black" : "border-border text-text-muted hover:border-accent hover:text-accent"
+        watched ? "border-success bg-success text-black" : "border-border text-text-muted hover:border-accent hover:text-accent-text"
       }`}
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="size-3.5" aria-hidden>
@@ -74,7 +74,7 @@ function CopyLinkButton({ hash, label }: { hash: string; label: string }) {
           })
           .catch(() => {});
       }}
-      className="flex size-7 shrink-0 items-center justify-center rounded text-text-muted transition-colors hover:bg-surface-overlay hover:text-accent"
+      className="flex size-7 shrink-0 items-center justify-center rounded text-text-muted transition-colors hover:bg-surface-overlay hover:text-accent-text"
     >
       {copied ? (
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-3.5" aria-hidden>
@@ -101,7 +101,7 @@ function CastAvatar({ member }: { member: EpisodeCastMember }) {
           member.name.charAt(0)
         )}
       </div>
-      <p className="mt-1 text-[11px] font-medium leading-tight text-text group-hover:text-accent">
+      <p className="mt-1 text-[11px] font-medium leading-tight text-text group-hover:text-accent-text">
         {member.name}
       </p>
       {member.character && (
@@ -199,7 +199,7 @@ function EpisodeRow({
               type="button"
               onClick={() => setShowCast((s) => !s)}
               aria-expanded={showCast}
-              className="mt-2 text-xs font-medium text-accent transition-colors hover:text-accent-hover"
+              className="mt-2 text-xs font-medium text-accent-text transition-colors hover:text-accent-text"
             >
               {showCast ? "Hide episode cast" : `Show episode cast (${ep.cast.length})`}
             </button>
@@ -290,7 +290,7 @@ function SeasonItem({
           type="button"
           onClick={() => setOpen((o) => !o)}
           aria-expanded={open}
-          className="flex flex-1 items-center gap-3 py-3 text-left transition-colors hover:text-accent"
+          className="flex flex-1 items-center gap-3 py-3 text-left transition-colors hover:text-accent-text"
         >
           <svg
             viewBox="0 0 24 24"
@@ -342,7 +342,7 @@ function SeasonItem({
                     const allWatched = episodes.every((e) => watched.has(`${season.seasonNumber}:${e.episodeNumber}`));
                     onMarkSeason(season.seasonNumber, episodes.map((e) => e.episodeNumber), !allWatched);
                   }}
-                  className="mb-3 rounded-md border border-border bg-surface px-2.5 py-1 text-xs font-medium text-text-muted transition-colors hover:border-accent hover:text-accent"
+                  className="mb-3 rounded-md border border-border bg-surface px-2.5 py-1 text-xs font-medium text-text-muted transition-colors hover:border-accent hover:text-accent-text"
                 >
                   {episodes.every((e) => watched.has(`${season.seasonNumber}:${e.episodeNumber}`)) ? "Unmark all" : "Mark season watched"}
                 </button>

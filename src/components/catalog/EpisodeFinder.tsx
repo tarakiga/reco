@@ -24,7 +24,7 @@ function ResultRow({ ep }: { ep: EpisodeMatch }) {
           ) : null}
         </div>
         {ep.aiReason ? (
-          <span className="mt-1 inline-flex rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-medium text-accent">
+          <span className="mt-1 inline-flex rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-medium text-accent-text">
             AI best guess
           </span>
         ) : ep.matchedOn ? (

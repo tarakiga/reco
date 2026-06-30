@@ -91,7 +91,7 @@ export function ListsManager({ initial, siteOrigin }: { initial: ListSummaryVM[]
             <li key={l.id} className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <Link href={`/account/lists/${l.id}`} className="truncate font-medium text-text hover:text-accent">
+                  <Link href={`/account/lists/${l.id}`} className="truncate font-medium text-text hover:text-accent-text">
                     {l.title}
                   </Link>
                   <Badge variant={l.published ? "success" : "neutral"}>{l.published ? "Published" : "Draft"}</Badge>

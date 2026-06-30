@@ -65,7 +65,7 @@ export default async function ListPage({ params }: { params: Promise<{ idSlug: s
 
       <footer className="mt-10 border-t border-border pt-6 text-sm text-text-muted">
         Made with{" "}
-        <Link href="/" className="font-medium text-accent hover:underline">
+        <Link href="/" className="font-medium text-accent-text hover:underline">
           Haystackk
         </Link>
         , find what to watch.

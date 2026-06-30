@@ -130,7 +130,7 @@ export function PollsManager({ initial, siteOrigin }: { initial: PollSummary[]; 
           {polls.map((p) => (
             <li key={p.id} className="flex items-center gap-3 px-3 py-3">
               <div className="min-w-0 flex-1">
-                <Link href={`/vote/${p.slug}`} className="truncate text-sm font-medium text-text hover:text-accent">
+                <Link href={`/vote/${p.slug}`} className="truncate text-sm font-medium text-text hover:text-accent-text">
                   {p.title}
                 </Link>
                 <p className="truncate text-xs text-text-muted">

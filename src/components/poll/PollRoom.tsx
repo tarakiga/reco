@@ -100,7 +100,7 @@ export function PollRoom({ initial, shareUrl }: { initial: PollViewState; shareU
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-8">
       <header className="space-y-2">
-        <p className="text-xs font-medium uppercase tracking-wide text-accent">Vote to watch · {roundLabel}</p>
+        <p className="text-xs font-medium uppercase tracking-wide text-accent-text">Vote to watch · {roundLabel}</p>
         <h1 className="text-2xl font-semibold text-text">{state.title}</h1>
         {state.deadline && state.status !== "done" && (
           <p className="text-sm text-text-muted">
@@ -235,11 +235,11 @@ export function PollRoom({ initial, shareUrl }: { initial: PollViewState; shareU
         <section className="space-y-4">
           {state.winner ? (
             <div className="space-y-3 rounded-lg border border-accent/40 bg-accent/5 p-5 text-center">
-              <p className="text-xs font-semibold uppercase tracking-wide text-accent">🏆 The group is watching</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-accent-text">🏆 The group is watching</p>
               <Link href={state.winner.href} className="mx-auto block w-32">
                 <Poster url={state.winner.posterUrl} />
               </Link>
-              <Link href={state.winner.href} className="block text-lg font-semibold text-text hover:text-accent">
+              <Link href={state.winner.href} className="block text-lg font-semibold text-text hover:text-accent-text">
                 {state.winner.title}
                 {state.winner.year ? <span className="text-text-muted"> ({state.winner.year})</span> : null}
               </Link>
@@ -315,7 +315,7 @@ function BallotCard({
     >
       <Poster url={o.posterUrl} />
       <span className="truncate px-0.5 text-xs font-medium text-text">{o.title}</span>
-      {selected && <span className="px-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent">Your pick</span>}
+      {selected && <span className="px-0.5 text-[10px] font-semibold uppercase tracking-wide text-accent-text">Your pick</span>}
     </button>
   );
 }

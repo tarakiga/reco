@@ -14,7 +14,7 @@ const MONTHS = [
 function Stat({ big, label, sub }: { big: string; label: string; sub?: string }) {
   return (
     <div className="rounded-xl border border-border bg-surface-raised p-5">
-      <p className="text-3xl font-extrabold text-accent sm:text-4xl">{big}</p>
+      <p className="text-3xl font-extrabold text-accent-text sm:text-4xl">{big}</p>
       <p className="mt-1 text-sm font-medium text-text">{label}</p>
       {sub && <p className="text-xs text-text-muted">{sub}</p>}
     </div>
@@ -59,7 +59,7 @@ export default async function WrappedPage() {
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-10">
-      <p className="text-sm font-medium uppercase tracking-wide text-accent">Your Year in Film</p>
+      <p className="text-sm font-medium uppercase tracking-wide text-accent-text">Your Year in Film</p>
       <h1 className="mt-1 text-4xl font-extrabold text-text sm:text-5xl">{year}</h1>
 
       <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -102,7 +102,7 @@ export default async function WrappedPage() {
           </Link>
           <div>
             <p className="text-xs uppercase tracking-wide text-text-muted">Your most-watched</p>
-            <Link href={w.mostWatched.href} className="text-lg font-semibold text-text hover:text-accent">
+            <Link href={w.mostWatched.href} className="text-lg font-semibold text-text hover:text-accent-text">
               {w.mostWatched.title}
             </Link>
             <p className="text-sm text-text-muted">Watched {w.mostWatched.count} {w.mostWatched.count === 1 ? "time" : "times"} this year</p>
@@ -111,7 +111,7 @@ export default async function WrappedPage() {
       )}
 
       <p className="mt-8 text-sm text-text-muted">
-        Built from your <Link href="/account?tab=diary" className="text-accent hover:underline">diary</Link>. The more you log, the richer it gets.
+        Built from your <Link href="/account?tab=diary" className="text-accent-text hover:underline">diary</Link>. The more you log, the richer it gets.
       </p>
     </div>
   );

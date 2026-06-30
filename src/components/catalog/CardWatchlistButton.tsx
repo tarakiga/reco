@@ -57,7 +57,7 @@ export function CardWatchlistButton({ mediaType, tmdbId, initial, signedIn }: Ca
       className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/55 backdrop-blur-sm transition-colors hover:bg-black/75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent disabled:opacity-50"
     >
       {on ? (
-        <svg viewBox="0 0 24 24" className="size-4 text-accent" fill="currentColor" aria-hidden="true">
+        <svg viewBox="0 0 24 24" className="size-4 text-accent-text" fill="currentColor" aria-hidden="true">
           <path d="M6 2h12a1 1 0 0 1 1 1v18l-7-4-7 4V3a1 1 0 0 1 1-1Z" />
           <path d="m10.5 11 1.6 1.6L15 9.8" fill="none" stroke="#0b0d12" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         </svg>

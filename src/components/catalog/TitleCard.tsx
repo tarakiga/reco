@@ -97,7 +97,7 @@ export function TitleCard({
           </div>
         )}
       </div>
-      <p className="mt-1.5 line-clamp-1 text-sm font-medium text-text transition-colors group-hover:text-accent">{title}</p>
+      <p className="mt-1.5 line-clamp-1 text-sm font-medium text-text transition-colors group-hover:text-accent-text">{title}</p>
       {year !== null && <p className="text-xs text-text-muted">{year}</p>}
     </Link>
   );

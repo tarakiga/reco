@@ -19,7 +19,7 @@ export default async function ChallengesPage() {
         {profile ? (
           "Your progress updates as you log films."
         ) : (
-          <Link href="/sign-in" className="text-accent hover:underline">
+          <Link href="/sign-in" className="text-accent-text hover:underline">
             Sign in
           </Link>
         )}

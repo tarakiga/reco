@@ -23,7 +23,7 @@ export async function GenreTiles() {
           <Link
             key={g.id}
             href={`/movies?genre=${g.id}`}
-            className="inline-flex h-9 items-center rounded-full border border-border bg-surface-raised px-4 text-sm font-medium text-text transition-colors hover:border-accent hover:text-accent"
+            className="inline-flex h-9 items-center rounded-full border border-border bg-surface-raised px-4 text-sm font-medium text-text transition-colors hover:border-accent hover:text-accent-text"
           >
             {g.name}
           </Link>

@@ -19,7 +19,7 @@ function PlaceLinks({ places }: { places: NamedRef[] }) {
     <span className="flex flex-wrap gap-x-1.5">
       {places.map((p, i) => (
         <span key={p.id}>
-          <Link href={`/location/${p.id}`} className="text-accent hover:underline">
+          <Link href={`/location/${p.id}`} className="text-accent-text hover:underline">
             {p.label}
           </Link>
           {i < places.length - 1 ? "," : ""}
@@ -58,7 +58,7 @@ export async function TitleExtras({ mediaType, tmdbId }: { mediaType: "movie" | 
         <Row icon="📖" label="Based on">
           {x.basedOn.map((s, i) => (
             <span key={s.id}>
-              <Link href={`/source/${s.id}`} className="text-accent hover:underline">
+              <Link href={`/source/${s.id}`} className="text-accent-text hover:underline">
                 {s.label}
               </Link>
               {i < x.basedOn.length - 1 ? ", " : ""}

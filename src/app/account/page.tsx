@@ -197,7 +197,7 @@ export default async function AccountPage() {
               {t.emoji}
             </span>
             <span className="min-w-0">
-              <span className="block text-sm font-semibold text-text group-hover:text-accent">{t.title}</span>
+              <span className="block text-sm font-semibold text-text group-hover:text-accent-text">{t.title}</span>
               <span className="block text-xs text-text-muted">{t.sub}</span>
             </span>
           </Link>

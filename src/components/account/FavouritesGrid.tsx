@@ -39,7 +39,7 @@ function FavouriteCard({ item, onRemoved }: { item: FavouriteVM; onRemoved: (tit
         onClick={remove}
         disabled={toggle.isPending}
         aria-label={`Remove ${item.title} from favourites`}
-        className="absolute right-1.5 top-1.5 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-accent backdrop-blur-sm transition hover:bg-black/80 disabled:opacity-50"
+        className="absolute right-1.5 top-1.5 z-10 inline-flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-accent-text backdrop-blur-sm transition hover:bg-black/80 disabled:opacity-50"
       >
         <span aria-hidden>♥</span>
       </button>

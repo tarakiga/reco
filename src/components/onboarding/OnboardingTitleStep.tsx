@@ -61,7 +61,7 @@ export function OnboardingTitleStep({
           ) : (
             <>
               Couldn&apos;t load suggestions.{" "}
-              <button type="button" onClick={() => picksQuery.refetch()} className="text-accent underline underline-offset-2 hover:text-accent-hover">
+              <button type="button" onClick={() => picksQuery.refetch()} className="text-accent-text underline underline-offset-2 hover:text-accent-text">
                 Try again
               </button>{" "}
               or search for a favorite above.

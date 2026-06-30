@@ -101,9 +101,9 @@ export function ForYouGrid() {
               <Link
                 href={item.why.href}
                 title={`Because you liked ${item.why.title}`}
-                className="mt-1 block truncate text-[11px] text-text-muted transition-colors hover:text-accent"
+                className="mt-1 block truncate text-[11px] text-text-muted transition-colors hover:text-accent-text"
               >
-                <span className="text-accent">♥</span> {item.why.title}
+                <span className="text-accent-text">♥</span> {item.why.title}
               </Link>
             )}
           </div>

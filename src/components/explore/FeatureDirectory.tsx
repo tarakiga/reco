@@ -14,11 +14,11 @@ function FeatureCard({ f }: { f: Feature }) {
           </span>
         )}
       </div>
-      <h3 className={`font-semibold text-text ${f.href ? "group-hover:text-accent" : ""}`}>{f.name}</h3>
+      <h3 className={`font-semibold text-text ${f.href ? "group-hover:text-accent-text" : ""}`}>{f.name}</h3>
       <p className="text-sm text-text-muted">{f.blurb}</p>
       <div className="mt-auto flex items-center justify-between gap-2 pt-1 text-xs">
         <span className="truncate text-text-muted">{f.where}</span>
-        {f.href && <span className="shrink-0 font-medium text-accent">Go →</span>}
+        {f.href && <span className="shrink-0 font-medium text-accent-text">Go →</span>}
       </div>
     </>
   );

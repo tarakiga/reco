@@ -248,7 +248,7 @@ export function GuideClient() {
             strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="mt-0.5 size-5 shrink-0 text-accent"
+            className="mt-0.5 size-5 shrink-0 text-accent-text"
             aria-hidden
           >
             <path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -351,7 +351,7 @@ export function GuideClient() {
               type="button"
               onClick={() => setPrimeOnly((p) => !p)}
               className={`h-9 rounded-md border px-3 text-sm font-medium transition-colors ${
-                primeOnly ? "border-accent bg-accent/15 text-accent" : "border-border bg-surface text-text-muted hover:border-accent"
+                primeOnly ? "border-accent bg-accent/15 text-accent-text" : "border-border bg-surface text-text-muted hover:border-accent"
               }`}
             >
               Prime time
@@ -489,7 +489,7 @@ export function GuideClient() {
           type="button"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           aria-label="Scroll to top"
-          className="fixed bottom-6 right-6 z-40 flex size-11 items-center justify-center rounded-full border border-border bg-surface-raised text-lg text-text shadow-overlay transition-colors hover:border-accent hover:text-accent"
+          className="fixed bottom-6 right-6 z-40 flex size-11 items-center justify-center rounded-full border border-border bg-surface-raised text-lg text-text shadow-overlay transition-colors hover:border-accent hover:text-accent-text"
         >
           ↑
         </button>
@@ -507,7 +507,7 @@ function EntryMeta({ e }: { e: GuideEntry }) {
         </span>
       )}
       {isOnNow(e) && (
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-accent">On now</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-accent-text">On now</span>
       )}
     </>
   );
@@ -534,7 +534,7 @@ const GuideList = memo(function GuideList({
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-baseline gap-x-2">
-                    <Link href={e.href} className="text-sm font-medium text-text hover:text-accent">
+                    <Link href={e.href} className="text-sm font-medium text-text hover:text-accent-text">
                       {e.showName}
                     </Link>
                     <EntryMeta e={e} />
@@ -709,7 +709,7 @@ const GuideGrid = memo(function GuideGrid({
               <div className="mt-2 flex items-center gap-3">
                 <Link
                   href={selected.entry.href}
-                  className="text-xs font-medium text-accent hover:underline"
+                  className="text-xs font-medium text-accent-text hover:underline"
                 >
                   View full details →
                 </Link>
