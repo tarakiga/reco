@@ -31,8 +31,21 @@ export const backupSchema = z
           title: z.string().min(1).max(120),
           subtitle: z.string().max(200).nullable().optional(),
           published: z.boolean().optional(),
+          // Whether the list renders as a tier list (S/A/B/C buckets).
+          tiered: z.boolean().optional(),
           items: z
-            .array(ref.extend({ note: z.string().max(500).nullable().optional(), position: z.number().int().optional() }))
+            .array(
+              ref.extend({
+                note: z.string().max(500).nullable().optional(),
+                position: z.number().int().optional(),
+                // Tier bucket ("S"|"A"|"B"|"C"), or null/absent for unranked.
+                tier: z.string().max(8).nullable().optional(),
+                // Episode-level items: which season/episode, plus its captured name.
+                season: z.number().int().optional(),
+                episode: z.number().int().optional(),
+                episodeName: z.string().max(300).nullable().optional(),
+              }),
+            )
             .max(20000)
             .optional(),
         }),

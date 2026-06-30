@@ -53,7 +53,16 @@ export async function exportUserData(userId: string): Promise<BackupData & { exp
   const listsOut = [];
   for (const l of userLists) {
     const items = await db
-      .select({ mediaType: titles.mediaType, tmdbId: titles.tmdbId, note: listItems.note, position: listItems.position })
+      .select({
+        mediaType: titles.mediaType,
+        tmdbId: titles.tmdbId,
+        note: listItems.note,
+        position: listItems.position,
+        tier: listItems.tier,
+        season: listItems.seasonNumber,
+        episode: listItems.episodeNumber,
+        episodeName: listItems.episodeName,
+      })
       .from(listItems)
       .innerJoin(titles, eq(listItems.titleId, titles.id))
       .where(eq(listItems.listId, l.id))
@@ -62,7 +71,17 @@ export async function exportUserData(userId: string): Promise<BackupData & { exp
       title: l.title,
       subtitle: l.subtitle,
       published: l.published,
-      items: items.map((it) => ({ mediaType: it.mediaType, tmdbId: n(it.tmdbId), note: it.note, position: it.position })),
+      tiered: l.tiered,
+      items: items.map((it) => ({
+        mediaType: it.mediaType,
+        tmdbId: n(it.tmdbId),
+        note: it.note,
+        position: it.position,
+        tier: it.tier,
+        season: it.season,
+        episode: it.episode,
+        episodeName: it.episodeName,
+      })),
     });
   }
 
@@ -217,17 +236,47 @@ export async function importUserData(userId: string, data: BackupData): Promise<
     if (!listId) {
       const [created] = await db
         .insert(lists)
-        .values({ userId, title: l.title, subtitle: l.subtitle ?? null, slug: slugify(l.title) || "list", published: l.published ?? false })
+        .values({ userId, title: l.title, subtitle: l.subtitle ?? null, slug: slugify(l.title) || "list", published: l.published ?? false, tiered: l.tiered ?? false })
         .returning({ id: lists.id });
       listId = created.id;
       s.lists++;
     }
-    const itemVals: { listId: string; titleId: string; position: number; note: string | null }[] = [];
+    type ItemVal = {
+      listId: string;
+      titleId: string;
+      position: number;
+      note: string | null;
+      tier: string | null;
+      seasonNumber: number;
+      episodeNumber: number;
+      episodeName: string | null;
+    };
+    const itemVals: ItemVal[] = [];
     for (const it of l.items ?? []) {
       const t = tid(it);
-      if (t) itemVals.push({ listId, titleId: t, position: it.position ?? 0, note: it.note ?? null }); else s.skipped++;
+      if (t)
+        itemVals.push({
+          listId,
+          titleId: t,
+          position: it.position ?? 0,
+          note: it.note ?? null,
+          tier: it.tier ?? null,
+          seasonNumber: it.season ?? 0,
+          episodeNumber: it.episode ?? 0,
+          episodeName: it.episodeName ?? null,
+        });
+      else s.skipped++;
     }
-    for (const c of chunked(itemVals)) await db.insert(listItems).values(c).onConflictDoNothing();
+    // Update the mutable item attributes on conflict so restoring a backup
+    // actually restores tier buckets and ordering (not just additive inserts).
+    for (const c of chunked(itemVals))
+      await db
+        .insert(listItems)
+        .values(c)
+        .onConflictDoUpdate({
+          target: [listItems.listId, listItems.titleId, listItems.seasonNumber, listItems.episodeNumber],
+          set: { tier: sql`excluded.tier`, position: sql`excluded.position`, note: sql`excluded.note` },
+        });
     s.listItems += itemVals.length;
   }
 
