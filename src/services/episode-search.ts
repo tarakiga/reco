@@ -3,7 +3,7 @@ import { cacheTag, cacheLife } from "next/cache";
 import { tmdb } from "@/lib/tmdb/client";
 import { stillUrl, profileUrl } from "@/lib/tmdb/images";
 import { slugify } from "@/lib/slug";
-import { searchEpisodes, type EpisodeIndexEntry, type EpisodeMatch } from "@/lib/tmdb/episodes";
+import { searchEpisodes, rankTopEpisodes, type EpisodeIndexEntry, type EpisodeMatch, type TopEpisode } from "@/lib/tmdb/episodes";
 
 const GUESS_MODEL = "gemini-flash-lite-latest";
 
@@ -49,6 +49,7 @@ async function episodeIndex(tvId: number): Promise<EpisodeIndexEntry[]> {
         airDate: e.air_date || null,
         stillUrl: stillUrl(e.still_path),
         voteAverage: e.vote_average && e.vote_average > 0 ? e.vote_average : null,
+        voteCount: e.vote_count && e.vote_count > 0 ? e.vote_count : null,
         cast: (e.guest_stars ?? []).map((g) => ({
           id: g.id,
           name: g.name,
@@ -68,6 +69,12 @@ async function episodeIndex(tvId: number): Promise<EpisodeIndexEntry[]> {
 export async function findEpisodes(tvId: number, query: string): Promise<EpisodeMatch[]> {
   const index = await episodeIndex(tvId);
   return searchEpisodes(index, query);
+}
+
+/** The show's best episodes, weighted so low-vote flukes don't top the list. */
+export async function topEpisodes(tvId: number, limit = 10): Promise<TopEpisode[]> {
+  const index = await episodeIndex(tvId);
+  return rankTopEpisodes(index, limit);
 }
 
 interface RawGuess {

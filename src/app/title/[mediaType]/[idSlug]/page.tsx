@@ -37,6 +37,7 @@ import { FactsPanel } from "@/components/catalog/FactsPanel";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { SeasonsAccordion } from "@/components/catalog/SeasonsAccordion";
 import { EpisodeFinder } from "@/components/catalog/EpisodeFinder";
+import { TopEpisodesPanel } from "@/components/catalog/TopEpisodesPanel";
 import { RelatedTitlesRail } from "@/components/catalog/RelatedTitlesRail";
 import { MovieCollection } from "@/components/catalog/MovieCollection";
 import { TitleExtras } from "@/components/catalog/TitleExtras";
@@ -293,6 +294,7 @@ export default async function TitlePage({
             <section className="mb-8">
               <h2 className="mb-3 text-lg font-semibold text-text">Episodes</h2>
               <EpisodeFinder tvId={id} />
+              <TopEpisodesPanel tvId={id} />
               <SeasonsAccordion tvId={id} seasons={seasons} />
             </section>
           )}

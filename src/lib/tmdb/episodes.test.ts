@@ -1,4 +1,4 @@
-import { seasonSummaries, toEpisodes, searchEpisodes, type EpisodeIndexEntry } from "./episodes";
+import { seasonSummaries, toEpisodes, searchEpisodes, rankTopEpisodes, type EpisodeIndexEntry } from "./episodes";
 import type { TmdbTitleDetail, TmdbSeasonDetail } from "./types";
 
 const entry = (over: Partial<EpisodeIndexEntry>): EpisodeIndexEntry => ({
@@ -10,6 +10,7 @@ const entry = (over: Partial<EpisodeIndexEntry>): EpisodeIndexEntry => ({
   airDate: null,
   stillUrl: null,
   voteAverage: null,
+  voteCount: null,
   cast: [],
   guestStars: [],
   characters: [],
@@ -55,6 +56,7 @@ test("toEpisodes maps fields and builds still url", () => {
         air_date: "2008-01-20",
         still_path: "/still.jpg",
         vote_average: 8.2,
+        vote_count: 1500,
       },
       {
         id: 12,
@@ -74,6 +76,7 @@ test("toEpisodes maps fields and builds still url", () => {
     airDate: "2008-01-20",
     stillUrl: "https://image.tmdb.org/t/p/w300/still.jpg",
     voteAverage: 8.2,
+    voteCount: 1500,
     cast: [],
   });
   // empty name → fallback; 0 vote → null; missing fields → null; guest → cast
@@ -85,6 +88,7 @@ test("toEpisodes maps fields and builds still url", () => {
     airDate: null,
     stillUrl: null,
     voteAverage: null,
+    voteCount: null,
     cast: [
       {
         id: 7,
@@ -144,4 +148,28 @@ test("searchEpisodes requires all words and ignores too-short queries", () => {
   const entries = [entry({ guestStars: ["Brad Pitt"] }), entry({ episodeNumber: 2, overview: "pitt stop" })];
   expect(searchEpisodes(entries, "brad pitt").every((r) => r.guestStars.includes("Brad Pitt"))).toBe(true);
   expect(searchEpisodes(entries, "x")).toEqual([]);
+});
+
+test("rankTopEpisodes gates out a low-sample 10.0 and drops unrated episodes", () => {
+  const entries = [
+    entry({ seasonNumber: 5, episodeNumber: 14, name: "Ozymandias", voteAverage: 9.4, voteCount: 5000 }),
+    entry({ seasonNumber: 3, episodeNumber: 9, name: "Obscure", voteAverage: 10, voteCount: 2 }),
+    entry({ seasonNumber: 1, episodeNumber: 1, name: "Pilot", voteAverage: 8.2, voteCount: 3000 }),
+    entry({ seasonNumber: 2, episodeNumber: 4, name: "Unrated", voteAverage: null, voteCount: null }),
+  ];
+  const top = rankTopEpisodes(entries, 10);
+  expect(top.map((e) => e.name)).toEqual(["Ozymandias", "Pilot"]); // 2-vote fluke gated out, unrated dropped
+});
+
+test("rankTopEpisodes falls back to all rated when none clear the vote gate", () => {
+  const entries = [
+    entry({ episodeNumber: 1, name: "A", voteAverage: 7.5, voteCount: 3 }),
+    entry({ episodeNumber: 2, name: "B", voteAverage: 8.9, voteCount: 4 }),
+  ];
+  // median vote count 3 → gate floored at 5, nothing qualifies → rank all rated.
+  expect(rankTopEpisodes(entries, 10).map((e) => e.name)).toEqual(["B", "A"]);
+});
+
+test("rankTopEpisodes returns [] when no episode has a rating", () => {
+  expect(rankTopEpisodes([entry({ voteAverage: null }), entry({ voteAverage: 7, voteCount: 0 })])).toEqual([]);
 });

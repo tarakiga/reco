@@ -26,6 +26,8 @@ export interface EpisodeVM {
   airDate: string | null;
   stillUrl: string | null;
   voteAverage: number | null;
+  /** How many votes back the average — used to weight the "top rated" ranking. */
+  voteCount: number | null;
   /** Per-episode guest cast (with photos) — the regulars live in the show Cast. */
   cast: EpisodeCastMember[];
 }
@@ -53,6 +55,7 @@ export function toEpisodes(season: TmdbSeasonDetail): EpisodeVM[] {
     airDate: e.air_date || null,
     stillUrl: stillUrl(e.still_path),
     voteAverage: e.vote_average && e.vote_average > 0 ? e.vote_average : null,
+    voteCount: e.vote_count && e.vote_count > 0 ? e.vote_count : null,
     cast: (e.guest_stars ?? []).map((g) => ({
       id: g.id,
       name: g.name,
@@ -135,4 +138,51 @@ export function searchEpisodes(
 
   scored.sort((a, b) => b.score - a.score || (b.entry.voteAverage ?? 0) - (a.entry.voteAverage ?? 0));
   return scored.slice(0, limit).map((s) => ({ ...s.entry, matchedOn: s.matchedOn }));
+}
+
+/** A single ranked "best of" episode — a slim shape for the top-rated panel. */
+export interface TopEpisode {
+  seasonNumber: number;
+  episodeNumber: number;
+  name: string;
+  overview: string;
+  airDate: string | null;
+  stillUrl: string | null;
+  voteAverage: number | null;
+  voteCount: number | null;
+}
+
+/**
+ * Rank a show's episodes so genuinely-loved ones rise and a lone 10/10 with two
+ * votes doesn't top the list. Only rated episodes qualify, and they must clear a
+ * minimum-vote gate (IMDb-style) that adapts to the show — a fraction of the
+ * median vote count, clamped to [5, 50] so it filters true flukes without
+ * excluding legitimately-voted episodes. If nothing clears the gate (a sparse
+ * show), we fall back to every rated episode. Then sort by average, most-voted
+ * first on ties.
+ */
+export function rankTopEpisodes(entries: EpisodeIndexEntry[], limit = 10): TopEpisode[] {
+  const rated = entries.filter((e) => e.voteAverage != null && (e.voteCount ?? 0) > 0);
+  if (rated.length === 0) return [];
+
+  const counts = rated.map((e) => e.voteCount as number).sort((a, b) => a - b);
+  const median = counts[Math.floor(counts.length / 2)];
+  const gate = Math.max(5, Math.min(Math.round(median * 0.2), 50));
+
+  let pool = rated.filter((e) => (e.voteCount as number) >= gate);
+  if (pool.length === 0) pool = rated;
+
+  return pool
+    .sort((a, b) => (b.voteAverage as number) - (a.voteAverage as number) || (b.voteCount ?? 0) - (a.voteCount ?? 0))
+    .slice(0, limit)
+    .map((e) => ({
+      seasonNumber: e.seasonNumber,
+      episodeNumber: e.episodeNumber,
+      name: e.name,
+      overview: e.overview,
+      airDate: e.airDate,
+      stillUrl: e.stillUrl,
+      voteAverage: e.voteAverage,
+      voteCount: e.voteCount,
+    }));
 }

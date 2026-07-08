@@ -89,6 +89,7 @@ export interface TmdbEpisode {
   air_date?: string | null;
   still_path?: string | null;
   vote_average?: number;
+  vote_count?: number;
   guest_stars?: { id: number; name: string; character?: string; profile_path?: string | null }[];
   crew?: { id: number; name: string; job?: string }[];
 }
