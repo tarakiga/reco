@@ -282,7 +282,7 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
   ];
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 pb-24">
       {/* Title + subtitle */}
       <div className="flex flex-col gap-3 rounded-lg border border-border bg-surface-raised p-4">
         <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -438,14 +438,24 @@ export function ListEditor({ initial, siteOrigin }: { initial: OwnerList; siteOr
         )}
       </div>
 
-      {/* Bottom save, so you don't scroll up after editing a long list. */}
-      {items.length > 0 && (
-        <div className="flex justify-end">
-          <Button onClick={saveMeta} loading={savingMeta} disabled={!title.trim()}>
-            Save list
-          </Button>
-        </div>
-      )}
+      {/* Floating save — stays in view however far you scroll a long list. */}
+      <div className="fixed bottom-6 right-6 z-40 sm:bottom-8 sm:right-8">
+        <Button
+          onClick={saveMeta}
+          loading={savingMeta}
+          disabled={!title.trim()}
+          size="lg"
+          className="rounded-full px-6 shadow-lg shadow-black/40"
+        >
+          {!savingMeta && (
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4" aria-hidden="true">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2Z" />
+              <path d="M17 21v-8H7v8M7 3v5h8" />
+            </svg>
+          )}
+          Save list
+        </Button>
+      </div>
     </div>
   );
 }
