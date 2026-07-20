@@ -334,6 +334,28 @@ export const MOODS: Mood[] = [
       sortBy: "vote_count.desc",
     },
   },
+  {
+    slug: "teen-outsiders",
+    label: "Teen outsiders",
+    emoji: "🖤",
+    blurb: "Misfits, cliques and gangs — kids finding where they belong (or don't).",
+    kind: "mood",
+    // Hand-picked: no genre/keyword query captures this — it spans comedy, horror,
+    // musical and drama, unified by teen cliques/gangs as the engine of the story
+    // rather than any one genre. Curated order: literal street-gang rivalry first
+    // (West Side Story's spiritual cousins), then John Hughes-era clique dramedies,
+    // then outsider horror, then clique satire, then more recent misfit stories.
+    // Breakfast Club, West Side Story, Lost Boys, The Outsiders, The Warriors,
+    // Rebel Without a Cause, Rumble Fish, Grease, Pretty in Pink, Sixteen Candles,
+    // Some Kind of Wonderful, Heathers, Dazed and Confused, The Craft, Fright
+    // Night, Ginger Snaps, Empire Records, Clueless, Cruel Intentions, 10 Things I
+    // Hate About You, Donnie Darko, Thirteen, Easy A, Perks of Being a Wallflower,
+    // Lady Bird, The Edge of Seventeen, Eighth Grade, Foxfire.
+    manual: [
+      2108, 1725, 1547, 227, 11474, 221, 232, 621, 11522, 15144, 15143, 2640, 9571, 9100, 11797,
+      9871, 13531, 9603, 796, 4951, 141, 11023, 37735, 84892, 391713, 376660, 489925, 18555,
+    ],
+  },
   // Occasions — only featured on the home page in their season.
   {
     slug: "spooky-season",
