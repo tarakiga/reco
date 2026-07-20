@@ -378,6 +378,26 @@ export const MOODS: Mood[] = [
       14756, 12400, 59440,
     ],
   },
+  {
+    slug: "dystopian-futures",
+    label: "Dystopian futures",
+    emoji: "🏙️",
+    blurb: "Totalitarian regimes and broken societies, imagined at their worst.",
+    kind: "mood",
+    // Hand-picked: spans an animated fable, a German TV movie and a Spanish
+    // horror-thriller, so no genre/keyword query captures it without pulling in
+    // unrelated sci-fi action. Chronological across the genre's eras: the
+    // foundational classics, the 60s-70s New Hollywood wave, then modern
+    // systems-of-control films.
+    // Metropolis, Animal Farm, Fahrenheit 451, A Clockwork Orange, THX 1138,
+    // Soylent Green, Logan's Run, Wir (We), Nineteen Eighty-Four, Brazil,
+    // Gattaca, Brave New World, Equilibrium, V for Vendetta, Children of Men,
+    // Snowpiercer, The Platform.
+    manual: [
+      19, 11848, 1714, 185, 636, 12101, 10803, 255656, 9314, 68, 782, 27260, 7299, 752, 9693,
+      110415, 619264,
+    ],
+  },
   // Occasions — only featured on the home page in their season.
   {
     slug: "spooky-season",
