@@ -338,9 +338,9 @@ export const MOODS: Mood[] = [
     slug: "teen-outsiders",
     label: "Teen outsiders",
     emoji: "🖤",
-    blurb: "Misfits, cliques and gangs — kids finding where they belong (or don't).",
+    blurb: "Misfits, cliques and gangs: kids finding where they belong (or don't).",
     kind: "mood",
-    // Hand-picked: no genre/keyword query captures this — it spans comedy, horror,
+    // Hand-picked: no genre/keyword query captures this, since it spans comedy, horror,
     // musical and drama, unified by teen cliques/gangs as the engine of the story
     // rather than any one genre. Curated order: literal street-gang rivalry first
     // (West Side Story's spiritual cousins), then John Hughes-era clique dramedies,
