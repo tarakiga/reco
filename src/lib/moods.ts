@@ -358,6 +358,26 @@ export const MOODS: Mood[] = [
       18555,
     ],
   },
+  {
+    slug: "martial-arts-underdogs",
+    label: "Martial arts underdogs",
+    emoji: "🥋",
+    blurb: "Scrappy fighters, brutal training montages, one last shot at the title.",
+    kind: "mood",
+    // Hand-picked: TMDB's martial-arts/kickboxing keywords are inconsistent and
+    // would mix in wuxia epics and modern stunt spectacles that don't share this
+    // tone: a nobody trains under a mentor and beats the champion in the ring or
+    // tournament. Curated order: the dojo classic that defines the formula, the
+    // 80s/90s tournament wave, then modern films working the same formula.
+    // Enter the Dragon, The Karate Kid, American Ninja, The Last Dragon, No
+    // Retreat No Surrender, Bloodsport, Kickboxer, Best of the Best, Lionheart,
+    // Only the Strong, The Quest, Ong-Bak, Undisputed II, Never Back Down, Ip
+    // Man, Redbelt, Warrior.
+    manual: [
+      9461, 1885, 12500, 13938, 12721, 11690, 10222, 238751, 9399, 15797, 9103, 9316, 15255, 8456,
+      14756, 12400, 59440,
+    ],
+  },
   // Occasions — only featured on the home page in their season.
   {
     slug: "spooky-season",
