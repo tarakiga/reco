@@ -17,9 +17,10 @@ export function MoodTabs({ slug, active }: { slug: string; active: MoodMedia }) 
             href={t.href}
             aria-current={on ? "page" : undefined}
             className={
-              on
-                ? "border-b-2 border-accent px-4 py-2 text-sm font-semibold text-text"
-                : "border-b-2 border-transparent px-4 py-2 text-sm font-medium text-text-muted hover:text-text"
+              "px-4 py-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent " +
+              (on
+                ? "border-b-2 border-accent font-semibold text-text"
+                : "border-b-2 border-transparent font-medium text-text-muted hover:text-text")
             }
           >
             {t.label}
