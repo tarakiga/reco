@@ -44,8 +44,13 @@ This is consistent with how the strongest existing moods already work: 13 of 22 
 
 Roughly 16 candidate shows were drafted per mood and verified against TMDB, correcting
 false-positive search matches along the way (for example "The Fall" matched *The Fall Guy*,
-"Warrior" matched *Xena: Warrior Princess*). Viability bar: 12 or more shows at 100 or more
-votes.
+"Warrior" matched *Xena: Warrior Princess*).
+
+The reference bar used below is 12 or more shows at 100 or more votes. This is a sizing
+heuristic for this feasibility check, not a shipping gate. Curated lists grow over time, so a
+mood can launch its TV tab with fewer titles and gain more later. The practical floor is
+visual: roughly 6 titles fill a grid row, so a list below that looks broken rather than
+merely short.
 
 **Comfortably viable (18):** cosy-night-in (15), edge-of-your-seat (16), need-a-laugh (16),
 a-good-cry (14), mind-benders (16), b-movie-mashups (13), popcorn-action (16), grindhouse
@@ -62,13 +67,19 @@ valentines-picks (15), summer-blockbusters (16).
   simply to accept lower-voted pre-1970 titles when curating this one list. That brings it
   comfortably above 16. This mood also needs a `blurbTv` override, since "Hollywood's golden
   age" does not describe *I Love Lucy*.
-- **martial-arts-underdogs:** about 11 real hits. Reachable only by leaning into anime
-  (Baki, Kengan Ashura, MEGALOBOX and Fighting Spirit are already verified), which shifts the
-  mood's character somewhat.
+- **martial-arts-underdogs:** about 11 real hits, which is fine to ship. Reaching a larger
+  list means leaning into anime (Baki, Kengan Ashura, MEGALOBOX and Fighting Spirit are
+  already verified), which shifts the mood's character somewhat toward anime relative to its
+  movie tab. Accepted deliberately.
 
-**Not viable (2):** so-bad-its-good (8 hits, and the TV equivalents such as Manimal and
-Automan are too obscure to be recognisable) and festive-favourites (4 hits, because Christmas
-is a movie format and series-length Christmas TV barely exists). These two stay movie-only.
+**Ships short, grows later (1):** so-bad-its-good (8 hits). The TV equivalents such as
+Manimal, Automan and Small Wonder are more obscure than the movie canon, but 8 clears the
+visual floor and the list can grow.
+
+**Stays movie-only for now (1):** festive-favourites (4 hits). Christmas is a movie format
+and series-length Christmas TV barely exists, so this one falls below the visual floor. It
+gets no TV tab until the list is curated up past roughly 6 titles, which the `manualTv`
+mechanism supports with no code change.
 
 ## Architecture
 
@@ -86,8 +97,8 @@ export interface Mood {
 ```
 
 Presence of `manualTv` is the single switch that enables the TV tab. Moods without it
-(so-bad-its-good, festive-favourites) render exactly as they do today with no tabs shown,
-so there are no dead ends and no greyed-out affordances.
+(festive-favourites at launch) render exactly as they do today with no tabs shown, so there
+are no dead ends and no greyed-out affordances. Adding a TV tab later is a data change only.
 
 `blurbTv` is expected to be used by classic-hollywood only, possibly one or two others. The
 default is to share one blurb across both tabs, because a mood means the same thing whether
@@ -146,6 +157,6 @@ so it is fixed here. Replacement wording: `` `${mood.label}: movies to watch` ``
 
 ## Out of scope
 
-- Curating TV lists for so-bad-its-good and festive-favourites.
+- Curating a TV list for festive-favourites.
 - Any change to home-page mood rotation.
 - TV moods driven by Discover queries, which Finding 1 rules out.
