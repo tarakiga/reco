@@ -64,9 +64,14 @@ test("moodBlurb prefers blurbTv for TV only", () => {
 
 const withTv = MOODS.filter((m) => m.manualTv?.length);
 
-test("21 of the 22 moods have a curated TV list", () => {
-  expect(MOODS).toHaveLength(22);
-  expect(withTv).toHaveLength(21);
+test("all but one of the moods have a curated TV list", () => {
+  expect(MOODS).toHaveLength(23);
+  // Only festive-favourites lacks one, so the count tracks the total.
+  expect(withTv).toHaveLength(MOODS.length - 1);
+});
+
+test("every mood has backdrop art for its card", () => {
+  for (const m of MOODS) expect(m.backdrop, `${m.slug} has no backdrop`).toMatch(/^\/.+\.jpg$/);
 });
 
 test("festive-favourites has no TV list", () => {
