@@ -1,4 +1,4 @@
-import { featuredMoods, PINNED_MOOD_SLUGS } from "./moods";
+import { featuredMoods, PINNED_MOOD_SLUGS, hasTvTab, moodBlurb, type Mood } from "./moods";
 
 test("pins the two fixed moods to the front, in order", () => {
   for (const [month, day] of [
@@ -33,4 +33,31 @@ test("backfills with evergreen moods when nothing is in season", () => {
 
 test("is deterministic for the same date", () => {
   expect(featuredMoods(5, 130)).toEqual(featuredMoods(5, 130));
+});
+
+const base: Mood = {
+  slug: "x",
+  label: "X",
+  emoji: "x",
+  blurb: "movie blurb",
+  kind: "mood",
+};
+
+test("hasTvTab is false when there is no TV list", () => {
+  expect(hasTvTab(base)).toBe(false);
+  expect(hasTvTab({ ...base, manualTv: [] })).toBe(false);
+});
+
+test("hasTvTab is true when a TV list is present", () => {
+  expect(hasTvTab({ ...base, manualTv: [1, 2] })).toBe(true);
+});
+
+test("moodBlurb falls back to the shared blurb for TV", () => {
+  expect(moodBlurb(base, "tv")).toBe("movie blurb");
+});
+
+test("moodBlurb prefers blurbTv for TV only", () => {
+  const m = { ...base, blurbTv: "tv blurb" };
+  expect(moodBlurb(m, "tv")).toBe("tv blurb");
+  expect(moodBlurb(m, "movie")).toBe("movie blurb");
 });

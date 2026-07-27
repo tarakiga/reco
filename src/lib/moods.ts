@@ -29,6 +29,12 @@ export interface Mood {
   query?: MoodQuery;
   /** Hand-picked TMDB movie ids, in curated order. Takes precedence over `query`. */
   manual?: number[];
+  /** Hand-picked TMDB TV ids, in curated order. Presence enables the mood's TV tab.
+   *  TV is always curated: TMDB's TV genre vocabulary has no Romance/Horror/Thriller/
+   *  Action/Adventure/Sci-Fi, so Discover queries return 0-2 results for these moods. */
+  manualTv?: number[];
+  /** Blurb override for the TV tab, when the shared blurb does not fit shows. */
+  blurbTv?: string;
   /** Months (1-12) an occasion is featured on the home page; omitted = evergreen. */
   season?: number[];
 }
@@ -452,6 +458,18 @@ export const MOODS: Mood[] = [
 
 export function getMoodBySlug(slug: string): Mood | undefined {
   return MOODS.find((m) => m.slug === slug);
+}
+
+export type MoodMedia = "movie" | "tv";
+
+/** A mood shows its TV tab only once it has a curated TV list. */
+export function hasTvTab(mood: Mood): boolean {
+  return (mood.manualTv?.length ?? 0) > 0;
+}
+
+/** Blurb for a tab: TV falls back to the shared blurb unless overridden. */
+export function moodBlurb(mood: Mood, media: MoodMedia): string {
+  return media === "tv" ? (mood.blurbTv ?? mood.blurb) : mood.blurb;
 }
 
 /** Mood rails always pinned to the front of the home page, in order. */
