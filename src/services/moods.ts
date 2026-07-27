@@ -2,10 +2,9 @@ import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { tmdb } from "@/lib/tmdb/client";
 import { toBrowseResults } from "@/lib/tmdb/discover";
-import { posterUrl } from "@/lib/tmdb/images";
-import { titleSlug } from "@/lib/slug";
+import { toMoodCard } from "@/lib/tmdb/mood-card";
 import type { TitleResult } from "@/lib/tmdb/transform";
-import { getMoodBySlug, type MoodQuery } from "@/lib/moods";
+import { getMoodBySlug, type MoodMedia, type MoodQuery } from "@/lib/moods";
 
 function buildParams(q: MoodQuery, page: number): Record<string, string> {
   const p: Record<string, string> = {
@@ -28,31 +27,22 @@ function buildParams(q: MoodQuery, page: number): Record<string, string> {
   return p;
 }
 
-/** Build a card from a hand-picked TMDB movie id (lightweight fetch). */
-async function manualMovie(id: number): Promise<TitleResult | null> {
-  const b = await tmdb.titleBrief("movie", id).catch(() => null);
-  if (!b) return null;
-  const name = b.title ?? b.name ?? "Untitled";
-  const date = b.release_date ?? b.first_air_date ?? null;
-  const year = date && date.length >= 4 ? Number(date.slice(0, 4)) : null;
-  return {
-    kind: "title",
-    mediaType: "movie",
-    tmdbId: id,
-    title: name,
-    year: Number.isFinite(year) ? year : null,
-    releaseDate: date,
-    posterUrl: posterUrl(b.poster_path ?? null),
-    href: `/title/movie/${id}-${titleSlug(name, date)}`,
-  };
+/** Build a card from a hand-picked TMDB id (lightweight fetch). */
+async function manualTitle(media: MoodMedia, id: number): Promise<TitleResult | null> {
+  const b = await tmdb.titleBrief(media, id).catch(() => null);
+  return toMoodCard(media, id, b);
 }
 
-/** Titles for a mood. Hand-picked `manual` list if set, otherwise TMDB Discover.
- *  Cached per mood (region-agnostic). */
-export async function getMoodTitles(slug: string, pages = 1): Promise<TitleResult[]> {
+/** Titles for a mood. Hand-picked `manual`/`manualTv` list if set, otherwise TMDB Discover
+ *  (movie only). Cached per mood and media type (region-agnostic). */
+export async function getMoodTitles(
+  slug: string,
+  media: MoodMedia = "movie",
+  pages = 1,
+): Promise<TitleResult[]> {
   "use cache";
   cacheLife("hours");
-  cacheTag(`mood:${slug}`);
+  cacheTag(`mood:${slug}:${media}`);
 
   const mood = getMoodBySlug(slug);
   if (!mood) return [];
@@ -63,8 +53,9 @@ export async function getMoodTitles(slug: string, pages = 1): Promise<TitleResul
   // Hand-picked seed first, preserving curated order. This is the whole mood for
   // a purely curated list, or a seed pinned ahead of a query fill (hybrid) when
   // a keyword query misses beloved titles (e.g. Inspirational + Miracle on 34th).
-  if (mood.manual?.length) {
-    const cards = await Promise.all(mood.manual.map(manualMovie));
+  const seed = media === "tv" ? mood.manualTv : mood.manual;
+  if (seed?.length) {
+    const cards = await Promise.all(seed.map((id) => manualTitle(media, id)));
     for (const c of cards) {
       if (c && !seen.has(c.tmdbId)) {
         seen.add(c.tmdbId);
@@ -73,8 +64,10 @@ export async function getMoodTitles(slug: string, pages = 1): Promise<TitleResul
     }
   }
 
-  // Dynamic Discover fill, appended after any seed and de-duplicated.
-  if (mood.query) {
+  // Dynamic Discover fill is movie-only: TMDB's TV genre vocabulary lacks the genres
+  // these queries rely on, so a TV fill returns 0-2 results. TV moods are curated.
+  if (media === "movie" && mood.query) {
+    // Dynamic Discover fill, appended after any seed and de-duplicated.
     const mt = mood.query.mediaType ?? "movie";
     for (let page = 1; page <= pages; page++) {
       const data = await tmdb.discover(mt, buildParams(mood.query, page)).catch(() => null);
