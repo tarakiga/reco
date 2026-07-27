@@ -234,10 +234,10 @@ export const MOODS: Mood[] = [
     ],
     // b-movie-mashups
     manualTv: [
-      61345, 62264, 65988, 65820, 71693, 62413, 62517, 58811, 10268, 73536, 39351, 1310, 67726,
+      61345, 62264, 65988, 65820, 71693, 62413, 62517, 58811, 10268, 896, 39351, 1310, 67726,
     ],
     // Z Nation, Ash vs Evil Dead, Wynonna Earp, Van Helsing, Blood Drive, Killjoys, Zoo,
-    // Helix, Primeval, Dinotopia, Grimm, Sanctuary, Beyond.
+    // Helix, Primeval, The Lost World, Grimm, Sanctuary, Beyond.
   },
   {
     slug: "popcorn-action",
