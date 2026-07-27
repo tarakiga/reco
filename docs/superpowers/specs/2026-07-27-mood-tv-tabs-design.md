@@ -40,7 +40,7 @@ cosy moods does not carry over.
 This is consistent with how the strongest existing moods already work: 13 of 22 are already
 `manual`.
 
-### Finding 2: curation is viable for 20 of 22 moods
+### Finding 2: curation is viable for 21 of 22 moods
 
 Roughly 16 candidate shows were drafted per mood and verified against TMDB, correcting
 false-positive search matches along the way (for example "The Fall" matched *The Fall Guy*,
