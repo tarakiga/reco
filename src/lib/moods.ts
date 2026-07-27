@@ -65,10 +65,12 @@ export const MOODS: Mood[] = [
     // cosy-night-in
     manualTv: [
       4586, 61662, 97546, 8592, 48891, 1421, 1420, 107113, 32726, 70785, 39793, 66134, 61828, 2430,
+      693, 1447, 5639, 60866, 66599, 226285, 106454,
     ],
     // Gilmore Girls, Schitt's Creek, Ted Lasso, Parks and Rec, Brooklyn Nine-Nine,
     // Modern Family, New Girl, Only Murders, Bob's Burgers, Anne with an E, Call the
-    // Midwife, The Durrells, Detectorists, Doc Martin.
+    // Midwife, The Durrells, Detectorists, Doc Martin, Desperate Housewives, Psych,
+    // Pushing Daisies, iZombie, Private Eyes, Elsbeth, The Afterparty.
   },
   {
     slug: "edge-of-your-seat",
@@ -91,11 +93,11 @@ export const MOODS: Mood[] = [
     // edge-of-your-seat
     manualTv: [
       1396, 60059, 69740, 67744, 43982, 1427, 34415, 49010, 1407, 2288, 1973, 1405, 70453, 39852,
-      80307, 78191,
+      80307, 78191, 93166, 225385, 124364,
     ],
     // Breaking Bad, Better Call Saul, Ozark, Mindhunter, Line of Duty, Broadchurch,
     // The Killing, The Fall, Homeland, Prison Break, 24, Dexter, Sharp Objects, The
-    // Sinner, Bodyguard, You.
+    // Sinner, Bodyguard, You, The Capture, Black Doves, From.
   },
   {
     slug: "need-a-laugh",
@@ -119,11 +121,12 @@ export const MOODS: Mood[] = [
     // need-a-laugh
     manualTv: [
       2316, 8592, 48891, 2710, 4589, 18347, 4608, 1400, 1668, 4546, 2490, 815, 2207, 62649, 83631,
-      126027,
+      126027, 72, 1418,
     ],
     // The Office, Parks and Rec, Brooklyn Nine-Nine, It's Always Sunny, Arrested
     // Development, Community, 30 Rock, Seinfeld, Friends, Curb Your Enthusiasm, The IT
-    // Crowd, Peep Show, Fawlty Towers, Superstore, What We Do in the Shadows, Ghosts.
+    // Crowd, Peep Show, Fawlty Towers, Superstore, What We Do in the Shadows, Ghosts,
+    // Only Fools and Horses, The Big Bang Theory.
   },
   {
     slug: "a-good-cry",
@@ -174,10 +177,11 @@ export const MOODS: Mood[] = [
     // mind-benders
     manualTv: [
       70523, 95396, 63247, 1920, 4607, 1705, 67195, 69061, 81349, 86340, 73411, 84977, 63646, 93784,
-      90669, 894,
+      90669, 894, 62560, 71116,
     ],
     // Dark, Severance, Westworld, Twin Peaks, Lost, Fringe, Legion, The OA, Devs,
-    // Undone, Maniac, Russian Doll, Counterpart, Tales from the Loop, 1899, The Prisoner.
+    // Undone, Maniac, Russian Doll, Counterpart, Tales from the Loop, 1899, The
+    // Prisoner, Mr. Robot, Castle Rock.
   },
   {
     slug: "so-bad-its-good",
@@ -204,14 +208,13 @@ export const MOODS: Mood[] = [
       17911, 9360, 326, 251516, 457712, 260928, 45795, 20787,
     ],
     // so-bad-its-good
-    manualTv: [69050, 2384, 2119, 3291, 12751, 3318, 2898, 237],
+    manualTv: [69050, 2384, 2119, 3291, 12751, 3318, 2898, 237, 1998, 72002, 71738, 90811],
     // Riverdale, Knight Rider, Airwolf, Manimal, Automan, Street Hawk, Small Wonder,
-    // Mortal Kombat: Conquest. Shorter than the movie list on purpose: the TV canon here
-    // is thin, and this list is expected to grow.
+    // Mortal Kombat: Conquest, Moonlighting, Dynasty (2017), The Orville, Avenue 5.
   },
   {
     slug: "b-movie-mashups",
-    label: "B-movie mashups",
+    label: "B-movie/TV mashups",
     emoji: "🦈",
     blurb: "Z-grade creature mashups where the title says it all: shark plus tornado, velociraptor plus pastor.",
     kind: "mood",
@@ -233,10 +236,10 @@ export const MOODS: Mood[] = [
     ],
     // b-movie-mashups
     manualTv: [
-      61345, 62264, 65988, 65820, 71693, 62413, 62517, 58811, 10268, 896, 39351, 1310, 67726,
+      61345, 62264, 65988, 65820, 71693, 62413, 62517, 58811, 10268, 896, 39351, 1310, 67726, 82816,
     ],
     // Z Nation, Ash vs Evil Dead, Wynonna Earp, Van Helsing, Blood Drive, Killjoys, Zoo,
-    // Helix, Primeval, The Lost World, Grimm, Sanctuary, Beyond.
+    // Helix, Primeval, The Lost World, Grimm, Sanctuary, Beyond, Lovecraft Country.
   },
   {
     slug: "popcorn-action",
@@ -350,15 +353,15 @@ export const MOODS: Mood[] = [
     // epic-adventures
     manualTv: [
       1399, 94997, 84773, 44217, 63333, 1891, 126308, 70593, 71912, 82452, 46296, 47665, 71914,
-      70484, 56570,
+      70484, 56570, 106734,
     ],
     // Game of Thrones, House of the Dragon, Rings of Power, Vikings, The Last Kingdom,
     // Rome, Shogun, Kingdom, The Witcher, Avatar: The Last Airbender, Spartacus, Black
-    // Sails, The Wheel of Time, Britannia, Outlander.
+    // Sails, The Wheel of Time, Britannia, Outlander, Domina.
   },
   {
     slug: "family-movie-night",
-    label: "Family movie night",
+    label: "Family night",
     emoji: "👨‍👩‍👧",
     blurb: "Something everyone can enjoy.",
     kind: "mood",
@@ -374,11 +377,12 @@ export const MOODS: Mood[] = [
     // family-movie-night
     manualTv: [
       82728, 82452, 40075, 1877, 72350, 15260, 92685, 60554, 85349, 68267, 74728, 95599, 115577,
-      82856,
+      82856, 1421, 66573, 71728, 66732,
     ],
     // Bluey, Avatar: The Last Airbender, Gravity Falls, Phineas and Ferb, DuckTales,
     // Adventure Time, The Owl House, Star Wars Rebels, Amphibia, Trollhunters, Carmen
-    // Sandiego, Kipo, Sonic Prime, The Mandalorian.
+    // Sandiego, Kipo, Sonic Prime, The Mandalorian, Modern Family, The Good Place,
+    // Young Sheldon, Stranger Things.
   },
   {
     slug: "true-stories",
@@ -427,12 +431,15 @@ export const MOODS: Mood[] = [
   },
   {
     slug: "classic-hollywood",
-    label: "Classic Hollywood",
+    label: "Classics",
     emoji: "🎩",
-    blurb: "Hollywood's golden age: timeless classics from the 1930s to the 1960s.",
+    blurb: "Timeless classics from Hollywood's golden age, the 1930s to the 1960s.",
     kind: "mood",
     // classic-hollywood
-    blurbTv: "Television's golden age: the shows that invented the medium, from the 1950s to the 1960s.",
+    // The TV list runs later than the movie one: the sitcom era stretches well past
+    // the 1960s, so the blurb widens to the 1980s rather than matching the movies.
+    blurbTv:
+      "Classic television: the sitcoms and Sunday-night staples that ran from the 1950s to the 1980s.",
     // Hybrid: a verified seed of the canon (a Discover era query alone surfaces
     // some acclaimed-but-obscure titles and misses the most iconic), pinned ahead
     // of an era-constrained fill. Seed (curated order):
@@ -459,13 +466,17 @@ export const MOODS: Mood[] = [
     },
     // classic-hollywood
     manualTv: [
-      2730, 4439, 5273, 6357, 5133, 106, 2132, 4177, 3713, 1018, 10952, 10980, 2774, 10083, 4357, 253,
+      2730, 4439, 5273, 6357, 5133, 106, 2132, 4177, 3713, 1018, 10952, 10980, 2774, 10083, 4357,
+      253, 1660, 4068, 2126, 2962, 1974, 2184, 3845, 3033, 1823, 39775, 2410, 1938,
     ],
     // I Love Lucy, The Honeymooners, Alfred Hitchcock Presents, The Twilight Zone, Leave
     // It to Beaver, The Andy Griffith Show, The Dick Van Dyke Show, Perry Mason,
     // Gunsmoke, Bonanza, Rawhide, Have Gun Will Travel, The Untouchables, The Fugitive,
-    // Mission: Impossible, Star Trek. Several are low-vote on TMDB but canonical for the
-    // era, so the usual vote heuristic was relaxed here deliberately.
+    // Mission: Impossible, Star Trek, I Dream of Jeannie, Hogan's Heroes, The Brady
+    // Bunch, The Mary Tyler Moore Show, The Bob Newhart Show, Maude, Happy Days,
+    // Laverne & Shirley, The Love Boat, Fantasy Island, Diff'rent Strokes, 227.
+    // Several are low-vote on TMDB but canonical for the era, so the usual vote
+    // heuristic was relaxed here deliberately.
   },
   {
     slug: "teen-outsiders",
@@ -493,11 +504,12 @@ export const MOODS: Mood[] = [
     // teen-outsiders
     manualTv: [
       1101, 2382, 2327, 2673, 95, 1432, 1948, 900, 85552, 81356, 100883, 76148, 76747, 85702,
-      117488,
+      117488, 2025, 269, 31917, 119051,
     ],
     // My So-Called Life, Freaks and Geeks, Dawson's Creek, The O.C., Buffy, Veronica
     // Mars, Degrassi, Skins, Euphoria, Sex Education, Never Have I Ever, Derry Girls,
-    // On My Block, PEN15, Yellowjackets.
+    // On My Block, PEN15, Yellowjackets, Beverly Hills 90210, One Tree Hill, Pretty
+    // Little Liars, Wednesday.
   },
   {
     slug: "martial-arts-underdogs",
