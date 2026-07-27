@@ -54,3 +54,6 @@ storybook-static
 scripts/backfill.log
 scripts/backfill.err
 scripts/backfill.pid
+
+# Brainstorming companion scratch
+.superpowers/
