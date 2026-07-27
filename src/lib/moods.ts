@@ -65,11 +65,10 @@ export const MOODS: Mood[] = [
     // cosy-night-in
     manualTv: [
       4586, 61662, 97546, 8592, 48891, 1421, 1420, 107113, 32726, 70785, 39793, 66134, 61828, 2430,
-      124834,
     ],
     // Gilmore Girls, Schitt's Creek, Ted Lasso, Parks and Rec, Brooklyn Nine-Nine,
     // Modern Family, New Girl, Only Murders, Bob's Burgers, Anne with an E, Call the
-    // Midwife, The Durrells, Detectorists, Doc Martin, Heartstopper.
+    // Midwife, The Durrells, Detectorists, Doc Martin.
   },
   {
     slug: "edge-of-your-seat",
@@ -322,12 +321,12 @@ export const MOODS: Mood[] = [
     },
     // date-night
     manualTv: [
-      91239, 196454, 56570, 62084, 92875, 89905, 240667, 88324, 91602, 61418, 82596, 100883, 124834,
-      62668, 250923, 194766,
+      91239, 196454, 56570, 62084, 92875, 89905, 240667, 88324, 91602, 61418, 82596, 100883, 62668,
+      250923, 194766,
     ],
     // Bridgerton, Queen Charlotte, Outlander, Poldark, Sanditon, Normal People, One Day,
     // Virgin River, Modern Love, Jane the Virgin, Emily in Paris, Never Have I Ever,
-    // Heartstopper, Lovesick, Nobody Wants This, The Summer I Turned Pretty.
+    // Lovesick, Nobody Wants This, The Summer I Turned Pretty.
   },
   {
     slug: "epic-adventures",
@@ -420,11 +419,11 @@ export const MOODS: Mood[] = [
     query: { withKeywords: "253695", voteCountGte: 80, sortBy: "vote_count.desc" },
     // inspirational
     manualTv: [
-      97546, 4278, 126929, 97401, 125935, 76922, 85077, 2243, 2440, 4550, 1781, 61865,
+      97546, 4278, 126929, 97401, 125935, 85077, 2243, 2440, 4550, 1781, 61865,
     ],
     // Ted Lasso, Friday Night Lights, Welcome to Wrexham, Cheer, Abbott Elementary,
-    // Queer Eye, The Chosen, Touched by an Angel, Highway to Heaven, 7th Heaven, Little
-    // House on the Prairie, When Calls the Heart.
+    // The Chosen, Touched by an Angel, Highway to Heaven, 7th Heaven, Little House on
+    // the Prairie, When Calls the Heart.
   },
   {
     slug: "classic-hollywood",
@@ -493,12 +492,12 @@ export const MOODS: Mood[] = [
     ],
     // teen-outsiders
     manualTv: [
-      1101, 2382, 2327, 2673, 95, 1432, 1948, 900, 85552, 81356, 124834, 100883, 76148, 76747, 85702,
+      1101, 2382, 2327, 2673, 95, 1432, 1948, 900, 85552, 81356, 100883, 76148, 76747, 85702,
       117488,
     ],
     // My So-Called Life, Freaks and Geeks, Dawson's Creek, The O.C., Buffy, Veronica
-    // Mars, Degrassi, Skins, Euphoria, Sex Education, Heartstopper, Never Have I Ever,
-    // Derry Girls, On My Block, PEN15, Yellowjackets.
+    // Mars, Degrassi, Skins, Euphoria, Sex Education, Never Have I Ever, Derry Girls,
+    // On My Block, PEN15, Yellowjackets.
   },
   {
     slug: "martial-arts-underdogs",
@@ -607,12 +606,12 @@ export const MOODS: Mood[] = [
     ],
     // valentines-picks
     manualTv: [
-      91239, 196454, 56570, 62084, 92875, 89905, 240667, 61418, 91602, 62668, 124834, 100883, 88324,
-      82596, 194766,
+      91239, 196454, 56570, 62084, 92875, 89905, 240667, 61418, 91602, 62668, 100883, 88324, 82596,
+      194766,
     ],
     // Bridgerton, Queen Charlotte, Outlander, Poldark, Sanditon, Normal People, One Day,
-    // Jane the Virgin, Modern Love, Lovesick, Heartstopper, Never Have I Ever, Virgin
-    // River, Emily in Paris, The Summer I Turned Pretty.
+    // Jane the Virgin, Modern Love, Lovesick, Never Have I Ever, Virgin River, Emily in
+    // Paris, The Summer I Turned Pretty.
   },
   {
     slug: "summer-blockbusters",
