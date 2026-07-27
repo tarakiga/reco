@@ -160,7 +160,16 @@ test("no TV list contains duplicate ids", () => {
     expect(new Set(m.manualTv!).size, `${m.slug} has duplicate ids`).toBe(m.manualTv!.length);
   }
 });
-```
+
+// Guards the blurb-fallback trap: a mood whose shared blurb says "films" or
+// "cinema" must override it for TV, or the TV tab describes the wrong medium.
+test("no TV tab shows a movie-specific blurb", () => {
+  const filmWords = /\b(films?|movies?|cinema|big-screen|blockbusters)\b/i;
+  for (const m of withTv) {
+    const shown = m.blurbTv ?? m.blurb;
+    expect(filmWords.test(shown), `${m.slug} TV blurb says "${shown}"`).toBe(false);
+  }
+});
 
 - [ ] **Step 2: Run to verify they fail**
 
@@ -169,7 +178,29 @@ Expected: FAIL, `expected [] to have length 21`.
 
 - [ ] **Step 3: Add each list**
 
-Add these properties to the matching mood objects:
+Add these properties to the matching mood objects.
+
+**Seven moods also need a `blurbTv`,** because their shared blurb names the wrong medium.
+Add these exactly as written (no em dashes):
+
+```ts
+// mind-benders
+blurbTv: "Twist endings, time loops and puzzle-box shows that mess with your head.",
+// so-bad-its-good
+blurbTv: "Gloriously terrible cult TV that is a riot to watch.",
+// popcorn-action
+blurbTv: "Turn-your-brain-off action: fast cars, big explosions, zero homework.",
+// grindhouse
+blurbTv: "Lo-fi, lurid exploitation TV, gleefully over the top.",
+// epic-adventures
+blurbTv: "Sweeping journeys with whole seasons to breathe.",
+// inspirational
+blurbTv: "Uplifting, faith-based and true-triumph shows to lift your spirit.",
+// classic-hollywood
+blurbTv: "Television's golden age: the shows that invented the medium, from the 1950s to the 1960s.",
+```
+
+The other 14 blurbs are already medium-neutral and need no override.
 
 ```ts
 // cosy-night-in
@@ -254,14 +285,13 @@ manualTv: [97546, 4278, 126929, 97401, 125935, 76922, 85077, 2243, 2440, 4550, 1
 // Queer Eye, The Chosen, Touched by an Angel, Highway to Heaven, 7th Heaven, Little
 // House on the Prairie, When Calls the Heart.
 
-// classic-hollywood  (also add blurbTv, see below)
+// classic-hollywood  (blurbTv listed in the block above)
 manualTv: [2730, 4439, 5273, 6357, 5133, 106, 2132, 4177, 3713, 1018, 10952, 10980, 2774, 10083, 4357, 253],
 // I Love Lucy, The Honeymooners, Alfred Hitchcock Presents, The Twilight Zone, Leave
 // It to Beaver, The Andy Griffith Show, The Dick Van Dyke Show, Perry Mason,
 // Gunsmoke, Bonanza, Rawhide, Have Gun Will Travel, The Untouchables, The Fugitive,
 // Mission: Impossible, Star Trek. Several are low-vote on TMDB but canonical for the
 // era, so the usual vote heuristic was relaxed here deliberately.
-blurbTv: "Television's golden age: the shows that invented the medium, from the 1950s to the 1960s.",
 
 // teen-outsiders
 manualTv: [1101, 2382, 2327, 2673, 95, 1432, 1948, 900, 85552, 81356, 124834, 100883, 76148, 76747, 85702, 117488],
