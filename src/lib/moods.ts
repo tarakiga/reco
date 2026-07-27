@@ -35,6 +35,11 @@ export interface Mood {
   manualTv?: number[];
   /** Blurb override for the TV tab, when the shared blurb does not fit shows. */
   blurbTv?: string;
+  /** TMDB backdrop path for the art behind this mood's card, e.g. "/abc.jpg".
+   *  Stored as a path rather than a title id on purpose: the moods page is
+   *  otherwise pure static data, and resolving 22 ids would add 22 TMDB calls
+   *  to a page that currently makes none. The trailing comment names the film. */
+  backdrop?: string;
   /** Months (1-12) an occasion is featured on the home page; omitted = evergreen. */
   season?: number[];
 }
@@ -48,6 +53,7 @@ export interface Mood {
 export const MOODS: Mood[] = [
   {
     slug: "cosy-night-in",
+    backdrop: "/6n53UI4mX9QMfe2S0Pgt8mGebY1.jpg", // Amelie (2001)
     label: "Cosy night in",
     emoji: "🛋️",
     blurb: "Warm, comforting watches for a quiet evening.",
@@ -74,6 +80,7 @@ export const MOODS: Mood[] = [
   },
   {
     slug: "edge-of-your-seat",
+    backdrop: "/i5H7zusQGsysGQ8i6P361Vnr0n2.jpg", // Se7en (1995)
     label: "Edge of your seat",
     emoji: "😱",
     blurb: "Tense thrillers that won't let you breathe.",
@@ -101,6 +108,7 @@ export const MOODS: Mood[] = [
   },
   {
     slug: "need-a-laugh",
+    backdrop: "/coru98UcFBzJIU7bxZguxaePgu0.jpg", // Superbad (2007)
     label: "Need a laugh",
     emoji: "😂",
     blurb: "Comedies to reset your mood.",
@@ -130,6 +138,7 @@ export const MOODS: Mood[] = [
   },
   {
     slug: "a-good-cry",
+    backdrop: "/b6HWTOxn1xevvyHU2K9ICvaRU6g.jpg", // The Green Mile (1999)
     label: "A good cry",
     emoji: "😭",
     blurb: "Bring the tissues.",
@@ -158,6 +167,7 @@ export const MOODS: Mood[] = [
   },
   {
     slug: "mind-benders",
+    backdrop: "/8ZTVqvKDQ8emSGUEMjsS4yHAwrp.jpg", // Inception (2010)
     label: "Mind-benders",
     emoji: "🤯",
     blurb: "Twist endings, time loops and puzzle-box films that mess with your head.",
@@ -185,6 +195,7 @@ export const MOODS: Mood[] = [
   },
   {
     slug: "so-bad-its-good",
+    backdrop: "/6OnOH5FIp0ZJQgPlu0ehDfXzVyp.jpg", // The Room (2003)
     label: "So bad they're good",
     emoji: "📼",
     blurb: "Gloriously terrible cult films and Z-movies that are a riot to watch.",
@@ -214,6 +225,7 @@ export const MOODS: Mood[] = [
   },
   {
     slug: "b-movie-mashups",
+    backdrop: "/riGVdQS9gXy38VoSaXXBhmR6A4h.jpg", // Sharknado (2013)
     label: "B-movie/TV mashups",
     emoji: "🦈",
     blurb: "Z-grade creature mashups where the title says it all: shark plus tornado, velociraptor plus pastor.",
@@ -243,6 +255,7 @@ export const MOODS: Mood[] = [
   },
   {
     slug: "popcorn-action",
+    backdrop: "/vsmlShNNHrYlERZaqMOsZ3YctoO.jpg", // Con Air (1997)
     label: "Popcorn action",
     emoji: "🍿",
     blurb: "Turn-your-brain-off blockbusters: fast cars, big explosions, zero homework.",
@@ -273,6 +286,7 @@ export const MOODS: Mood[] = [
   },
   {
     slug: "grindhouse",
+    backdrop: "/iZBUOcku0xv9MMfiEMXiDqErPXl.jpg", // Planet Terror (2007)
     label: "Grindhouse",
     emoji: "🎞️",
     blurb: "Lo-fi, lurid exploitation cinema, gleefully over the top.",
@@ -308,6 +322,7 @@ export const MOODS: Mood[] = [
   },
   {
     slug: "date-night",
+    backdrop: "/zdXnJqBaGFVtLoPNuMeKfEYUViZ.jpg", // The Notebook (2004)
     label: "Date night",
     emoji: "❤️",
     blurb: "Crowd-pleasers for two.",
@@ -333,6 +348,7 @@ export const MOODS: Mood[] = [
   },
   {
     slug: "epic-adventures",
+    backdrop: "/mWDdRXTivGE7aaY2vo1Ie0PfCX5.jpg", // The Fellowship of the Ring (2001)
     label: "Epic adventures",
     emoji: "🌌",
     blurb: "Sweeping, big-screen journeys.",
@@ -361,6 +377,7 @@ export const MOODS: Mood[] = [
   },
   {
     slug: "family-movie-night",
+    backdrop: "/3Rfvhy1Nl6sSGJwyjb0QiZzZYlB.jpg", // Toy Story (1995)
     label: "Family night",
     emoji: "👨‍👩‍👧",
     blurb: "Something everyone can enjoy.",
@@ -386,6 +403,7 @@ export const MOODS: Mood[] = [
   },
   {
     slug: "true-stories",
+    backdrop: "/n0FDJI9c0uWiZwm8wgXVjaMBn96.jpg", // Apollo 13 (1995)
     label: "Based on a true story",
     emoji: "🎬",
     blurb: "Real events, dramatised.",
@@ -402,6 +420,7 @@ export const MOODS: Mood[] = [
   },
   {
     slug: "inspirational",
+    backdrop: "/5jhG1lTgV0MS6tDkBMQSSitttTT.jpg", // The Pursuit of Happyness (2006)
     label: "Inspirational",
     emoji: "✨",
     blurb: "Uplifting, faith-based and true-triumph films to lift your spirit.",
@@ -431,6 +450,7 @@ export const MOODS: Mood[] = [
   },
   {
     slug: "classic-hollywood",
+    backdrop: "/87wqeMeUeMRLjsE1IWNKJcPlpuC.jpg", // Casablanca (1943)
     label: "Classics",
     emoji: "🎩",
     blurb: "Timeless classics from Hollywood's golden age, the 1930s to the 1960s.",
@@ -467,19 +487,20 @@ export const MOODS: Mood[] = [
     // classic-hollywood
     manualTv: [
       2730, 4439, 5273, 6357, 5133, 106, 2132, 4177, 3713, 1018, 10952, 10980, 2774, 10083, 4357,
-      253, 1660, 4068, 2126, 2962, 1974, 2184, 3845, 3033, 1823, 39775, 2410, 1938,
+      253, 1660, 4068, 2126, 2962, 1974, 2184, 3845, 3033, 1823, 39775, 2410, 1938, 2586, 154, 2552,
     ],
     // I Love Lucy, The Honeymooners, Alfred Hitchcock Presents, The Twilight Zone, Leave
     // It to Beaver, The Andy Griffith Show, The Dick Van Dyke Show, Perry Mason,
     // Gunsmoke, Bonanza, Rawhide, Have Gun Will Travel, The Untouchables, The Fugitive,
     // Mission: Impossible, Star Trek, I Dream of Jeannie, Hogan's Heroes, The Brady
     // Bunch, The Mary Tyler Moore Show, The Bob Newhart Show, Maude, Happy Days,
-    // Laverne & Shirley, The Love Boat, Fantasy Island, Diff'rent Strokes, 227.
-    // Several are low-vote on TMDB but canonical for the era, so the usual vote
-    // heuristic was relaxed here deliberately.
+    // Laverne & Shirley, The Love Boat, Fantasy Island, Diff'rent Strokes, 227,
+    // Sanford and Son, Good Times, Mork & Mindy. Several are low-vote on TMDB but
+    // canonical for the era, so the usual vote heuristic was relaxed here deliberately.
   },
   {
     slug: "teen-outsiders",
+    backdrop: "/kjVgUMsG0PKBXzlP8HGNQpWDxAX.jpg", // The Breakfast Club (1985)
     label: "Teen outsiders",
     emoji: "🖤",
     blurb: "Misfits, cliques and gangs: kids finding where they belong (or don't).",
@@ -504,15 +525,16 @@ export const MOODS: Mood[] = [
     // teen-outsiders
     manualTv: [
       1101, 2382, 2327, 2673, 95, 1432, 1948, 900, 85552, 81356, 100883, 76148, 76747, 85702,
-      117488, 2025, 269, 31917, 119051,
+      117488, 2025, 269, 31917, 119051, 1981,
     ],
     // My So-Called Life, Freaks and Geeks, Dawson's Creek, The O.C., Buffy, Veronica
     // Mars, Degrassi, Skins, Euphoria, Sex Education, Never Have I Ever, Derry Girls,
     // On My Block, PEN15, Yellowjackets, Beverly Hills 90210, One Tree Hill, Pretty
-    // Little Liars, Wednesday.
+    // Little Liars, Wednesday, Charmed.
   },
   {
     slug: "martial-arts-underdogs",
+    backdrop: "/ugfBioco0L7qNvwq0d0Pl0AL8SL.jpg", // Enter the Dragon (1973)
     label: "Martial arts underdogs",
     emoji: "🥋",
     blurb: "Scrappy fighters, brutal training montages, one last shot at the title.",
@@ -541,6 +563,7 @@ export const MOODS: Mood[] = [
   },
   {
     slug: "dystopian-futures",
+    backdrop: "/tBIRtMCELcA5PxO7z7OiuCHJdFO.jpg", // Snowpiercer (2013)
     label: "Dystopian futures",
     emoji: "🏙️",
     blurb: "Totalitarian regimes and broken societies, imagined at their worst.",
@@ -570,6 +593,7 @@ export const MOODS: Mood[] = [
   // Occasions — only featured on the home page in their season.
   {
     slug: "spooky-season",
+    backdrop: "/sHI9xlFRWCJ38AIIfOqnGjuEvXz.jpg", // Halloween (1978)
     label: "Spooky season",
     emoji: "🎃",
     blurb: "Horror and dread for the season.",
@@ -588,6 +612,7 @@ export const MOODS: Mood[] = [
   },
   {
     slug: "festive-favourites",
+    backdrop: "/ih2xVgeMS8R5WUetYE8Mr9hVTlB.jpg", // Home Alone (1990)
     label: "Festive favourites",
     emoji: "🎄",
     blurb: "Christmas movies to get cosy with.",
@@ -597,6 +622,7 @@ export const MOODS: Mood[] = [
   },
   {
     slug: "valentines-picks",
+    backdrop: "/xnHVX37XZEp33hhCbYlQFq7ux1J.jpg", // Titanic (1997)
     label: "Valentine's picks",
     emoji: "💘",
     blurb: "The great love stories, for the season of love.",
@@ -627,6 +653,7 @@ export const MOODS: Mood[] = [
   },
   {
     slug: "summer-blockbusters",
+    backdrop: "/o7LzVmlOSYc3EspyVMC9bsTTARc.jpg", // Jurassic Park (1993)
     label: "Summer blockbusters",
     emoji: "☀️",
     blurb: "Big, loud and fun.",

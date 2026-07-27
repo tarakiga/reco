@@ -1,20 +1,40 @@
 import Link from "next/link";
-import { MOODS } from "@/lib/moods";
+import { MOODS, type Mood } from "@/lib/moods";
+import { backdropUrlCard } from "@/lib/tmdb/images";
 
 export const metadata = {
   title: "Browse by mood",
   description: "Find something to watch by mood or occasion.",
 };
 
-function MoodTile({ slug, emoji, label, blurb }: { slug: string; emoji: string; label: string; blurb: string }) {
+/** Card colour laid over the art: solid across the left half, then fading to 50%
+ *  by the right edge, so the film shows through on the right and the text half
+ *  keeps its original contrast. */
+const ART_SCRIM =
+  "linear-gradient(to right, var(--color-surface-raised) 0%, var(--color-surface-raised) 50%, color-mix(in srgb, var(--color-surface-raised) 50%, transparent) 100%)";
+
+function MoodTile({ mood }: { mood: Mood }) {
+  const art = backdropUrlCard(mood.backdrop);
   return (
     <Link
-      href={`/mood/${slug}`}
-      className="group flex flex-col gap-1 rounded-xl border border-border bg-surface-raised p-4 transition-colors hover:border-accent/40 hover:bg-surface-overlay"
+      href={`/mood/${mood.slug}`}
+      className="group relative isolate overflow-hidden rounded-xl border border-border bg-surface-raised transition-colors hover:border-accent/40"
     >
-      <span aria-hidden className="text-2xl">{emoji}</span>
-      <span className="font-semibold text-text group-hover:text-accent-text">{label}</span>
-      <span className="text-sm text-text-muted">{blurb}</span>
+      {art && (
+        <>
+          <span
+            aria-hidden
+            className="absolute inset-0 -z-10 bg-cover bg-right bg-no-repeat"
+            style={{ backgroundImage: `url(${art})` }}
+          />
+          <span aria-hidden className="absolute inset-0 -z-10" style={{ background: ART_SCRIM }} />
+        </>
+      )}
+      <span className="flex flex-col gap-1 p-4">
+        <span aria-hidden className="text-2xl">{mood.emoji}</span>
+        <span className="font-semibold text-text group-hover:text-accent-text">{mood.label}</span>
+        <span className="text-sm text-text-muted">{mood.blurb}</span>
+      </span>
     </Link>
   );
 }
@@ -34,7 +54,7 @@ export default function MoodsPage() {
         <h2 className="mb-3 text-lg font-semibold text-text">Moods</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {moods.map((m) => (
-            <MoodTile key={m.slug} slug={m.slug} emoji={m.emoji} label={m.label} blurb={m.blurb} />
+            <MoodTile key={m.slug} mood={m} />
           ))}
         </div>
       </section>
@@ -43,7 +63,7 @@ export default function MoodsPage() {
         <h2 className="mb-3 text-lg font-semibold text-text">Occasions</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {occasions.map((m) => (
-            <MoodTile key={m.slug} slug={m.slug} emoji={m.emoji} label={m.label} blurb={m.blurb} />
+            <MoodTile key={m.slug} mood={m} />
           ))}
         </div>
       </section>

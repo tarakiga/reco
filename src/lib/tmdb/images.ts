@@ -7,6 +7,8 @@ export const posterUrl = (p: string | null | undefined) => url("w500", p);
 /** Tiny poster, used for fast client-side dominant-color sampling. */
 export const posterUrlSmall = (p: string | null | undefined) => url("w154", p);
 export const backdropUrl = (p: string | null | undefined) => url("w1280", p);
+/** Card-sized backdrop, e.g. the art behind a mood tile. w1280 is wasteful there. */
+export const backdropUrlCard = (p: string | null | undefined) => url("w780", p);
 export const profileUrl = (p: string | null | undefined) => url("w185", p);
 /** Tiny profile, for dominant-color sampling (distinct size avoids a CORS cache
  *  clash with the displayed w185 photo). */
