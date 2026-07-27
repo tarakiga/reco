@@ -607,24 +607,26 @@ export const MOODS: Mood[] = [
     // Italian Job, Kes, Get Carter, Monty Python and the Holy Grail, Life of Brian,
     // The Meaning of Life, Withnail & I, A Fish Called Wanda, Four Weddings and a
     // Funeral, Trainspotting, The Full Monty, Lock Stock and Two Smoking Barrels,
-    // Billy Elliot, Shaun of the Dead, Death at a Funeral, Hot Fuzz.
+    // Snatch, Billy Elliot, Shaun of the Dead, Death at a Funeral, Hot Fuzz.
     manual: [
       851, 11898, 30095, 16665, 1092, 32961, 5506, 14433, 10536, 13384, 1485, 762, 583, 4543, 13446,
-      623, 712, 627, 9427, 100, 71, 747, 2196, 4638,
+      623, 712, 627, 9427, 100, 107, 71, 747, 2196, 4638,
     ],
     // uk-classics
     manualTv: [
-      3333, 505, 492, 168, 4250, 5986, 2292, 2544, 425, 2765, 2207, 2180, 11174, 125, 4549, 2695,
-      72, 7246, 2211, 4327, 4548, 34, 1060, 2767, 1604,
+      3333, 505, 892, 492, 2690, 198, 168, 4250, 5986, 2292, 2544, 425, 2765, 2207, 2180, 11174,
+      125, 4549, 2695, 25204, 72, 7246, 2211, 4327, 4548, 34, 1060, 2767, 11163, 1604,
     ],
-    // Steptoe and Son, Dad's Army, Upstairs Downstairs, Are You Being Served?, Last of
-    // the Summer Wine, Some Mothers Do 'Ave 'Em, Porridge, Rising Damp, It Ain't Half
-    // Hot Mum, The Good Life, Fawlty Towers, Open All Hours, The Professionals (CI5),
-    // To the Manor Born, Yes Minister, Hi-de-Hi!, Only Fools and Horses, Blackadder,
+    // Steptoe and Son, Dad's Army, Randall and Hopkirk (Deceased), Upstairs Downstairs,
+    // The Two Ronnies, Bless This House, Are You Being Served?, Last of the Summer Wine,
+    // Some Mothers Do 'Ave 'Em, Porridge, Rising Damp, It Ain't Half Hot Mum, The Good
+    // Life, Fawlty Towers, Open All Hours, The Professionals (CI5), To the Manor Born,
+    // Yes Minister, Hi-de-Hi!, Russ Abbot's Madhouse, Only Fools and Horses, Blackadder,
     // 'Allo 'Allo!, Mr. Bean, One Foot in the Grave, Keeping Up Appearances, Jeeves and
-    // Wooster, The Vicar of Dibley, The Green Green Grass. Many are low-vote on TMDB
-    // but canonical British television, so the usual vote heuristic is relaxed here,
-    // as it is for Classics.
+    // Wooster, The Vicar of Dibley, Smack the Pony, The Green Green Grass. Many are
+    // low-vote on TMDB but canonical British television, so the usual vote heuristic is
+    // relaxed here, as it is for Classics. Bless This House is the 1971 British sitcom
+    // (id 198); two unrelated US shows share the title.
   },
   // Occasions — only featured on the home page in their season.
   {
