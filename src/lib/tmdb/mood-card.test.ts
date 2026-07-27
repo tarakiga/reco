@@ -29,3 +29,21 @@ test("tolerates a brief with no date", () => {
   const c = toMoodCard("tv", 2, { name: "X", poster_path: null });
   expect(c!.year).toBeNull();
 });
+
+test("prefers title over name when both are set", () => {
+  const c = toMoodCard("movie", 1, {
+    title: "The Preferred Title",
+    name: "Ignored Name",
+    poster_path: null,
+  });
+  expect(c!.title).toBe("The Preferred Title");
+});
+
+test("treats empty title as missing and falls back to name", () => {
+  const c = toMoodCard("tv", 2, {
+    title: "",
+    name: "Fallback",
+    poster_path: null,
+  });
+  expect(c!.title).toBe("Fallback");
+});
