@@ -62,6 +62,14 @@ export const MOODS: Mood[] = [
       sortBy: "vote_count.desc",
       certificationLte: "PG-13",
     },
+    // cosy-night-in
+    manualTv: [
+      4586, 61662, 97546, 8592, 48891, 1421, 1420, 107113, 32726, 70785, 39793, 66134, 61828, 2430,
+      124834,
+    ],
+    // Gilmore Girls, Schitt's Creek, Ted Lasso, Parks and Rec, Brooklyn Nine-Nine,
+    // Modern Family, New Girl, Only Murders, Bob's Burgers, Anne with an E, Call the
+    // Midwife, The Durrells, Detectorists, Doc Martin, Heartstopper.
   },
   {
     slug: "edge-of-your-seat",
@@ -81,6 +89,14 @@ export const MOODS: Mood[] = [
       4547, 65754, 11324, 473033, 44115, 949, 1538, 64690, 570670, 358364, 489999, 546121, 567609,
       313922, 300669, 26388,
     ],
+    // edge-of-your-seat
+    manualTv: [
+      1396, 60059, 69740, 67744, 43982, 1427, 34415, 49010, 1407, 2288, 1973, 1405, 70453, 39852,
+      80307, 78191,
+    ],
+    // Breaking Bad, Better Call Saul, Ozark, Mindhunter, Line of Duty, Broadchurch,
+    // The Killing, The Fall, Homeland, Prison Break, 24, Dexter, Sharp Objects, The
+    // Sinner, Bodyguard, You.
   },
   {
     slug: "need-a-laugh",
@@ -101,6 +117,14 @@ export const MOODS: Mood[] = [
       10189, 138832, 51540, 72105, 27581, 496, 9398, 9718, 11635, 9522, 9472, 8193, 788, 1624, 3049,
       290250, 238713, 4638,
     ],
+    // need-a-laugh
+    manualTv: [
+      2316, 8592, 48891, 2710, 4589, 18347, 4608, 1400, 1668, 4546, 2490, 815, 2207, 62649, 83631,
+      126027,
+    ],
+    // The Office, Parks and Rec, Brooklyn Nine-Nine, It's Always Sunny, Arrested
+    // Development, Community, 30 Rock, Seinfeld, Friends, Curb Your Enthusiasm, The IT
+    // Crowd, Peep Show, Fawlty Towers, Superstore, What We Do in the Shadows, Ghosts.
   },
   {
     slug: "a-good-cry",
@@ -121,6 +145,14 @@ export const MOODS: Mood[] = [
       30547, 458302, 14306, 14160, 497, 28178, 12477, 1265, 4032, 10860, 11050, 222935, 10229, 6023,
       11036, 4347, 334541, 354912, 637, 207, 22660, 423, 9800, 70, 13, 14574, 527641, 1100099,
     ],
+    // a-good-cry
+    manualTv: [
+      67136, 1274, 54344, 81355, 89905, 79410, 46619, 240667, 111141, 99581, 136311, 1416, 39793,
+      46880,
+    ],
+    // This Is Us, Six Feet Under, The Leftovers, When They See Us, Normal People, After
+    // Life, Rectify, One Day, Maid, Unorthodox, Shrinking, Grey's Anatomy, Call the
+    // Midwife, The Fosters.
   },
   {
     slug: "mind-benders",
@@ -128,6 +160,8 @@ export const MOODS: Mood[] = [
     emoji: "🤯",
     blurb: "Twist endings, time loops and puzzle-box films that mess with your head.",
     kind: "mood",
+    // mind-benders
+    blurbTv: "Twist endings, time loops and puzzle-box shows that mess with your head.",
     // Hand-picked: no genre or keyword query captures this well. Curated order.
     // Memento, Mulholland Drive, Usual Suspects, Predestination, Triangle, Inception,
     // The Prestige, Fight Club, Shutter Island, Donnie Darko, Primer, Coherence,
@@ -138,6 +172,13 @@ export const MOODS: Mood[] = [
       77, 1018, 629, 206487, 26466, 27205, 1124, 550, 11324, 141, 14337, 220289, 38, 63, 45612,
       329865, 181886, 670, 745, 14139, 31011, 2291, 577922, 2666, 4553, 2832, 10494, 4977, 1903, 59967,
     ],
+    // mind-benders
+    manualTv: [
+      70523, 95396, 63247, 1920, 4607, 1705, 67195, 69061, 81349, 86340, 73411, 84977, 63646, 93784,
+      90669, 894,
+    ],
+    // Dark, Severance, Westworld, Twin Peaks, Lost, Fringe, Legion, The OA, Devs,
+    // Undone, Maniac, Russian Doll, Counterpart, Tales from the Loop, 1899, The Prisoner.
   },
   {
     slug: "so-bad-its-good",
@@ -145,6 +186,8 @@ export const MOODS: Mood[] = [
     emoji: "📼",
     blurb: "Gloriously terrible cult films and Z-movies that are a riot to watch.",
     kind: "mood",
+    // so-bad-its-good
+    blurbTv: "Gloriously terrible cult TV that is a riot to watch.",
     // Hand-picked like mind-benders: TMDB's "so bad it's good" keyword (#323812)
     // is applied too sparsely to use as a Discover filter, so it misses the
     // canon. Curated order.
@@ -161,6 +204,11 @@ export const MOODS: Mood[] = [
       197599, 43353, 32307, 16296, 9980, 15239, 45649, 55563, 37833, 26011, 5753, 84140, 22172,
       17911, 9360, 326, 251516, 457712, 260928, 45795, 20787,
     ],
+    // so-bad-its-good
+    manualTv: [69050, 2384, 2119, 3291, 12751, 3318, 2898, 237],
+    // Riverdale, Knight Rider, Airwolf, Manimal, Automan, Street Hawk, Small Wonder,
+    // Mortal Kombat: Conquest. Shorter than the movie list on purpose: the TV canon here
+    // is thin, and this list is expected to grow.
   },
   {
     slug: "b-movie-mashups",
@@ -184,6 +232,12 @@ export const MOODS: Mood[] = [
       36086, 28509, 116463, 294562, 248504, 284711, 344147, 44809, 216539, 83896, 221737, 33641,
       254474, 10679, 166822, 8869, 804150, 402516, 4289,
     ],
+    // b-movie-mashups
+    manualTv: [
+      61345, 62264, 65988, 65820, 71693, 62413, 62517, 58811, 10268, 73536, 39351, 1310, 67726,
+    ],
+    // Z Nation, Ash vs Evil Dead, Wynonna Earp, Van Helsing, Blood Drive, Killjoys, Zoo,
+    // Helix, Primeval, Dinotopia, Grimm, Sanctuary, Beyond.
   },
   {
     slug: "popcorn-action",
@@ -191,6 +245,8 @@ export const MOODS: Mood[] = [
     emoji: "🍿",
     blurb: "Turn-your-brain-off blockbusters: fast cars, big explosions, zero homework.",
     kind: "mood",
+    // popcorn-action
+    blurbTv: "Turn-your-brain-off action: fast cars, big explosions, zero homework.",
     // Hand-picked: "mindless" is a tone judgment TMDB can't express. A popular
     // Action Discover query returns prestige films (Dark Knight, LOTR), the
     // opposite of this, so curate toward the fun-not-acclaimed end.
@@ -204,6 +260,14 @@ export const MOODS: Mood[] = [
       9802, 95, 27578, 76163, 14869, 254128, 14161, 602, 117263, 267860, 10483, 8909, 4141, 427641,
       447200, 44833, 325348, 136797, 47327, 10999, 9874,
     ],
+    // popcorn-action
+    manualTv: [
+      1973, 32573, 41727, 73544, 108978, 73375, 76479, 77169, 71790, 32798, 2919, 47450, 1412, 67178,
+      110492, 205715,
+    ],
+    // 24, Strike Back, Banshee, Warrior, Reacher, Jack Ryan, The Boys, Cobra Kai,
+    // S.W.A.T., Hawaii Five-0, Burn Notice, Into the Badlands, Arrow, The Punisher,
+    // Peacemaker, Gen V.
   },
   {
     slug: "grindhouse",
@@ -211,6 +275,8 @@ export const MOODS: Mood[] = [
     emoji: "🎞️",
     blurb: "Lo-fi, lurid exploitation cinema, gleefully over the top.",
     kind: "mood",
+    // grindhouse
+    blurbTv: "Lo-fi, lurid exploitation TV, gleefully over the top.",
     // Hand-picked: TMDB's grindhouse/exploitation keywords are sparse and the
     // defining films (e.g. They Call Me Macho Woman) carry no keywords at all,
     // so no Discover filter works. Curated across the exploitation tradition:
@@ -229,6 +295,14 @@ export const MOODS: Mood[] = [
       1991, 17467, 40810, 13481, 24804, 19174, 482, 21968, 22121, 26178, 39899, 15516, 27346, 27813,
       1694, 14240, 37835, 14673, 2487, 39775,
     ],
+    // grindhouse
+    manualTv: [
+      46296, 47665, 41727, 62264, 64230, 60626, 42295, 71693, 75663, 129418, 72339, 1409, 126118,
+      40008, 47640, 54671,
+    ],
+    // Spartacus, Black Sails, Banshee, Ash vs Evil Dead, Preacher, From Dusk Till Dawn,
+    // Hemlock Grove, Blood Drive, Deadly Class, Brand New Cherry Flavor, Happy!, Sons of
+    // Anarchy, Chapelwaite, Hannibal, The Strain, Penny Dreadful.
   },
   {
     slug: "date-night",
@@ -246,6 +320,14 @@ export const MOODS: Mood[] = [
       sortBy: "vote_count.desc",
       certificationLte: "PG-13",
     },
+    // date-night
+    manualTv: [
+      91239, 196454, 56570, 62084, 92875, 89905, 240667, 88324, 91602, 61418, 82596, 100883, 124834,
+      62668, 250923, 194766,
+    ],
+    // Bridgerton, Queen Charlotte, Outlander, Poldark, Sanditon, Normal People, One Day,
+    // Virgin River, Modern Love, Jane the Virgin, Emily in Paris, Never Have I Ever,
+    // Heartstopper, Lovesick, Nobody Wants This, The Summer I Turned Pretty.
   },
   {
     slug: "epic-adventures",
@@ -253,6 +335,8 @@ export const MOODS: Mood[] = [
     emoji: "🌌",
     blurb: "Sweeping, big-screen journeys.",
     kind: "mood",
+    // epic-adventures
+    blurbTv: "Sweeping journeys with whole seasons to breathe.",
     // Hand-picked: the genre query surfaced this week's trending releases and
     // small-scale films, not epics. Curated sweeping journeys.
     // Stardust, LOTR x3, The Hobbit, Raiders, Pirates of the Caribbean, Avatar,
@@ -264,6 +348,14 @@ export const MOODS: Mood[] = [
       2270, 120, 121, 122, 49051, 85, 22, 19995, 98, 197, 438631, 693134, 76341, 616, 8619, 1579,
       1317499, 652, 1495, 564, 2059, 329, 11, 281957, 2493, 10191, 76600, 89,
     ],
+    // epic-adventures
+    manualTv: [
+      1399, 94997, 84773, 44217, 63333, 1891, 126308, 70593, 71912, 82452, 46296, 47665, 71914,
+      70484, 56570,
+    ],
+    // Game of Thrones, House of the Dragon, Rings of Power, Vikings, The Last Kingdom,
+    // Rome, Shogun, Kingdom, The Witcher, Avatar: The Last Airbender, Spartacus, Black
+    // Sails, The Wheel of Time, Britannia, Outlander.
   },
   {
     slug: "family-movie-night",
@@ -280,6 +372,14 @@ export const MOODS: Mood[] = [
       sortBy: "vote_count.desc",
       certificationLte: "PG-13",
     },
+    // family-movie-night
+    manualTv: [
+      82728, 82452, 40075, 1877, 72350, 15260, 92685, 60554, 85349, 68267, 74728, 95599, 115577,
+      82856,
+    ],
+    // Bluey, Avatar: The Last Airbender, Gravity Falls, Phineas and Ferb, DuckTales,
+    // Adventure Time, The Owl House, Star Wars Rebels, Amphibia, Trollhunters, Carmen
+    // Sandiego, Kipo, Sonic Prime, The Mandalorian.
   },
   {
     slug: "true-stories",
@@ -288,6 +388,14 @@ export const MOODS: Mood[] = [
     blurb: "Real events, dramatised.",
     kind: "mood",
     query: { withKeywords: "9672", withoutGenres: "99", voteAverageGte: 6.8, voteCountGte: 300 },
+    // true-stories
+    manualTv: [
+      87108, 65494, 4613, 81355, 63351, 67744, 64513, 91275, 72039, 82883, 74140, 122066, 110695,
+      114925, 95665, 155537,
+    ],
+    // Chernobyl, The Crown, Band of Brothers, When They See Us, Narcos, Mindhunter,
+    // American Crime Story, Unbelievable, Escape at Dannemora, The Act, Waco, The
+    // Dropout, Dopesick, Pam & Tommy, Inventing Anna, Black Bird.
   },
   {
     slug: "inspirational",
@@ -295,6 +403,8 @@ export const MOODS: Mood[] = [
     emoji: "✨",
     blurb: "Uplifting, faith-based and true-triumph films to lift your spirit.",
     kind: "mood",
+    // inspirational
+    blurbTv: "Uplifting, faith-based and true-triumph shows to lift your spirit.",
     // Hybrid: a hand-picked seed of beloved inspirational classics that TMDB's
     // "christian film" keyword misses (Miracle on 34th Street, sports underdogs,
     // true-triumph stories), pinned ahead of the auto-updating faith-based query
@@ -308,6 +418,13 @@ export const MOODS: Mood[] = [
       324786, 9443, 316029, 207, 489,
     ],
     query: { withKeywords: "253695", voteCountGte: 80, sortBy: "vote_count.desc" },
+    // inspirational
+    manualTv: [
+      97546, 4278, 126929, 97401, 125935, 76922, 85077, 2243, 2440, 4550, 1781, 61865,
+    ],
+    // Ted Lasso, Friday Night Lights, Welcome to Wrexham, Cheer, Abbott Elementary,
+    // Queer Eye, The Chosen, Touched by an Angel, Highway to Heaven, 7th Heaven, Little
+    // House on the Prairie, When Calls the Heart.
   },
   {
     slug: "classic-hollywood",
@@ -315,6 +432,8 @@ export const MOODS: Mood[] = [
     emoji: "🎩",
     blurb: "Hollywood's golden age: timeless classics from the 1930s to the 1960s.",
     kind: "mood",
+    // classic-hollywood
+    blurbTv: "Television's golden age: the shows that invented the medium, from the 1950s to the 1960s.",
     // Hybrid: a verified seed of the canon (a Discover era query alone surfaces
     // some acclaimed-but-obscure titles and misses the most iconic), pinned ahead
     // of an era-constrained fill. Seed (curated order):
@@ -339,6 +458,15 @@ export const MOODS: Mood[] = [
       voteCountGte: 600,
       sortBy: "vote_count.desc",
     },
+    // classic-hollywood
+    manualTv: [
+      2730, 4439, 5273, 6357, 5133, 106, 2132, 4177, 3713, 1018, 10952, 10980, 2774, 10083, 4357, 253,
+    ],
+    // I Love Lucy, The Honeymooners, Alfred Hitchcock Presents, The Twilight Zone, Leave
+    // It to Beaver, The Andy Griffith Show, The Dick Van Dyke Show, Perry Mason,
+    // Gunsmoke, Bonanza, Rawhide, Have Gun Will Travel, The Untouchables, The Fugitive,
+    // Mission: Impossible, Star Trek. Several are low-vote on TMDB but canonical for the
+    // era, so the usual vote heuristic was relaxed here deliberately.
   },
   {
     slug: "teen-outsiders",
@@ -363,6 +491,14 @@ export const MOODS: Mood[] = [
       11797, 9871, 11824, 13531, 9603, 796, 4951, 141, 11023, 37735, 84892, 391713, 376660, 489925,
       18555,
     ],
+    // teen-outsiders
+    manualTv: [
+      1101, 2382, 2327, 2673, 95, 1432, 1948, 900, 85552, 81356, 124834, 100883, 76148, 76747, 85702,
+      117488,
+    ],
+    // My So-Called Life, Freaks and Geeks, Dawson's Creek, The O.C., Buffy, Veronica
+    // Mars, Degrassi, Skins, Euphoria, Sex Education, Heartstopper, Never Have I Ever,
+    // Derry Girls, On My Block, PEN15, Yellowjackets.
   },
   {
     slug: "martial-arts-underdogs",
@@ -383,6 +519,14 @@ export const MOODS: Mood[] = [
       9461, 1885, 12500, 13938, 12721, 11690, 10222, 238751, 9399, 15797, 9103, 9316, 15255, 8456,
       14756, 12400, 59440,
     ],
+    // martial-arts-underdogs
+    manualTv: [
+      77169, 73544, 1472, 47450, 86752, 62127, 42705, 77939, 80623, 90660, 225180,
+    ],
+    // Cobra Kai, Warrior, Kung Fu (1972), Into the Badlands, Wu Assassins, Iron Fist,
+    // Fighting Spirit, Megalobox, Baki, Kengan Ashura, Blue Eye Samurai. Leans more on
+    // anime than the movie list does, which is the only way the underdog-fighter shape
+    // exists in long-form TV.
   },
   {
     slug: "dystopian-futures",
@@ -403,6 +547,14 @@ export const MOODS: Mood[] = [
       19, 11848, 1714, 185, 636, 12101, 10803, 255656, 9314, 68, 782, 27260, 7299, 752, 9693,
       110415, 619264,
     ],
+    // dystopian-futures
+    manualTv: [
+      69478, 42009, 48866, 79680, 125988, 106379, 62017, 63247, 93405, 87104, 46511, 100088, 108545,
+      62858, 93289, 90972,
+    ],
+    // The Handmaid's Tale, Black Mirror, The 100, Snowpiercer, Silo, Fallout, The Man in
+    // the High Castle, Westworld, Squid Game, Years and Years, Utopia, The Last of Us, 3
+    // Body Problem, Colony, Brave New World, Station Eleven.
   },
   // Occasions — only featured on the home page in their season.
   {
@@ -413,6 +565,15 @@ export const MOODS: Mood[] = [
     kind: "occasion",
     season: [10],
     query: { withGenres: "27", voteCountGte: 300 },
+    // spooky-season
+    manualTv: [
+      72844, 109958, 1413, 66732, 1402, 97400, 79242, 54671, 75191, 71116, 124364, 128098, 40008,
+      16118, 86850, 92916,
+    ],
+    // The Haunting of Hill House, Bly Manor, American Horror Story, Stranger Things, The
+    // Walking Dead, Midnight Mass, Chilling Adventures of Sabrina, Penny Dreadful, The
+    // Terror, Castle Rock, From, Interview with the Vampire, Hannibal, Salem's Lot,
+    // Dracula, Marianne.
   },
   {
     slug: "festive-favourites",
@@ -444,6 +605,14 @@ export const MOODS: Mood[] = [
       289, 4348, 11036, 597, 639, 509, 114, 76, 80, 38, 313369, 372058, 142, 398818, 4347, 824, 454,
       88, 251, 858, 9489, 4951, 50646, 122906, 666277, 531428, 843, 194, 4584, 804, 82693, 19913,
     ],
+    // valentines-picks
+    manualTv: [
+      91239, 196454, 56570, 62084, 92875, 89905, 240667, 61418, 91602, 62668, 124834, 100883, 88324,
+      82596, 194766,
+    ],
+    // Bridgerton, Queen Charlotte, Outlander, Poldark, Sanditon, Normal People, One Day,
+    // Jane the Virgin, Modern Love, Lovesick, Heartstopper, Never Have I Ever, Virgin
+    // River, Emily in Paris, The Summer I Turned Pretty.
   },
   {
     slug: "summer-blockbusters",
@@ -453,6 +622,14 @@ export const MOODS: Mood[] = [
     kind: "occasion",
     season: [6, 7, 8],
     query: { withGenres: "28|12|878", voteCountGte: 1500 },
+    // summer-blockbusters
+    manualTv: [
+      1399, 94997, 66732, 76479, 82856, 84958, 85271, 202555, 71912, 119051, 106379, 95557, 94605,
+      111110, 110492, 108978,
+    ],
+    // Game of Thrones, House of the Dragon, Stranger Things, The Boys, The Mandalorian,
+    // Loki, WandaVision, Daredevil: Born Again, The Witcher, Wednesday, Fallout,
+    // Invincible, Arcane, One Piece, Peacemaker, Reacher.
   },
 ];
 

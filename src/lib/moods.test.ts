@@ -1,4 +1,4 @@
-import { featuredMoods, PINNED_MOOD_SLUGS, hasTvTab, moodBlurb, type Mood } from "./moods";
+import { featuredMoods, PINNED_MOOD_SLUGS, hasTvTab, moodBlurb, MOODS, type Mood } from "./moods";
 
 test("pins the two fixed moods to the front, in order", () => {
   for (const [month, day] of [
@@ -60,4 +60,35 @@ test("moodBlurb prefers blurbTv for TV only", () => {
   const m = { ...base, blurbTv: "tv blurb" };
   expect(moodBlurb(m, "tv")).toBe("tv blurb");
   expect(moodBlurb(m, "movie")).toBe("movie blurb");
+});
+
+const withTv = MOODS.filter((m) => m.manualTv?.length);
+
+test("21 of the 22 moods have a curated TV list", () => {
+  expect(MOODS).toHaveLength(22);
+  expect(withTv).toHaveLength(21);
+});
+
+test("festive-favourites has no TV list", () => {
+  expect(MOODS.find((m) => m.slug === "festive-favourites")?.manualTv).toBeUndefined();
+});
+
+test("every TV list clears the one-row visual floor", () => {
+  for (const m of withTv) expect(m.manualTv!.length).toBeGreaterThanOrEqual(6);
+});
+
+test("no TV list contains duplicate ids", () => {
+  for (const m of withTv) {
+    expect(new Set(m.manualTv!).size, `${m.slug} has duplicate ids`).toBe(m.manualTv!.length);
+  }
+});
+
+// Guards the blurb-fallback trap: a mood whose shared blurb says "films" or
+// "cinema" must override it for TV, or the TV tab describes the wrong medium.
+test("no TV tab shows a movie-specific blurb", () => {
+  const filmWords = /\b(films?|movies?|cinema|big-screen|blockbusters)\b/i;
+  for (const m of withTv) {
+    const shown = m.blurbTv ?? m.blurb;
+    expect(filmWords.test(shown), `${m.slug} TV blurb says "${shown}"`).toBe(false);
+  }
 });
