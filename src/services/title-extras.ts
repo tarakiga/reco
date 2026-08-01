@@ -1,6 +1,7 @@
 import "server-only";
-import { cacheTag } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { tmdb } from "@/lib/tmdb/client";
+import { sparql } from "@/lib/wikidata";
 
 export interface NamedRef {
   /** Wikidata Q-id, e.g. "Q243556". */
@@ -29,15 +30,13 @@ const EMPTY: TitleExtrasData = {
   narrativeLocations: [],
 };
 
-const WD_HEADERS = {
-  "User-Agent": "reco/1.0 (https://reco-pink.vercel.app)",
-  Accept: "application/sparql-results+json",
-};
-
 /** Awards, source material, and locations for a title, sourced from Wikidata.
  *  Cached per title; returns empties on no-wikidata-id or error. */
 export async function titleExtras(mediaType: "movie" | "tv", tmdbId: number): Promise<TitleExtrasData> {
   "use cache";
+  // Awards and source-material links are near-static, so the default profile's
+  // ~15 minute revalidate was re-querying Wikidata far more than needed.
+  cacheLife("days");
   cacheTag(`title-extras:${mediaType}:${tmdbId}`);
 
   let wikidataId: string | null = null;
@@ -57,17 +56,12 @@ export async function titleExtras(mediaType: "movie" | "tv", tmdbId: number): Pr
     SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
   }`;
 
-  let bindings: { prop?: { value: string }; val?: { value: string }; valLabel?: { value: string } }[];
-  try {
-    const res = await fetch(
-      `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(query)}`,
-      { headers: WD_HEADERS },
-    );
-    if (!res.ok) return EMPTY;
-    bindings = ((await res.json()) as { results?: { bindings?: typeof bindings } }).results?.bindings ?? [];
-  } catch {
-    return EMPTY;
-  }
+  const bindings = await sparql<{
+    prop?: { value: string };
+    val?: { value: string };
+    valLabel?: { value: string };
+  }>(query, `title-extras:${mediaType}:${tmdbId}`);
+  if (!bindings) return EMPTY;
 
   const groups: Record<string, NamedRef[]> = {};
   const seen: Record<string, Set<string>> = {};

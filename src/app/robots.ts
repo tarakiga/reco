@@ -35,7 +35,16 @@ export default function robots(): MetadataRoute.Robots {
       // Disallow the scraper bots entirely.
       { userAgent: AI_SCRAPERS, disallow: "/" },
       // Everyone else: allowed, but throttled, and kept off private/API paths.
-      { userAgent: "*", allow: "/", disallow: ["/account", "/admin", "/api"], crawlDelay: 10 },
+      // /find and /rank are excluded because they are result pages, not content:
+      // every distinct query is a new URL, so crawling them generates unbounded
+      // paths (12k distinct in six hours at last measure) and each one runs a
+      // vector search. Search results are conventionally kept out of the index.
+      {
+        userAgent: "*",
+        allow: "/",
+        disallow: ["/account", "/admin", "/api", "/find", "/rank"],
+        crawlDelay: 10,
+      },
     ],
   };
 }

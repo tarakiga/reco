@@ -1,8 +1,9 @@
 import "server-only";
-import { cacheTag } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { tmdb } from "@/lib/tmdb/client";
 import { posterUrl } from "@/lib/tmdb/images";
 import { titleSlug } from "@/lib/slug";
+import { sparql } from "@/lib/wikidata";
 
 export type RelatedMediaType = "movie" | "tv";
 
@@ -51,19 +52,15 @@ async function wikidataRelated(
   mediaType: RelatedMediaType,
   wikidataId: string,
 ): Promise<{ tmdbId: number; relation: string }[]> {
-  const url = `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(buildQuery(mediaType, wikidataId))}`;
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent": "reco/1.0 (https://reco-pink.vercel.app)",
-      Accept: "application/sparql-results+json",
-    },
-  });
-  if (!res.ok) throw new Error(`Wikidata query failed (${res.status})`);
-  const data = (await res.json()) as { results?: { bindings?: { tmdb?: { value: string }; rel?: { value: string } }[] } };
+  const bindings = await sparql<{ tmdb?: { value: string }; rel?: { value: string } }>(
+    buildQuery(mediaType, wikidataId),
+    `related:${mediaType}:${wikidataId}`,
+  );
+  if (!bindings) return [];
 
   const out: { tmdbId: number; relation: string }[] = [];
   const seen = new Set<number>();
-  for (const b of data.results?.bindings ?? []) {
+  for (const b of bindings) {
     const tmdbId = Number(b.tmdb?.value);
     if (!Number.isInteger(tmdbId) || seen.has(tmdbId)) continue;
     seen.add(tmdbId);
@@ -76,6 +73,9 @@ async function wikidataRelated(
  *  versions). Cached per title; [] when no Wikidata id, no relations, or error. */
 export async function relatedTitles(mediaType: RelatedMediaType, tmdbId: number): Promise<RelatedTitle[]> {
   "use cache";
+  // Franchise and remake links are near-static, so the default ~15 minute
+  // revalidate was re-querying Wikidata far more often than the data changes.
+  cacheLife("days");
   cacheTag(`related:${mediaType}:${tmdbId}`);
 
   let wikidataId: string | null = null;

@@ -1,6 +1,7 @@
 import "server-only";
-import { cacheTag } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { tmdb } from "@/lib/tmdb/client";
+import { sparql } from "@/lib/wikidata";
 
 export interface AwardGroup {
   /** Awarding body, e.g. "Academy Award", "BAFTA Award", "Golden Globe Award". */
@@ -15,11 +16,6 @@ export interface PersonAwards {
   groups: AwardGroup[];
 }
 
-const WD_HEADERS = {
-  "User-Agent": "haystackk/1.0 (https://haystackk.com)",
-  Accept: "application/sparql-results+json",
-};
-
 /**
  * A person's awards from Wikidata (TMDB has none): P166 "award received" and
  * P1411 "nominated for". Cached per person; null on no-wikidata-id, error, or no
@@ -28,6 +24,9 @@ const WD_HEADERS = {
  */
 export async function personAwards(personId: number): Promise<PersonAwards | null> {
   "use cache";
+  // Awards change at most a few times a year, so the default profile's ~15
+  // minute revalidate was re-querying Wikidata far more than the data warrants.
+  cacheLife("days");
   cacheTag(`person-awards:${personId}`);
 
   let wikidataId: string | null = null;
@@ -44,17 +43,12 @@ export async function personAwards(personId: number): Promise<PersonAwards | nul
     SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
   }`;
 
-  let bindings: { prop?: { value: string }; val?: { value: string }; valLabel?: { value: string } }[];
-  try {
-    const res = await fetch(
-      `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(query)}`,
-      { headers: WD_HEADERS },
-    );
-    if (!res.ok) return null;
-    bindings = ((await res.json()) as { results?: { bindings?: typeof bindings } }).results?.bindings ?? [];
-  } catch {
-    return null;
-  }
+  const bindings = await sparql<{
+    prop?: { value: string };
+    val?: { value: string };
+    valLabel?: { value: string };
+  }>(query, `person-awards:${personId}`);
+  if (!bindings) return null;
 
   const wins: string[] = [];
   const noms: string[] = [];

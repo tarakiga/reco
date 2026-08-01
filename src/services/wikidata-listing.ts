@@ -1,8 +1,9 @@
 import "server-only";
-import { cacheTag } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { tmdb } from "@/lib/tmdb/client";
 import { posterUrl } from "@/lib/tmdb/images";
 import { titleSlug } from "@/lib/slug";
+import { sparql } from "@/lib/wikidata";
 
 export interface ListingItem {
   tmdbId: number;
@@ -17,11 +18,6 @@ export interface Listing {
   items: ListingItem[];
 }
 
-const WD_HEADERS = {
-  "User-Agent": "reco/1.0 (https://reco-pink.vercel.app)",
-  Accept: "application/sparql-results+json",
-};
-
 export function isWikidataQid(id: string): boolean {
   return /^Q\d+$/.test(id);
 }
@@ -31,7 +27,7 @@ interface RawRow {
   mediaType: "movie" | "tv";
 }
 
-async function build(qid: string, itemClause: string): Promise<Listing> {
+async function build(qid: string, itemClause: string, label: string): Promise<Listing> {
   const query = `SELECT DISTINCT ?tmdb ?mt ?srcLabel WHERE {
     BIND(wd:${qid} AS ?src)
     ${itemClause}
@@ -40,17 +36,12 @@ async function build(qid: string, itemClause: string): Promise<Listing> {
     SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
   }`;
 
-  let bindings: { tmdb?: { value: string }; mt?: { value: string }; srcLabel?: { value: string } }[];
-  try {
-    const res = await fetch(
-      `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(query)}`,
-      { headers: WD_HEADERS },
-    );
-    if (!res.ok) return { heading: "", items: [] };
-    bindings = ((await res.json()) as { results?: { bindings?: typeof bindings } }).results?.bindings ?? [];
-  } catch {
-    return { heading: "", items: [] };
-  }
+  const bindings = await sparql<{
+    tmdb?: { value: string };
+    mt?: { value: string };
+    srcLabel?: { value: string };
+  }>(query, label);
+  if (!bindings) return { heading: "", items: [] };
 
   const heading = bindings[0]?.srcLabel?.value ?? "";
   const seen = new Set<number>();
@@ -94,15 +85,19 @@ async function build(qid: string, itemClause: string): Promise<Listing> {
 /** Every movie/show based on a given Wikidata source work. */
 export async function titlesBySource(qid: string): Promise<Listing> {
   "use cache";
+  // Adaptations of a source work change rarely; the default ~15 minute
+  // revalidate was re-running this SPARQL far more often than needed.
+  cacheLife("days");
   cacheTag(`wd-source:${qid}`);
   if (!isWikidataQid(qid)) return { heading: "", items: [] };
-  return build(qid, `?item wdt:P144 ?src.`);
+  return build(qid, `?item wdt:P144 ?src.`, `wd-source:${qid}`);
 }
 
 /** Every movie/show filmed in or set in a given Wikidata place. */
 export async function titlesByLocation(qid: string): Promise<Listing> {
   "use cache";
+  cacheLife("days");
   cacheTag(`wd-location:${qid}`);
   if (!isWikidataQid(qid)) return { heading: "", items: [] };
-  return build(qid, `?item (wdt:P915|wdt:P840) ?src.`);
+  return build(qid, `?item (wdt:P915|wdt:P840) ?src.`, `wd-location:${qid}`);
 }
