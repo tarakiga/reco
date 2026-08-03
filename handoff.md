@@ -68,3 +68,111 @@ Append an entry after each completed task: what was done, decisions made, where 
 - Plain `<img>` for TMDB CDN (no next/image — avoids domain config).
 - e2e hits live TMDB (network-dependent — may be flaky in CI without internet).
 - Next: Plan 3b (watchlists, ratings, browse filters).
+
+## 2026-08-03: Mood TV tabs, card art, Wikidata hardening, Gemini paused
+
+### ACTION REQUIRED, do not forget
+
+**1. Gemini is OFF in production AND preview. This is temporary.**
+
+`GEMINI_API_KEY` was deleted from Vercel (commit `a1caf02` redeployed to pick it up).
+It was a single variable scoped to both Preview and Production, so removing it took
+both, not just production. The key itself is NOT lost: it is still in local
+`.env.local`, and local dev is unaffected.
+
+Three features are silently degraded while it is off, all by design (each call site
+guards on the key and falls back):
+
+| Feature | Code | Fallback while off |
+| --- | --- | --- |
+| Scene-query expansion on `/find` | `src/lib/scene/expand.ts` | Searches literal words, weaker recall on vague queries |
+| Title spell-correction | `src/lib/search/correct.ts` | Misspellings no longer auto-correct |
+| Episode guessing | `src/services/episode-search.ts` (`guessEpisodes`) | Keyword matching over synopses only |
+
+To restore, from the project root:
+
+```
+npx vercel env add GEMINI_API_KEY production     # paste value from .env.local
+npx vercel env add GEMINI_API_KEY preview        # if previews should have it too
+```
+
+Then deploy (any push, or `git commit --allow-empty`), because env changes only
+apply to new deployments.
+
+**Before re-enabling, fix the cost cause:** `expandSceneQuery` is the only Gemini
+call with no caching. `correctTitleQuery` and `guessEpisodes` both have
+`cacheLife("weeks")`; the scene path has none, and it sits on `/find`, the endpoint
+that was being crawled. Add `cacheLife("weeks")` there first.
+
+**2. Vercel WAF rule is live in LOG mode, needs a decision.**
+
+Rule `rule_rate_limit_find_bC4fFw` ("Rate limit find"): `path starts with /find`,
+60 req / 60s per IP, action = **log only, blocks nothing**. Published 2026-08-03.
+
+Review at
+`https://vercel.com/tars-projects-8492f88e/reco/firewall/traffic?filter=rule_rate_limit_find_bC4fFw`
+then either tighten to enforcement:
+
+```
+npx vercel firewall rules edit "Rate limit find" --rate-limit-action deny --yes
+npx vercel firewall publish --yes
+```
+
+or disable it if robots.txt already solved the traffic:
+
+```
+npx vercel firewall rules disable "Rate limit find" --yes
+```
+
+Context: `/find` was taking ~6,980 hits in 6 hours (~1.7 req/s) across 12,216
+distinct paths, driving ~27,400 function invocations/24h. Nearly all were
+`cache=HIT`, so the pages were cheap, but every request still invokes Clerk
+middleware. Crawler traffic, not users.
+
+### Shipped this session
+
+- **Mood TV tabs.** Every mood now has Movies/TV tabs. `/mood/[slug]` stays movies
+  (existing links unaffected), `/mood/[slug]/tv` is new. 22 of 23 moods have curated
+  `manualTv` lists; only `festive-favourites` is movie-only and renders no tabs.
+  New: `manualTv`, `blurbTv`, `backdrop` on `Mood`; `hasTvTab`/`moodBlurb` helpers;
+  `MoodTabs`; shared `MoodView`; pure `toMoodCard` mapper in `src/lib/tmdb/`.
+- **TV moods are curated-only, and must stay that way.** TMDB's TV genre vocabulary
+  has no Romance, Horror, Thriller, Action, Adventure or Sci-Fi, and it silently
+  ignores unknown genre ids rather than erroring. Measured: the existing queries
+  return 0 to 2 results against `/discover/tv` (date-night 2, spooky-season 0,
+  summer-blockbusters 0, inspirational 1). Discover fill is guarded to movies only
+  in `getMoodTitles`. Do not "fix" this by adding a `queryTv`.
+- **Mood card backdrop art.** Each card sits on a film backdrop with the card colour
+  as a scrim: solid across the left half, fading to 50% by the right edge. Stored as
+  a TMDB path (not a title id) so `/moods` stays static; resolving 23 ids would add
+  23 API calls to a page that makes none.
+- **New mood: UK classics** (25 films, 30 shows). Renames: Classic Hollywood to
+  Classics, Family movie night to Family night, B-movie mashups to B-movie/TV
+  mashups. Slugs unchanged so URLs still work.
+- **Wikidata hardening** (commit `1f6ea79`). All four callers now share
+  `src/lib/wikidata.ts`: 5s `AbortSignal.timeout`, failure logging, and one accurate
+  user-agent. Added `cacheLife("days")` to all five cached Wikidata functions, which
+  previously had `cacheTag` but no `cacheLife` and so inherited the default ~15 min
+  revalidate. Two callers were also still sending a stale
+  `reco-pink.vercel.app` user-agent, which matters because Wikidata throttles per
+  user-agent.
+- **robots.txt** now disallows `/find` and `/rank` (result pages, unbounded URLs).
+
+### Known issues, not fixed
+
+- **Soft 404s app-wide.** `notFound()` returns HTTP 200 with the not-found body,
+  because `cacheComponents: true` commits the prerendered shell before the dynamic
+  part streams. Affects `/title/...`, bad mood slugs, `/mood/festive-favourites/tv`.
+  Pre-existing, not caused by the mood work. Reordering the gate before
+  `connection()` does NOT fix it (tried and reverted). Bad for SEO.
+- **Do not narrow the Clerk middleware matcher** in `src/proxy.ts` to cut invocations.
+  `cardActionContext()` calls `getCurrentProfile()` which calls Clerk `auth()`, and it
+  runs on public pages (`/find`, mood pages). Narrowing breaks favourites and
+  watchlist marking there. This was considered and rejected.
+- **`episodeIndex`** (`src/services/episode-search.ts:24`) has `cacheTag` but no
+  `cacheLife`, the same gap just fixed on the Wikidata services.
+- **`/api/v1/*` has no rate limiting.** Deliberately deferred so the `/find` WAF rule
+  can be evaluated on its own first.
+- 2 pre-existing test failures on main, unrelated: `site-config.test.ts > nav falls
+  back when namespace empty`, and `PageShell.stories.tsx > Default` (Storybook missing
+  ClerkProvider).
