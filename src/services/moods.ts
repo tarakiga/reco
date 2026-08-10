@@ -2,7 +2,7 @@ import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { tmdb } from "@/lib/tmdb/client";
 import { toBrowseResults } from "@/lib/tmdb/discover";
-import { toMoodCard } from "@/lib/tmdb/mood-card";
+import { tmdbBriefToTitleResult } from "@/lib/tmdb/brief";
 import type { TitleResult } from "@/lib/tmdb/transform";
 import { getMoodBySlug, type MoodMedia, type MoodQuery } from "@/lib/moods";
 
@@ -30,7 +30,7 @@ function buildParams(q: MoodQuery, page: number): Record<string, string> {
 /** Build a card from a hand-picked TMDB id (lightweight fetch). */
 async function manualTitle(media: MoodMedia, id: number): Promise<TitleResult | null> {
   const b = await tmdb.titleBrief(media, id).catch(() => null);
-  return toMoodCard(media, id, b);
+  return tmdbBriefToTitleResult(media, id, b);
 }
 
 /** Titles for a mood. Hand-picked `manual`/`manualTv` list if set, otherwise TMDB Discover

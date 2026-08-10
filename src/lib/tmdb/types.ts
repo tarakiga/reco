@@ -121,6 +121,7 @@ export interface TmdbTitleDetail {
   id: number;
   title?: string;
   name?: string;
+  adult?: boolean;
   tagline?: string;
   overview?: string;
   poster_path?: string | null;

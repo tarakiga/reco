@@ -1,18 +1,11 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { tmdb } from "@/lib/tmdb/client";
-import { posterUrl } from "@/lib/tmdb/images";
-import { titleSlug } from "@/lib/slug";
+import { tmdbBriefToTitleResult } from "@/lib/tmdb/brief";
+import type { TitleResult } from "@/lib/tmdb/transform";
 import { sparql } from "@/lib/wikidata";
 
-export interface ListingItem {
-  tmdbId: number;
-  mediaType: "movie" | "tv";
-  title: string;
-  year: number | null;
-  posterUrl: string | null;
-  href: string;
-}
+export type ListingItem = TitleResult;
 export interface Listing {
   heading: string;
   items: ListingItem[];
@@ -58,19 +51,9 @@ async function build(qid: string, itemClause: string, label: string): Promise<Li
     await Promise.all(
       rows.slice(0, 40).map(async (r): Promise<ListingItem | null> => {
         try {
-          const t = await tmdb.titleBrief(r.mediaType, r.tmdbId);
-          if (t.adult) return null; // never surface adult titles
-          const name = (r.mediaType === "tv" ? t.name : t.title) ?? "Untitled";
-          const date = (r.mediaType === "tv" ? t.first_air_date : t.release_date) ?? "";
-          const year = date.length >= 4 ? Number(date.slice(0, 4)) : null;
-          return {
-            tmdbId: r.tmdbId,
-            mediaType: r.mediaType,
-            title: name,
-            year: Number.isFinite(year) ? year : null,
-            posterUrl: posterUrl(t.poster_path),
-            href: `/title/${r.mediaType}/${r.tmdbId}-${titleSlug(name, date || null)}`,
-          };
+          // Null for adult titles too, which we never surface.
+          const brief = await tmdb.titleBrief(r.mediaType, r.tmdbId);
+          return tmdbBriefToTitleResult(r.mediaType, r.tmdbId, brief);
         } catch {
           return null;
         }

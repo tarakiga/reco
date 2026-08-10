@@ -1,19 +1,13 @@
 import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { tmdb } from "@/lib/tmdb/client";
-import { posterUrl } from "@/lib/tmdb/images";
-import { titleSlug } from "@/lib/slug";
+import { tmdbBriefToTitleResult } from "@/lib/tmdb/brief";
+import type { TitleResult } from "@/lib/tmdb/transform";
 import { sparql } from "@/lib/wikidata";
 
 export type RelatedMediaType = "movie" | "tv";
 
-export interface RelatedTitle {
-  tmdbId: number;
-  mediaType: RelatedMediaType;
-  title: string;
-  year: number | null;
-  posterUrl: string | null;
-  href: string;
+export interface RelatedTitle extends TitleResult {
   relation: string;
 }
 
@@ -97,20 +91,10 @@ export async function relatedTitles(mediaType: RelatedMediaType, tmdbId: number)
   const cards = await Promise.all(
     rels.slice(0, 12).map(async (r): Promise<RelatedTitle | null> => {
       try {
-        const t = await tmdb.titleBrief(mediaType, r.tmdbId);
-        if (t.adult) return null; // never surface adult titles (e.g. parodies via Wikidata)
-        const title = (mediaType === "tv" ? t.name : t.title) ?? "Untitled";
-        const date = (mediaType === "tv" ? t.first_air_date : t.release_date) ?? "";
-        const year = date.length >= 4 ? Number(date.slice(0, 4)) : null;
-        return {
-          tmdbId: r.tmdbId,
-          mediaType,
-          title,
-          year: Number.isFinite(year) ? year : null,
-          posterUrl: posterUrl(t.poster_path),
-          href: `/title/${mediaType}/${r.tmdbId}-${titleSlug(title, date || null)}`,
-          relation: RELATION_LABEL[r.relation] ?? "Related",
-        };
+        // Null for adult titles too (e.g. parodies reached via Wikidata).
+        const brief = await tmdb.titleBrief(mediaType, r.tmdbId);
+        const card = tmdbBriefToTitleResult(mediaType, r.tmdbId, brief);
+        return card && { ...card, relation: RELATION_LABEL[r.relation] ?? "Related" };
       } catch {
         return null;
       }
