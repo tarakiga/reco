@@ -1,4 +1,5 @@
 import "server-only";
+import { cacheLife, cacheTag } from "next/cache";
 import { toVectorLiteral } from "@/db/vector";
 import { nearestTitles } from "@/db/vector-search";
 import { matchPercent } from "@/lib/taste/match";
@@ -97,7 +98,36 @@ export async function sceneSearch(
   rawQuery: string,
   opts: { limit?: number; override?: SceneMediaType | "all" } = {},
 ): Promise<SceneSearchOutcome> {
-  const overrideMt = opts.override === "movie" || opts.override === "tv" ? opts.override : null;
+  // Normalise before the cache key, so trivially different spellings of the same
+  // search ("a  giant squid " and "a giant squid") share one entry rather than
+  // each buying its own embedding. Flattening opts to scalars keeps the key
+  // stable too: an absent `override` and an explicit undefined are one thing.
+  return cachedSceneSearch(
+    rawQuery.trim().replace(/\s+/g, " "),
+    Math.min(Math.max(1, opts.limit ?? DEFAULT_LIMIT), MAX_LIMIT),
+    opts.override ?? null,
+  );
+}
+
+/**
+ * Cached per (query, limit, override). Every miss costs a Voyage embedding plus
+ * a vector scan over the catalog, and before this the page paid both on every
+ * request, repeats included.
+ *
+ * A day is the trade: results only move when the catalog is re-embedded, which
+ * the nightly cron does. Note this only helps repeated queries. A crawler
+ * walking distinct ones misses every time, which is what the firewall is for.
+ */
+async function cachedSceneSearch(
+  rawQuery: string,
+  limit: number,
+  override: SceneMediaType | "all" | null,
+): Promise<SceneSearchOutcome> {
+  "use cache";
+  cacheLife("days");
+  cacheTag("scene-search");
+
+  const overrideMt = override === "movie" || override === "tv" ? override : null;
 
   // Person-attribution ("movies by Harlan Coben", "directed by Nolan") → that
   // person's real credits, not vibe-similarity. Resolving the name on TMDB is
@@ -105,7 +135,7 @@ export async function sceneSearch(
   const pq = parsePersonQuery(rawQuery);
   if (pq) {
     const mt = overrideMt ?? pq.mediaType;
-    const person = await personSearch(pq, { limit: opts.limit ?? 20, mediaType: mt });
+    const person = await personSearch(pq, { limit, mediaType: mt });
     if (person.results.length > 0) {
       const verb = person.role === "acting" ? "with" : "by";
       return {
@@ -124,7 +154,7 @@ export async function sceneSearch(
   const filters = parseQueryFilters(rawQuery);
   if (filters.isCatalog) {
     const mt = overrideMt ?? filters.mediaType;
-    const discovered = await discoverSearch({ ...filters, mediaType: mt }, opts.limit ?? 20);
+    const discovered = await discoverSearch({ ...filters, mediaType: mt }, limit);
     if (discovered.length > 0) {
       return { results: discovered, mediaType: mt, detected: filters.detectedMedia, mode: "discover", summary: filters.summary };
     }
@@ -133,8 +163,8 @@ export async function sceneSearch(
 
   const { mediaType: detected, cleaned } = parseMediaIntent(rawQuery);
   const mediaType: SceneMediaType | null =
-    opts.override === undefined ? detected : opts.override === "all" ? null : opts.override;
+    override === null ? detected : override === "all" ? null : override;
   const expanded = await expandSceneQuery(cleaned);
-  const results = await searchByScene(expanded, { limit: opts.limit, mediaType: mediaType ?? undefined });
+  const results = await searchByScene(expanded, { limit, mediaType: mediaType ?? undefined });
   return { results, mediaType, detected, mode: "semantic", summary: null };
 }

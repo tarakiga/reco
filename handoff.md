@@ -99,10 +99,11 @@ npx vercel env add GEMINI_API_KEY preview        # if previews should have it to
 Then deploy (any push, or `git commit --allow-empty`), because env changes only
 apply to new deployments.
 
-**Before re-enabling, fix the cost cause:** `expandSceneQuery` is the only Gemini
-call with no caching. `correctTitleQuery` and `guessEpisodes` both have
-`cacheLife("weeks")`; the scene path has none, and it sits on `/find`, the endpoint
-that was being crawled. Add `cacheLife("weeks")` there first.
+**The cost cause is now fixed, so re-enabling is safe.** `expandSceneQuery` was the
+only Gemini call with no caching, and it sat on `/find`, the endpoint being
+crawled. It now has `cacheLife("weeks")` like `correctTitleQuery` and
+`guessEpisodes`. The whole `sceneSearch` pipeline is cached too, so a repeated
+query no longer buys a fresh Voyage embedding and vector scan either.
 
 **2. Vercel WAF rule is live in LOG mode, needs a decision.**
 

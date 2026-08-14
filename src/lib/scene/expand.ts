@@ -1,4 +1,5 @@
 import "server-only";
+import { cacheLife } from "next/cache";
 
 // Alias (not a pinned version) so it doesn't get retired out from under us.
 const MODEL = "gemini-flash-lite-latest";
@@ -17,8 +18,14 @@ const prompt = (q: string) =>
  * Expand a vague scene query to improve semantic recall (bridges vocabulary gaps
  * like "dorm" → "boarding school"). Uses Google Gemini Flash when GEMINI_API_KEY
  * is set; otherwise returns the query unchanged so search still works.
+ *
+ * Cached per query, like its siblings correctTitleQuery and guessEpisodes. An
+ * expansion is stable for a given phrase, and this was the one Gemini call site
+ * paying per request rather than per distinct query.
  */
 export async function expandSceneQuery(query: string): Promise<string> {
+  "use cache";
+  cacheLife("weeks");
   const key = process.env.GEMINI_API_KEY;
   const q = query.trim();
   if (!key || q.length === 0) return q;
