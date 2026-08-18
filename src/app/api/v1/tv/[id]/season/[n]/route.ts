@@ -1,18 +1,5 @@
 import { NextResponse } from "next/server";
-import { cacheLife, cacheTag } from "next/cache";
-import { tmdb } from "@/lib/tmdb/client";
-import { toEpisodes } from "@/lib/tmdb/episodes";
-
-/** A season's episode list. Cached per show+season: the data is near-static, and
- *  this endpoint is public, so uncached it cost a TMDB call on every request.
- *  A failed season fetch throws rather than returning empty, so a transient
- *  TMDB error is never cached in place of a real season. */
-async function seasonEpisodes(tvId: number, seasonNumber: number) {
-  "use cache";
-  cacheLife("days");
-  cacheTag(`tv-season:${tvId}:${seasonNumber}`);
-  return toEpisodes(await tmdb.season(tvId, seasonNumber));
-}
+import { seasonEpisodes } from "@/services/tv-season";
 
 export async function GET(
   _req: Request,
