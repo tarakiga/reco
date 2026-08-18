@@ -1,4 +1,5 @@
 import "server-only";
+import { cacheLife } from "next/cache";
 import { tmdb } from "@/lib/tmdb/client";
 import { toEpisodes } from "@/lib/tmdb/episodes";
 import type { PersonShowCredit } from "@/lib/tmdb/person";
@@ -18,6 +19,7 @@ const MAX_SEASONS_SCANNED = 40; // guard against pathological long-runners
  */
 export async function getPersonShowCredit(personId: number, tvId: number): Promise<PersonShowCredit> {
   "use cache";
+  cacheLife("days");
   const [show, agg] = await Promise.all([
     tmdb.getTitle("tv", tvId),
     tmdb.tvAggregateCredits(tvId).catch(() => ({ cast: [] as never[] })),

@@ -23,6 +23,7 @@ async function fetchSeason(tvId: number, n: number) {
 async function episodeIndex(tvId: number): Promise<EpisodeIndexEntry[]> {
   "use cache";
   cacheTag(`tv-episode-index:${tvId}`);
+  cacheLife("days");
   const detail = await tmdb.getTitle("tv", tvId);
   const nums = (detail.seasons ?? [])
     .filter((s) => s.season_number > 0)

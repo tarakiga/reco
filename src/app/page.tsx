@@ -17,6 +17,7 @@ import { WrappedBanner } from "@/components/home/WrappedBanner";
 
 async function getTrending(): Promise<TitleResult[]> {
   "use cache";
+  cacheLife("hours");
   try {
     const data = await tmdb.trending();
     const results = toSearchResults(data.results);
@@ -28,6 +29,7 @@ async function getTrending(): Promise<TitleResult[]> {
 
 async function getPopular(mediaType: "movie" | "tv"): Promise<TitleResult[]> {
   "use cache";
+  cacheLife("hours");
   try {
     const data = await tmdb.popular(mediaType);
     return toBrowseResults(mediaType, data.results);
@@ -38,6 +40,7 @@ async function getPopular(mediaType: "movie" | "tv"): Promise<TitleResult[]> {
 
 async function getNowPlaying(): Promise<TitleResult[]> {
   "use cache";
+  cacheLife("hours");
   try {
     const data = await tmdb.nowPlaying();
     return toBrowseResults("movie", data.results);

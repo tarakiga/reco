@@ -1,8 +1,10 @@
+import { cacheLife } from "next/cache";
 import Link from "next/link";
 import { tmdb } from "@/lib/tmdb/client";
 
 async function getGenres(): Promise<{ id: number; name: string }[]> {
   "use cache";
+  cacheLife("weeks");
   try {
     const { genres } = await tmdb.genres("movie");
     return genres;

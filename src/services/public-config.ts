@@ -32,5 +32,6 @@ export async function publishedOptions(namespace: string): Promise<PublishedOpti
 export async function publishedBlock(key: string): Promise<PublishedBlock | null> {
   "use cache";
   cacheTag(`config:content_block:${key}`);
+  cacheLife("hours"); // also revalidated instantly on publish; never cache forever
   return getPublishedBlockRaw(key);
 }

@@ -1,8 +1,10 @@
+import { cacheLife } from "next/cache";
 import { NextResponse } from "next/server";
 import { tmdb } from "@/lib/tmdb/client";
 
 async function combinedGenres() {
   "use cache";
+  cacheLife("weeks");
   const [movie, tv] = await Promise.all([tmdb.genres("movie"), tmdb.genres("tv")]);
   const byId = new Map<number, string>();
   for (const g of [...movie.genres, ...tv.genres]) byId.set(g.id, g.name);

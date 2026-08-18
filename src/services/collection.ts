@@ -1,5 +1,5 @@
 import "server-only";
-import { cacheTag } from "next/cache";
+import { cacheTag, cacheLife } from "next/cache";
 import { tmdb } from "@/lib/tmdb/client";
 import { posterUrl } from "@/lib/tmdb/images";
 import { titleSlug } from "@/lib/slug";
@@ -16,6 +16,7 @@ export interface CollectionPart {
 export async function collectionParts(collectionId: number, excludeId: number): Promise<CollectionPart[]> {
   "use cache";
   cacheTag(`collection:${collectionId}`);
+  cacheLife("days");
   try {
     const col = await tmdb.collection(collectionId);
     return (col.parts ?? [])
