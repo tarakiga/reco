@@ -289,85 +289,38 @@ git commit -m "Add poll option keys for titles and episodes"
 
 ---
 
-### Task 3: Schema
+### Task 3: Schema (DONE, recorded here for accuracy)
 
-**Files:**
-- Modify: `src/db/schema.ts`
+This task is complete. It is rewritten from what was originally planned, because the
+original assumed a migration workflow this repo does not use. Recorded so the rest of the
+plan reads correctly.
 
-- [ ] **Step 1: Add the episode columns to poll_votes**
+**What was planned and why it was wrong:** the task said to run `npm run db:generate` and
+edit the resulting incremental migration. This repo has never used `drizzle-kit generate`,
+so there is no baseline snapshot: it produced a 270 line initial migration with CREATE
+TABLE for all 23 existing tables, which would fail on the first table if applied. The
+generated `drizzle/` folder should be deleted, and adopting real migrations is its own
+piece of work, not something to decide mid-feature.
 
-In `src/db/schema.ts`, inside `pollVotes`, directly after the `titleId` column:
+**A second correction:** the plan applied the whole schema change at once, including
+dropping `round2_title_ids`. That would have broken production, because the deployed code
+still reads that column. The drop has to wait until the option-key code is live.
 
-```ts
-    // A specific TV episode of the title, or 0/0 for the whole movie/show, the
-    // same convention list_items uses. 0 rather than NULL so comparisons stay
-    // simple: NULLs compare distinct.
-    seasonNumber: integer("season_number").notNull().default(0),
-    episodeNumber: integer("episode_number").notNull().default(0),
-    // Captured at vote time so rendering a ballot needs no TMDB call per option.
-    episodeName: text("episode_name"),
-```
+**What was actually done:**
 
-- [ ] **Step 2: Swap the round-2 column and add the winner episode**
+- `src/db/schema.ts` gained `seasonNumber`, `episodeNumber` and `episodeName` on
+  `pollVotes`, plus `round2OptionKeys`, `winnerSeasonNumber` and `winnerEpisodeNumber` on
+  `polls`. `round2TitleIds` was KEPT, with a comment explaining it goes later.
+- `npm run db:push` applied nothing, exiting 0 with no change summary. That is what it does
+  when it wants an interactive confirmation and finds no terminal. Verified by querying
+  `information_schema` and finding none of the new columns.
+- The six columns were applied as idempotent `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`
+  statements and confirmed by reading `information_schema` back.
+- The backfill ran, converting the single stored round-2 ballot from uuids to `:0:0` keys,
+  verified by comparing both columns on that row.
+- Task 1's characterisation tests still pass, confirming live behaviour is undisturbed.
 
-In the `polls` table, replace:
-
-```ts
-  round2TitleIds: uuid("round2_title_ids").array(),
-```
-
-with:
-
-```ts
-  // Surviving option keys after the round-1 genre cull (the round-2 ballot).
-  // Text rather than uuid because an option can be one episode of a title.
-  round2OptionKeys: text("round2_option_keys").array(),
-```
-
-and directly after `winnerTitleId`, add:
-
-```ts
-  winnerSeasonNumber: integer("winner_season_number").notNull().default(0),
-  winnerEpisodeNumber: integer("winner_episode_number").notNull().default(0),
-```
-
-- [ ] **Step 3: Generate the migration**
-
-Run: `npm run db:generate`
-Expected: a new file under the drizzle migrations folder containing the added columns and
-the dropped/added round-2 column.
-
-- [ ] **Step 4: Add the backfill to the generated migration**
-
-Open the generated SQL file and append, so in-flight polls keep their ballot:
-
-```sql
---> statement-breakpoint
-UPDATE "polls"
-SET "round2_option_keys" = (
-  SELECT array_agg(id::text || ':0:0') FROM unnest("round2_title_ids") AS id
-)
-WHERE "round2_title_ids" IS NOT NULL;
-```
-
-Place it BEFORE any statement that drops `round2_title_ids`. If the generated file drops
-the old column first, move the drop below this statement.
-
-- [ ] **Step 5: Apply and verify**
-
-Run: `npm run db:push`
-Expected: applies cleanly.
-
-Run: `npx tsc --noEmit`
-Expected: errors ONLY in `src/services/polls.ts`, pointing at `round2TitleIds`. That is
-Task 4's work list. Do not fix them here.
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add src/db/schema.ts drizzle
-git commit -m "Add episode columns and option keys to the poll schema"
-```
+Committed as `aba3c2a`.
 
 ---
 
@@ -728,6 +681,47 @@ on 2026-08-18, and that a poll mixing an episode and a film still culls sensibly
 `src/services/site-config.test.ts` is fixed, but `PageShell.stories.tsx` can fail under
 parallel load with a Clerk provider error, and the full suite is flaky on a loaded machine.
 Neither is related to this work.
+
+---
+
+### Task 8: Drop the old column, AFTER deploying
+
+Do NOT do this until Tasks 4 to 7 are merged and live in production. Until then the running
+code reads `round2_title_ids`, and dropping it 500s every poll page.
+
+**Files:**
+- Modify: `src/db/schema.ts`
+
+- [ ] **Step 1: Confirm the new code is deployed**
+
+Check that production is serving a build that contains the option-key code. If in any
+doubt, stop and ask.
+
+- [ ] **Step 2: Remove the column from the schema**
+
+Delete the `round2TitleIds` line and its comment from the `polls` table.
+
+- [ ] **Step 3: Apply it**
+
+`npm run db:push` did not work non-interactively in this environment. Apply directly and
+verify, the same way the expand phase was applied:
+
+```sql
+ALTER TABLE polls DROP COLUMN IF EXISTS round2_title_ids;
+```
+
+Then confirm with a query against `information_schema.columns` that the column is gone and
+that `round2_option_keys` is still populated for the rows that had a ballot.
+
+- [ ] **Step 4: Verify and commit**
+
+Run: `npx tsc --noEmit` (expect no output)
+Run: `npx vitest run src/services/polls.test.ts` (expect PASS)
+
+```bash
+git add src/db/schema.ts
+git commit -m "Drop the superseded round2_title_ids column"
+```
 
 ---
 
