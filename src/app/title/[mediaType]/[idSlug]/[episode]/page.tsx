@@ -1,3 +1,4 @@
+import { cache } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getOrCreateTitle } from "@/services/catalog";
@@ -15,21 +16,29 @@ interface Params {
 
 /** Show row, episode and parsed reference, or null when the episode genuinely
  *  does not exist. Anything other than a not-found rethrows: a TMDB or database
- *  fault must surface as an error, not masquerade as a missing episode. */
-async function load(params: Params) {
-  if (params.mediaType !== "tv") return null;
-  const id = parseIdSlug(params.idSlug);
-  const ref = parseEpisodeSlug(params.episode);
+ *  fault must surface as an error, not masquerade as a missing episode.
+ *
+ *  Wrapped in React's `cache` so generateMetadata and the page component share
+ *  one lookup per request instead of two. `cache` keys on argument identity,
+ *  and Next.js resolves generateMetadata's `params` and the page's `params`
+ *  from two separately-built objects with equal contents but different
+ *  references, so this takes the three primitives rather than the params
+ *  object: primitives compare by value, so the two call sites still hit the
+ *  same cache entry. */
+const load = cache(async (mediaType: string, idSlug: string, episode: string) => {
+  if (mediaType !== "tv") return null;
+  const id = parseIdSlug(idSlug);
+  const ref = parseEpisodeSlug(episode);
   if (!id || !ref) return null;
   try {
     const show = await getOrCreateTitle("tv", id, false);
-    const episode = await oneEpisode(id, ref.season, ref.episode);
-    return episode ? { show, episode, ref } : null;
+    const ep = await oneEpisode(id, ref.season, ref.episode);
+    return ep ? { show, episode: ep, ref } : null;
   } catch (e) {
     if (e instanceof TmdbError && e.status === 404) return null;
     throw e;
   }
-}
+});
 
 export async function generateMetadata({ params }: { params: Promise<Params> }) {
   const p = await params;
@@ -37,7 +46,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }) 
   // page render, matching the sibling show page's generateMetadata.
   let data;
   try {
-    data = await load(p);
+    data = await load(p.mediaType, p.idSlug, p.episode);
   } catch {
     return {};
   }
@@ -72,7 +81,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }) 
 
 export default async function EpisodePage({ params }: { params: Promise<Params> }) {
   const p = await params;
-  const data = await load(p);
+  const data = await load(p.mediaType, p.idSlug, p.episode);
   if (!data) notFound();
   const { show, episode, ref } = data;
   const fields = episodeCardFields({
