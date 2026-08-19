@@ -4,6 +4,7 @@ import { and, desc, eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { polls, pollVotes, titles } from "@/db/schema";
 import { getOrCreateTitle } from "./catalog";
+import { oneEpisode } from "./tv-season";
 import { posterUrl } from "@/lib/tmdb/images";
 import { computeSurvivors, topTierGenres, OTHER_GENRE } from "@/lib/poll-cull";
 import { optionKey, parseOptionKey } from "@/lib/poll-option";
@@ -279,6 +280,8 @@ export async function castVote(
   voter: VoterIdentity,
   mediaType: "movie" | "tv",
   tmdbId: number,
+  seasonNumber = 0,
+  episodeNumber = 0,
 ): Promise<PollViewState | null> {
   const [poll] = await db.select().from(polls).where(eq(polls.slug, slug));
   if (!poll) return null;
@@ -286,8 +289,17 @@ export async function castVote(
 
   const round = poll.status === "round1" ? 1 : 2;
   const title = await getOrCreateTitle(mediaType, tmdbId);
-  // Episodes arrive in a later task; every option cast here is the whole title.
-  const key = optionKey(title.id, 0, 0);
+
+  // Confirm the episode is real before it can reach a ballot, and capture its
+  // name so rendering the ballot later needs no TMDB call per option.
+  let episodeName: string | null = null;
+  if (episodeNumber > 0) {
+    const episode = await oneEpisode(tmdbId, seasonNumber, episodeNumber);
+    if (!episode) throw new PollError(404, "That episode does not exist");
+    episodeName = episode.name;
+  }
+
+  const key = optionKey(title.id, seasonNumber, episodeNumber);
 
   if (round === 1) {
     const votes = await roundVotes(poll.id, 1);
@@ -308,10 +320,19 @@ export async function castVote(
 
   await db
     .insert(pollVotes)
-    .values({ pollId: poll.id, userId: voter.userId, voterKey: voter.voterKey, round, titleId: title.id })
+    .values({
+      pollId: poll.id,
+      userId: voter.userId,
+      voterKey: voter.voterKey,
+      round,
+      titleId: title.id,
+      seasonNumber,
+      episodeNumber,
+      episodeName,
+    })
     .onConflictDoUpdate({
       target: [pollVotes.pollId, pollVotes.voterKey, pollVotes.round],
-      set: { titleId: title.id, userId: voter.userId, createdAt: new Date() },
+      set: { titleId: title.id, userId: voter.userId, seasonNumber, episodeNumber, episodeName, createdAt: new Date() },
     });
 
   // Auto-advance when the round fills.

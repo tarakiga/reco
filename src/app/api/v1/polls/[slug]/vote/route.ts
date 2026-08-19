@@ -9,10 +9,10 @@ export async function POST(req: Request, { params }: { params: Promise<{ slug: s
   await connection();
   const { slug } = await params;
   try {
-    const { mediaType, tmdbId } = castVoteInput.parse(await req.json());
+    const { mediaType, tmdbId, seasonNumber, episodeNumber } = castVoteInput.parse(await req.json());
     // Guests vote too — minted a cookie token when they have none yet.
     const { identity, issueToken } = await resolveOrIssueVoter();
-    const state = await castVote(slug, identity, mediaType, tmdbId);
+    const state = await castVote(slug, identity, mediaType, tmdbId, seasonNumber ?? 0, episodeNumber ?? 0);
     if (!state) return jsonError(404, "Vote not found");
     const res = NextResponse.json({ state });
     if (issueToken) res.cookies.set(voterCookie(issueToken));

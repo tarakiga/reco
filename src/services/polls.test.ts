@@ -1,15 +1,25 @@
-import { afterAll, beforeAll, expect, test } from "vitest";
+import { afterAll, beforeAll, expect, test, vi } from "vitest";
 import { eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { profiles, titles, polls } from "@/db/schema";
 import { createPoll, castVote, getPollState, listUserPolls, PollError } from "./polls";
 
+vi.mock("@/services/tv-season", () => ({
+  oneEpisode: vi.fn(async (_tv: number, s: number, e: number) =>
+    s === 1 && e === 1
+      ? { episodeNumber: 1, name: "Pilot", overview: "", runtime: 30, airDate: "2008-01-20", stillUrl: null, voteAverage: null, voteCount: null, cast: [] }
+      : null,
+  ),
+  seasonEpisodes: vi.fn(),
+}));
+
 const CLERK = "__vitest__clerk_polls";
 // Two comedies and one horror, so the genre cull has something to separate.
 const SEEDS = [
-  { tmdbId: 99912001, title: "Poll Comedy A", genres: [{ id: 35, name: "Comedy" }] },
-  { tmdbId: 99912002, title: "Poll Comedy B", genres: [{ id: 35, name: "Comedy" }] },
-  { tmdbId: 99912003, title: "Poll Horror C", genres: [{ id: 27, name: "Horror" }] },
+  { tmdbId: 99912001, title: "Poll Comedy A", genres: [{ id: 35, name: "Comedy" }], mediaType: "movie" as const },
+  { tmdbId: 99912002, title: "Poll Comedy B", genres: [{ id: 35, name: "Comedy" }], mediaType: "movie" as const },
+  { tmdbId: 99912003, title: "Poll Horror C", genres: [{ id: 27, name: "Horror" }], mediaType: "movie" as const },
+  { tmdbId: 99912004, title: "Poll Show D", genres: [{ id: 35, name: "Comedy" }], mediaType: "tv" as const },
 ];
 const IDS = SEEDS.map((s) => s.tmdbId);
 let creatorId: string;
@@ -26,7 +36,7 @@ beforeAll(async () => {
   for (const s of SEEDS) {
     await db.insert(titles).values({
       tmdbId: s.tmdbId,
-      mediaType: "movie",
+      mediaType: s.mediaType,
       slug: `poll-test-${s.tmdbId}`,
       title: s.title,
       releaseYear: 2020,
@@ -128,4 +138,25 @@ test("listUserPolls surfaces the winner title once a poll finishes", async () =>
   const summary = summaries.find((s) => s.slug === slug);
   expect(summary?.status).toBe("done");
   expect(summary?.winnerTitle).toBe("Poll Comedy A");
+});
+
+test("an episode vote stores the season, episode and captured name", async () => {
+  const { slug } = await createPoll(creatorId, { title: "__vitest__ ep", expectedVoters: 3 });
+  const state = await castVote(slug, voter("ep1"), "tv", 99912004, 1, 1);
+  expect(state?.myPick?.seasonNumber).toBe(1);
+  expect(state?.myPick?.episodeNumber).toBe(1);
+  expect(state?.myPick?.title).toContain("S1E1");
+  expect(state?.myPick?.title).toContain("Pilot");
+});
+
+test("a vote for an episode that does not exist is rejected", async () => {
+  const { slug } = await createPoll(creatorId, { title: "__vitest__ badep", expectedVoters: 3 });
+  await expect(castVote(slug, voter("ep2"), "tv", 99912004, 9, 9)).rejects.toBeInstanceOf(PollError);
+});
+
+test("an episode and its whole show are two distinct options", async () => {
+  const { slug } = await createPoll(creatorId, { title: "__vitest__ two", expectedVoters: 2 });
+  await castVote(slug, voter("ep3"), "tv", 99912004, 1, 1);
+  const state = await castVote(slug, voter("ep4"), "tv", 99912004, 0, 0);
+  expect(state?.reveal?.picks.length).toBe(2);
 });

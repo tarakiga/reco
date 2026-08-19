@@ -8,6 +8,18 @@ export const createPollInput = z.object({
   deadline: z.string().datetime().nullable().optional(),
 });
 
-export const castVoteInput = titleRef;
+// Bounds match parseEpisodeSlug in src/lib/tmdb/detail.ts, so the URL parser and
+// the vote endpoint agree on what counts as a plausible episode.
+export const castVoteInput = titleRef
+  .extend({
+    seasonNumber: z.number().int().min(1).max(999).optional(),
+    episodeNumber: z.number().int().min(1).max(9999).optional(),
+  })
+  .refine((v) => (v.seasonNumber == null) === (v.episodeNumber == null), {
+    message: "season and episode must be given together",
+  })
+  .refine((v) => v.mediaType === "tv" || v.seasonNumber == null, {
+    message: "only a TV show has episodes",
+  });
 
 export type CreatePollInput = z.infer<typeof createPollInput>;
