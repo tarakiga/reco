@@ -90,6 +90,49 @@ function CopyLinkButton({ hash, label }: { hash: string; label: string }) {
   );
 }
 
+/** Share one episode by its own URL. The accordion only renders on a show page,
+ *  so the current pathname plus the episode segment is that episode's canonical
+ *  address. Built at click time because `window` does not exist during SSR. */
+function ShareEpisodeButton({ segment, title }: { segment: string; title: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      aria-label={`Share ${title}`}
+      title={`Share ${title}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        const url = `${window.location.origin}${window.location.pathname}/${segment}`;
+        if (typeof navigator.share === "function") {
+          navigator.share({ title, text: title, url }).catch(() => {});
+          return;
+        }
+        navigator.clipboard
+          ?.writeText(url)
+          .then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1200);
+          })
+          .catch(() => {});
+      }}
+      className="flex size-7 shrink-0 items-center justify-center rounded text-text-muted transition-colors hover:bg-surface-overlay hover:text-accent-text"
+    >
+      {copied ? (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-3.5" aria-hidden>
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="size-3.5" aria-hidden>
+          <circle cx="18" cy="5" r="3" />
+          <circle cx="6" cy="12" r="3" />
+          <circle cx="18" cy="19" r="3" />
+          <path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
 function CastAvatar({ member }: { member: EpisodeCastMember }) {
   return (
     <Link href={member.href} className="group w-full text-center">
@@ -166,7 +209,7 @@ function EpisodeRow({
             <div className="flex shrink-0 items-center gap-1.5">
               {signedIn && <CheckButton watched={watched} onClick={onToggle} />}
               <span className="opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
-                <CopyLinkButton hash={`s${seasonNumber}e${ep.episodeNumber}`} label="Copy link to this episode" />
+                <ShareEpisodeButton segment={`s${seasonNumber}e${ep.episodeNumber}`} title={ep.name} />
               </span>
               {ep.voteAverage ? (
                 <span className="text-xs font-medium text-warning">★ {ep.voteAverage.toFixed(1)}</span>
