@@ -59,12 +59,25 @@ export function PollRoom({ initial, shareUrl }: { initial: PollViewState; shareU
     return () => clearInterval(id);
   }, [state.status, refresh]);
 
-  async function vote(r: { mediaType: "movie" | "tv"; tmdbId: number; title?: string }) {
+  async function vote(r: {
+    mediaType: "movie" | "tv";
+    tmdbId: number;
+    title?: string;
+    seasonNumber?: number;
+    episodeNumber?: number;
+  }) {
     setBusy(true);
     try {
       const d = await meFetch<{ state: PollViewState }>(`/api/v1/polls/${initial.slug}/vote`, {
         method: "POST",
-        body: { mediaType: r.mediaType, tmdbId: r.tmdbId },
+        body: {
+          mediaType: r.mediaType,
+          tmdbId: r.tmdbId,
+          // The endpoint requires season and episode together or not at all.
+          ...(r.seasonNumber != null && r.episodeNumber != null
+            ? { seasonNumber: r.seasonNumber, episodeNumber: r.episodeNumber }
+            : {}),
+        },
       });
       setState(d.state);
       toast({ title: r.title ? `Voted: ${r.title}` : "Vote recorded", variant: "success" });
@@ -195,7 +208,7 @@ export function PollRoom({ initial, shareUrl }: { initial: PollViewState; shareU
           </div>
           <ul className="space-y-2">
             {state.reveal.picks.map((p) => (
-              <RevealRow key={p.titleId} p={p} />
+              <RevealRow key={p.key} p={p} />
             ))}
           </ul>
         </section>
@@ -215,13 +228,20 @@ export function PollRoom({ initial, shareUrl }: { initial: PollViewState; shareU
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {state.round2.map((o) => (
                 <BallotCard
-                  key={o.titleId}
+                  key={o.key}
                   o={o}
-                  selected={state.myPick?.titleId === o.titleId}
+                  selected={state.myPick?.key === o.key}
                   disabled={busy}
                   onPick={() => {
-                    const m = /\/title\/(movie|tv)\/(\d+)-/.exec(o.href);
-                    if (m) vote({ mediaType: m[1] as "movie" | "tv", tmdbId: Number(m[2]), title: o.title });
+                    const m = o.href.match(/\/title\/(movie|tv)\/(\d+)-/);
+                    if (m)
+                      vote({
+                        mediaType: m[1] as "movie" | "tv",
+                        tmdbId: Number(m[2]),
+                        title: o.title,
+                        seasonNumber: o.episodeNumber > 0 ? o.seasonNumber : undefined,
+                        episodeNumber: o.episodeNumber > 0 ? o.episodeNumber : undefined,
+                      });
                   }}
                 />
               ))}
@@ -256,7 +276,7 @@ export function PollRoom({ initial, shareUrl }: { initial: PollViewState; shareU
                 {[...state.round2]
                   .sort((a, b) => (b.votes ?? 0) - (a.votes ?? 0))
                   .map((o) => (
-                    <li key={o.titleId} className="flex items-center justify-between text-sm">
+                    <li key={o.key} className="flex items-center justify-between text-sm">
                       <span className="text-text">{o.title}</span>
                       <span className="text-text-muted">
                         {o.votes ?? 0} {o.votes === 1 ? "vote" : "votes"}
