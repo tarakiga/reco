@@ -2,6 +2,7 @@ import { ImageResponse } from "next/og";
 import sharp from "sharp";
 import { getOrCreateTitle } from "@/services/catalog";
 import { oneEpisode } from "@/services/tv-season";
+import { TmdbError } from "@/lib/tmdb/client";
 import { parseIdSlug, parseEpisodeSlug } from "@/lib/tmdb/detail";
 import { episodeCardFields } from "@/lib/tmdb/episode-card";
 import { posterUrl } from "@/lib/tmdb/images";
@@ -18,8 +19,18 @@ export async function GET(
   { params }: { params: Promise<{ mediaType: string; idSlug: string; episode: string }> },
 ) {
   const { mediaType, idSlug, episode: episodeSlug } = await params;
+
+  // parseEpisodeSlug accepts s1-s999 and e1-e9999, an unbounded URL space far
+  // bigger than any real season list, so a bogus link is cheap to construct
+  // and cheap to spam. Refuse those before doing any lookup or rendering: the
+  // page route already 404s for the same URL, and rendering an attractive
+  // card for a 404 would let a bogus link look legitimate. Reject early so a
+  // wave of made-up episode URLs cannot each force a TMDB call, a Satori
+  // rasterise and a sharp JPEG encode.
+  if (mediaType !== "tv") return new Response(null, { status: 404 });
   const id = parseIdSlug(idSlug);
   const ref = parseEpisodeSlug(episodeSlug);
+  if (!id || !ref) return new Response(null, { status: 404 });
 
   let showTitle = BRAND_NAME;
   let episodeName = "";
@@ -28,28 +39,30 @@ export async function GET(
   let synopsis: string | null = null;
   let posterSrc: string | null = null;
 
-  if (id && ref && mediaType === "tv") {
-    try {
-      const show = await getOrCreateTitle("tv", id, false);
-      const episode = await oneEpisode(id, ref.season, ref.episode);
-      showTitle = show.title;
-      posterSrc = posterUrl(show.posterPath);
-      if (episode) {
-        const fields = episodeCardFields({
-          showYear: show.releaseYear,
-          season: ref.season,
-          episode: ref.episode,
-          airDate: episode.airDate,
-          overview: episode.overview,
-        });
-        episodeName = episode.name;
-        metaLine = fields.metaLine;
-        yearLine = fields.year ? String(fields.year) : "";
-        synopsis = fields.synopsis;
-      }
-    } catch {
-      /* fall back to the branded card */
-    }
+  try {
+    const show = await getOrCreateTitle("tv", id, false);
+    const episode = await oneEpisode(id, ref.season, ref.episode);
+    // The episode genuinely does not exist: 404 rather than rasterise a card
+    // for it, matching the page route's own 404 for this URL.
+    if (!episode) return new Response(null, { status: 404 });
+    showTitle = show.title;
+    posterSrc = posterUrl(show.posterPath);
+    const fields = episodeCardFields({
+      showYear: show.releaseYear,
+      season: ref.season,
+      episode: ref.episode,
+      airDate: episode.airDate,
+      overview: episode.overview,
+    });
+    episodeName = episode.name;
+    metaLine = fields.metaLine;
+    yearLine = fields.year ? String(fields.year) : "";
+    synopsis = fields.synopsis;
+  } catch (e) {
+    // A 404 from TMDB itself means the show or episode does not exist either.
+    // Any other error is a transient fault on a real episode, which is better
+    // served by the plain branded fallback card than by a broken preview.
+    if (e instanceof TmdbError && e.status === 404) return new Response(null, { status: 404 });
   }
 
   // Satori's own image fetch is flaky, which is why some cards came out blank.
