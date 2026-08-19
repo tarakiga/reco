@@ -18,6 +18,12 @@ export default defineConfig({
   },
   test: {
     exclude: ["e2e/**", "node_modules/**"],
+    // 5s (the default) is too tight here for two reasons: service tests make
+    // several sequential round trips to a remote CockroachDB, and component
+    // tests overshoot it on a loaded machine. Both showed up as timeouts that
+    // looked like failures but were not. A hung test still fails, just later.
+    testTimeout: 30_000,
+    hookTimeout: 30_000,
     projects: [{
       extends: true,
       test: {
