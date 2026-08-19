@@ -244,3 +244,31 @@ unfurler group with access, sitting above the catch-all rule.
   following the `list_items` convention where 0/0 means the whole title;
   `round2TitleIds` becomes option keys since a uuid array cannot express an
   episode.
+
+## 2026-08-19 (later): Episode voting shipped
+
+A "Vote to Watch" ballot can now carry a specific TV episode, mixed freely with
+whole titles. Two-step picker (search the show, then pick the episode, reusing
+ListEpisodePicker), option keys "{titleId}:{season}:{episode}" with 0:0 meaning
+the whole title, genre cull unchanged since an episode inherits its show's
+genres. Spec and plan under docs/superpowers/. polls.ts went from zero tests to
+13, written as characterisation tests BEFORE the refactor.
+
+Operational lessons, each learned the hard way this session:
+
+- **Removing a DB column: schema declaration first, deploy, THEN drop.** Drizzle
+  selects every column declared in schema.ts whether or not the value is read,
+  so dropping a column while a build declaring it is live 500s every page that
+  queries the table. This briefly broke /vote pages before being restored.
+- **`npm run db:push` silently applies nothing in a non-interactive shell.**
+  Exits 0, no change summary. Schema changes were applied as direct idempotent
+  ALTER TABLE statements and verified by reading information_schema back.
+- **This repo has no drizzle-kit migration baseline.** `db:generate` emits a full
+  23-table initial migration, not an incremental diff. Adopting real migrations
+  is its own future project.
+- **Vitest testTimeout is now 30s.** The 5s default was the cause of the
+  long-standing flaky UI test failures and made multi-round-trip CockroachDB
+  service tests impossible.
+
+round2_title_ids is fully gone: code, schema and database column. The ballot
+lives in round2_option_keys.
