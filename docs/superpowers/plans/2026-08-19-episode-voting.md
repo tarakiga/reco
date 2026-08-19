@@ -684,44 +684,38 @@ Neither is related to this work.
 
 ---
 
-### Task 8: Drop the old column, AFTER deploying
+### Task 8: Drop the old column (partially done, sequencing corrected)
 
-Do NOT do this until Tasks 4 to 7 are merged and live in production. Until then the running
-code reads `round2_title_ids`, and dropping it 500s every poll page.
+The original version of this task said to remove the schema declaration and drop the
+database column together. That ordering is wrong, and running the drop against a live
+build proved it: Drizzle's `select().from(polls)` enumerates every column declared in
+`schema.ts`, so the deployed build names `round2_title_ids` in its SELECT whether or not
+any code reads the value. The drop broke every poll page with "column does not exist"
+until the column was restored about a minute later.
 
-**Files:**
-- Modify: `src/db/schema.ts`
+The correct sequence, with the first step already done in commit `07fd355`:
 
-- [ ] **Step 1: Confirm the new code is deployed**
+- [x] **Step 1: Remove the declaration from `src/db/schema.ts`** (done, `07fd355`)
 
-Check that production is serving a build that contains the option-key code. If in any
-doubt, stop and ask.
+- [ ] **Step 2: Deploy that commit and confirm a poll page renders**
 
-- [ ] **Step 2: Remove the column from the schema**
+Load a finished poll such as `/vote/ceaa9d82fa` on the new deployment and confirm it shows
+its result rather than an error page.
 
-Delete the `round2TitleIds` line and its comment from the `polls` table.
+- [ ] **Step 3: Only then drop the column**
 
-- [ ] **Step 3: Apply it**
-
-`npm run db:push` did not work non-interactively in this environment. Apply directly and
-verify, the same way the expand phase was applied:
+`npm run db:push` does not apply changes non-interactively in this environment, so apply
+directly and verify, the same way the expand phase was applied:
 
 ```sql
 ALTER TABLE polls DROP COLUMN IF EXISTS round2_title_ids;
 ```
 
-Then confirm with a query against `information_schema.columns` that the column is gone and
-that `round2_option_keys` is still populated for the rows that had a ballot.
+Confirm via `information_schema.columns` that only `round2_option_keys` remains, and that
+the poll page still renders afterwards.
 
-- [ ] **Step 4: Verify and commit**
-
-Run: `npx tsc --noEmit` (expect no output)
-Run: `npx vitest run src/services/polls.test.ts` (expect PASS)
-
-```bash
-git add src/db/schema.ts
-git commit -m "Drop the superseded round2_title_ids column"
-```
+This step stays optional: an unused nullable column costs nothing, and rushing it is how
+the outage above happened.
 
 ---
 
