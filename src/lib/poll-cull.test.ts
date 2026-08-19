@@ -58,11 +58,11 @@ test("no votes → no survivors", () => {
 });
 
 test("two episodes of one show both survive, since they share its genres", () => {
-  const map = new Map([
+  const titleMap = new Map([
     ["t1:1:1", { genreIds: [35], title: "Bottom: S1E1" }],
     ["t1:1:2", { genreIds: [35], title: "Bottom: S1E2" }],
   ]);
-  const votes = [{ optionKey: "t1:1:1" }, { optionKey: "t1:1:2" }];
+  const optionVotes = [{ optionKey: "t1:1:1" }, { optionKey: "t1:1:2" }];
   // No genre separation, so nothing is culled and round 2 is a straight runoff.
-  expect(computeSurvivors(votes, map).sort()).toEqual(["t1:1:1", "t1:1:2"]);
+  expect(computeSurvivors(optionVotes, titleMap).sort()).toEqual(["t1:1:1", "t1:1:2"]);
 });

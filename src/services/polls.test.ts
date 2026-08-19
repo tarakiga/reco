@@ -2,7 +2,7 @@ import { afterAll, beforeAll, expect, test } from "vitest";
 import { eq, inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { profiles, titles, polls } from "@/db/schema";
-import { createPoll, castVote, getPollState, PollError } from "./polls";
+import { createPoll, castVote, getPollState, listUserPolls, PollError } from "./polls";
 
 const CLERK = "__vitest__clerk_polls";
 // Two comedies and one horror, so the genre cull has something to separate.
@@ -112,4 +112,20 @@ test("a full round 1 refuses an extra voter", async () => {
 
 test("getPollState returns null for an unknown slug", async () => {
   expect(await getPollState("__vitest__nope", null)).toBeNull();
+});
+
+test("listUserPolls surfaces the winner title once a poll finishes", async () => {
+  const { slug } = await createPoll(creatorId, { title: "__vitest__ list", expectedVoters: 3 });
+  await castVote(slug, voter("g1"), "movie", 99912001);
+  await castVote(slug, voter("g2"), "movie", 99912002);
+  await castVote(slug, voter("g3"), "movie", 99912003);
+
+  await castVote(slug, voter("g1"), "movie", 99912001);
+  await castVote(slug, voter("g2"), "movie", 99912001);
+  await castVote(slug, voter("g3"), "movie", 99912002);
+
+  const summaries = await listUserPolls(creatorId);
+  const summary = summaries.find((s) => s.slug === slug);
+  expect(summary?.status).toBe("done");
+  expect(summary?.winnerTitle).toBe("Poll Comedy A");
 });

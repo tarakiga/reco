@@ -37,18 +37,25 @@ interface TitleLite {
 }
 
 /**
- * Loads the titles behind a set of option keys. An option key that fails to
- * parse (corrupt data, not attacker input — see poll-option.ts) is skipped
+ * Loads the titles behind a set of options. An option key that fails to
+ * parse (corrupt data, not attacker input, see poll-option.ts) is skipped
  * rather than thrown on, so one bad key doesn't take down the whole poll.
+ *
+ * Episode names travel in with the caller rather than being re-queried here:
+ * they're already sitting in the vote rows every caller has in hand, and a
+ * lookup scoped only by titleId would scan every vote ever cast for that show
+ * across every poll on the platform, on the hottest path in the feature.
  */
-async function loadOptions(keys: string[]): Promise<Map<string, TitleLite>> {
+async function loadOptions(
+  options: { key: string; episodeName: string | null }[],
+): Promise<Map<string, TitleLite>> {
   const map = new Map<string, TitleLite>();
-  if (keys.length === 0) return map;
+  if (options.length === 0) return map;
 
-  const refs = new Map<string, { titleId: string; season: number; episode: number }>();
-  for (const key of keys) {
+  const refs = new Map<string, { titleId: string; season: number; episode: number; episodeName: string | null }>();
+  for (const { key, episodeName } of options) {
     const ref = parseOptionKey(key);
-    if (ref) refs.set(key, ref);
+    if (ref) refs.set(key, { ...ref, episodeName });
   }
   if (refs.size === 0) return map;
 
@@ -68,33 +75,13 @@ async function loadOptions(keys: string[]): Promise<Map<string, TitleLite>> {
     .where(inArray(titles.id, titleIds));
   const rowsById = new Map(rows.map((r) => [r.id, r]));
 
-  // Episode names are captured at vote time (poll_votes.episode_name), since a
-  // key alone ("titleId:season:episode") can't carry the name itself.
-  const episodeNames = new Map<string, string>();
-  const episodeTitleIds = [...new Set([...refs.values()].filter((r) => r.episode > 0).map((r) => r.titleId))];
-  if (episodeTitleIds.length > 0) {
-    const epRows = await db
-      .select({
-        titleId: pollVotes.titleId,
-        seasonNumber: pollVotes.seasonNumber,
-        episodeNumber: pollVotes.episodeNumber,
-        episodeName: pollVotes.episodeName,
-      })
-      .from(pollVotes)
-      .where(inArray(pollVotes.titleId, episodeTitleIds));
-    for (const er of epRows) {
-      if (!er.episodeName) continue;
-      episodeNames.set(optionKey(er.titleId, er.seasonNumber, er.episodeNumber), er.episodeName);
-    }
-  }
-
   for (const [key, ref] of refs) {
     const r = rowsById.get(ref.titleId);
     if (!r) continue;
     const meta = (r.metadata ?? {}) as TmdbTitleDetail;
     const genres = (meta.genres ?? []).map((g) => ({ id: g.id, name: g.name }));
     const isEp = ref.episode > 0;
-    const episodeName = isEp ? episodeNames.get(key) ?? null : null;
+    const episodeName = isEp ? ref.episodeName : null;
     map.set(key, {
       id: r.id,
       tmdbId: r.tmdbId,
@@ -150,7 +137,7 @@ function distinctVoters(votes: VoteLite[]): number {
 /** Close round 1: cull by genre, then either crown a sole survivor or open round 2. */
 async function closeRound1(pollId: string): Promise<void> {
   const votes = await roundVotes(pollId, 1);
-  const titleMap = await loadOptions(votes.map((v) => v.optionKey));
+  const titleMap = await loadOptions(votes.map((v) => ({ key: v.optionKey, episodeName: v.episodeName })));
   const survivors = computeSurvivors(votes, titleMap);
   if (survivors.length <= 1) {
     const winnerRef = survivors[0] ? parseOptionKey(survivors[0]) : null;
@@ -172,7 +159,7 @@ async function closeRound1(pollId: string): Promise<void> {
 /** Close round 2: most-voted survivor wins (tie → higher TMDB rating, then title). */
 async function closeRound2(pollId: string): Promise<void> {
   const votes = await roundVotes(pollId, 2);
-  const titleMap = await loadOptions(votes.map((v) => v.optionKey));
+  const titleMap = await loadOptions(votes.map((v) => ({ key: v.optionKey, episodeName: v.episodeName })));
   const tally = new Map<string, number>();
   for (const v of votes) tally.set(v.optionKey, (tally.get(v.optionKey) ?? 0) + 1);
   let winner: string | null = null;
@@ -248,10 +235,14 @@ export async function listUserPolls(userId: string): Promise<PollSummary[]> {
     .from(polls)
     .where(eq(polls.creatorId, userId))
     .orderBy(desc(polls.createdAt));
+  // No vote rows in hand here (unlike the other loadOptions callers), so there's
+  // no episode name to thread through without an extra query. A winning episode
+  // still renders as "Show: S1E6" without the friendly episode title on this
+  // list page; that's an acceptable trade for not adding another query here.
   const winnerKeys = rows
     .filter((r): r is typeof r & { winnerTitleId: string } => Boolean(r.winnerTitleId))
     .map((r) => optionKey(r.winnerTitleId, r.winnerSeasonNumber, r.winnerEpisodeNumber));
-  const titleMap = await loadOptions(winnerKeys);
+  const titleMap = await loadOptions(winnerKeys.map((key) => ({ key, episodeName: null })));
   const summaries: PollSummary[] = [];
   for (const r of rows) {
     const votes = await roundVotes(r.id, 1);
@@ -415,13 +406,22 @@ export async function getPollState(
     ? optionKey(poll.winnerTitleId, poll.winnerSeasonNumber, poll.winnerEpisodeNumber)
     : null;
 
+  // Episode names live on the vote rows we already loaded above. Survivors are
+  // always a subset of round-1 votes and the winner a subset of round-2 votes,
+  // so every key that can carry a name finds one here without another query.
+  const episodeNameByKey = new Map<string, string | null>();
+  for (const v of r1) episodeNameByKey.set(v.optionKey, v.episodeName);
+  for (const v of r2) episodeNameByKey.set(v.optionKey, v.episodeName);
+
   const referenced = new Set<string>([
     ...r1.map((v) => v.optionKey),
     ...r2.map((v) => v.optionKey),
     ...(poll.round2OptionKeys ?? []),
     ...(winnerKey ? [winnerKey] : []),
   ]);
-  const titleMap = await loadOptions([...referenced]);
+  const titleMap = await loadOptions(
+    [...referenced].map((key) => ({ key, episodeName: episodeNameByKey.get(key) ?? null })),
+  );
 
   const voterKey = voter?.voterKey ?? null;
   const isCreator = Boolean(voter?.userId && poll.creatorId === voter.userId);
