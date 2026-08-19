@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getOrCreateTitle } from "@/services/catalog";
 import { oneEpisode } from "@/services/tv-season";
+import { TmdbError } from "@/lib/tmdb/client";
 import { parseIdSlug, parseEpisodeSlug } from "@/lib/tmdb/detail";
 import { episodeCardFields } from "@/lib/tmdb/episode-card";
 import { ShareButton } from "@/components/catalog/ShareButton";
@@ -12,7 +13,9 @@ interface Params {
   episode: string;
 }
 
-/** Show row, episode and parsed reference, or null when any part is unusable. */
+/** Show row, episode and parsed reference, or null when the episode genuinely
+ *  does not exist. Anything other than a not-found rethrows: a TMDB or database
+ *  fault must surface as an error, not masquerade as a missing episode. */
 async function load(params: Params) {
   if (params.mediaType !== "tv") return null;
   const id = parseIdSlug(params.idSlug);
@@ -22,14 +25,22 @@ async function load(params: Params) {
     const show = await getOrCreateTitle("tv", id, false);
     const episode = await oneEpisode(id, ref.season, ref.episode);
     return episode ? { show, episode, ref } : null;
-  } catch {
-    return null;
+  } catch (e) {
+    if (e instanceof TmdbError && e.status === 404) return null;
+    throw e;
   }
 }
 
 export async function generateMetadata({ params }: { params: Promise<Params> }) {
   const p = await params;
-  const data = await load(p);
+  // A metadata failure should degrade to no metadata rather than break the
+  // page render, matching the sibling show page's generateMetadata.
+  let data;
+  try {
+    data = await load(p);
+  } catch {
+    return {};
+  }
   if (!data) return {};
   const { show, episode, ref } = data;
   const fields = episodeCardFields({
