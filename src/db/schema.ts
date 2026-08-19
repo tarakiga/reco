@@ -273,9 +273,16 @@ export const polls = pgTable("polls", {
   expectedVoters: integer("expected_voters").notNull(),
   deadline: timestamp("deadline", { withTimezone: true }),
   status: pollStatusEnum("status").notNull().default("round1"),
-  // Surviving title ids after the round-1 genre cull (round-2 ballot).
+  // Surviving option keys after the round-1 genre cull (the round-2 ballot).
+  // Text rather than uuid because an option can be one episode of a title.
+  round2OptionKeys: text("round2_option_keys").array(),
+  // Superseded by round2OptionKeys. Kept until the new code is deployed, since
+  // the running app still reads it: dropping it first would break live polls.
+  // Remove in a follow-up push once the option-key code is in production.
   round2TitleIds: uuid("round2_title_ids").array(),
   winnerTitleId: uuid("winner_title_id").references(() => titles.id, { onDelete: "set null" }),
+  winnerSeasonNumber: integer("winner_season_number").notNull().default(0),
+  winnerEpisodeNumber: integer("winner_episode_number").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -290,6 +297,13 @@ export const pollVotes = pgTable(
     userId: uuid("user_id").references(() => profiles.id, { onDelete: "cascade" }),
     round: integer("round").notNull(), // 1 or 2
     titleId: uuid("title_id").notNull().references(() => titles.id, { onDelete: "cascade" }),
+    // A specific TV episode of the title, or 0/0 for the whole movie/show, the
+    // same convention list_items uses. 0 rather than NULL so comparisons stay
+    // simple: NULLs compare distinct.
+    seasonNumber: integer("season_number").notNull().default(0),
+    episodeNumber: integer("episode_number").notNull().default(0),
+    // Captured at vote time so rendering a ballot needs no TMDB call per option.
+    episodeName: text("episode_name"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [unique("poll_votes_poll_voter_round").on(t.pollId, t.voterKey, t.round)],
