@@ -45,3 +45,18 @@ test("clamps a long synopsis on a word boundary", () => {
   expect(out.endsWith("...")).toBe(true);
   expect(out).not.toContain("wor...");
 });
+
+test("hard cuts when there is no space late enough to break on", () => {
+  const out = episodeCardFields({ ...BASE, overview: "x".repeat(400) }).synopsis!;
+  expect(out.endsWith("...")).toBe(true);
+  expect(out.startsWith("x".repeat(240))).toBe(true);
+});
+
+test("never splits a multi code unit character", () => {
+  const overview = `${"x".repeat(239)}\u{1F600}${"y".repeat(50)}`;
+  const out = episodeCardFields({ ...BASE, overview }).synopsis!;
+  // A lone surrogate makes the string invalid UTF-16. encodeURIComponent throws
+  // on invalid UTF-16 (a lone surrogate) but accepts a string built only from
+  // complete pairs, including an intact emoji, so this only fails on a real split.
+  expect(() => encodeURIComponent(out)).not.toThrow();
+});

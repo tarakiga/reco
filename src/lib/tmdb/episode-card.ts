@@ -35,9 +35,14 @@ export function episodeCardFields(input: EpisodeCardInput): EpisodeCardFields {
 
 function clamp(text: string): string | null {
   if (!text) return null;
-  if (text.length <= SYNOPSIS_MAX) return text;
-  const cut = text.slice(0, SYNOPSIS_MAX);
+  // Cut on code points, not code units, so the boundary can never land inside a
+  // surrogate pair and emit half an emoji into the share card.
+  const chars = [...text];
+  if (chars.length <= SYNOPSIS_MAX) return text;
+  const cut = chars.slice(0, SYNOPSIS_MAX).join("");
   const lastSpace = cut.lastIndexOf(" ");
+  // Below this threshold the last space is so far back that cutting there would
+  // throw away most of the synopsis, so accept a mid-word cut instead.
   const body = lastSpace > SYNOPSIS_MAX * 0.6 ? cut.slice(0, lastSpace) : cut;
   return `${body.trimEnd()}...`;
 }
