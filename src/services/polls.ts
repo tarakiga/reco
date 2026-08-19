@@ -6,6 +6,7 @@ import { polls, pollVotes, titles } from "@/db/schema";
 import { getOrCreateTitle } from "./catalog";
 import { posterUrl } from "@/lib/tmdb/images";
 import { computeSurvivors, topTierGenres, OTHER_GENRE } from "@/lib/poll-cull";
+import { optionKey, parseOptionKey } from "@/lib/poll-option";
 import type { VoterIdentity } from "./voter";
 import type { TmdbTitleDetail } from "@/lib/tmdb/types";
 
@@ -30,11 +31,28 @@ interface TitleLite {
   genreIds: number[];
   genres: { id: number; name: string }[];
   rating: number; // TMDB vote_average (0 when unknown) — round-2 tiebreak
+  seasonNumber: number;
+  episodeNumber: number;
+  episodeName: string | null;
 }
 
-async function loadTitles(ids: string[]): Promise<Map<string, TitleLite>> {
+/**
+ * Loads the titles behind a set of option keys. An option key that fails to
+ * parse (corrupt data, not attacker input — see poll-option.ts) is skipped
+ * rather than thrown on, so one bad key doesn't take down the whole poll.
+ */
+async function loadOptions(keys: string[]): Promise<Map<string, TitleLite>> {
   const map = new Map<string, TitleLite>();
-  if (ids.length === 0) return map;
+  if (keys.length === 0) return map;
+
+  const refs = new Map<string, { titleId: string; season: number; episode: number }>();
+  for (const key of keys) {
+    const ref = parseOptionKey(key);
+    if (ref) refs.set(key, ref);
+  }
+  if (refs.size === 0) return map;
+
+  const titleIds = [...new Set([...refs.values()].map((r) => r.titleId))];
   const rows = await db
     .select({
       id: titles.id,
@@ -47,21 +65,52 @@ async function loadTitles(ids: string[]): Promise<Map<string, TitleLite>> {
       metadata: titles.metadata,
     })
     .from(titles)
-    .where(inArray(titles.id, ids));
-  for (const r of rows) {
+    .where(inArray(titles.id, titleIds));
+  const rowsById = new Map(rows.map((r) => [r.id, r]));
+
+  // Episode names are captured at vote time (poll_votes.episode_name), since a
+  // key alone ("titleId:season:episode") can't carry the name itself.
+  const episodeNames = new Map<string, string>();
+  const episodeTitleIds = [...new Set([...refs.values()].filter((r) => r.episode > 0).map((r) => r.titleId))];
+  if (episodeTitleIds.length > 0) {
+    const epRows = await db
+      .select({
+        titleId: pollVotes.titleId,
+        seasonNumber: pollVotes.seasonNumber,
+        episodeNumber: pollVotes.episodeNumber,
+        episodeName: pollVotes.episodeName,
+      })
+      .from(pollVotes)
+      .where(inArray(pollVotes.titleId, episodeTitleIds));
+    for (const er of epRows) {
+      if (!er.episodeName) continue;
+      episodeNames.set(optionKey(er.titleId, er.seasonNumber, er.episodeNumber), er.episodeName);
+    }
+  }
+
+  for (const [key, ref] of refs) {
+    const r = rowsById.get(ref.titleId);
+    if (!r) continue;
     const meta = (r.metadata ?? {}) as TmdbTitleDetail;
     const genres = (meta.genres ?? []).map((g) => ({ id: g.id, name: g.name }));
-    map.set(r.id, {
+    const isEp = ref.episode > 0;
+    const episodeName = isEp ? episodeNames.get(key) ?? null : null;
+    map.set(key, {
       id: r.id,
       tmdbId: r.tmdbId,
       mediaType: r.mediaType,
-      title: r.title,
+      title: isEp ? `${r.title}: S${ref.season}E${ref.episode}${episodeName ? ` - ${episodeName}` : ""}` : r.title,
       year: r.year,
       posterUrl: posterUrl(r.posterPath),
-      href: `/title/${r.mediaType}/${r.tmdbId}-${r.slug}`,
+      href: isEp
+        ? `/title/tv/${r.tmdbId}-${r.slug}/s${ref.season}e${ref.episode}`
+        : `/title/${r.mediaType}/${r.tmdbId}-${r.slug}`,
       genreIds: genres.length ? genres.map((g) => g.id) : [OTHER_GENRE],
       genres,
       rating: typeof meta.vote_average === "number" ? meta.vote_average : 0,
+      seasonNumber: ref.season,
+      episodeNumber: ref.episode,
+      episodeName,
     });
   }
   return map;
@@ -74,13 +123,24 @@ async function loadTitles(ids: string[]): Promise<Map<string, TitleLite>> {
 interface VoteLite {
   voterKey: string;
   titleId: string;
+  seasonNumber: number;
+  episodeNumber: number;
+  episodeName: string | null;
+  optionKey: string;
 }
 
 async function roundVotes(pollId: string, round: number): Promise<VoteLite[]> {
-  return db
-    .select({ voterKey: pollVotes.voterKey, titleId: pollVotes.titleId })
+  const rows = await db
+    .select({
+      voterKey: pollVotes.voterKey,
+      titleId: pollVotes.titleId,
+      seasonNumber: pollVotes.seasonNumber,
+      episodeNumber: pollVotes.episodeNumber,
+      episodeName: pollVotes.episodeName,
+    })
     .from(pollVotes)
     .where(and(eq(pollVotes.pollId, pollId), eq(pollVotes.round, round)));
+  return rows.map((r) => ({ ...r, optionKey: optionKey(r.titleId, r.seasonNumber, r.episodeNumber) }));
 }
 
 function distinctVoters(votes: VoteLite[]): number {
@@ -90,28 +150,35 @@ function distinctVoters(votes: VoteLite[]): number {
 /** Close round 1: cull by genre, then either crown a sole survivor or open round 2. */
 async function closeRound1(pollId: string): Promise<void> {
   const votes = await roundVotes(pollId, 1);
-  const titleMap = await loadTitles(votes.map((v) => v.titleId));
+  const titleMap = await loadOptions(votes.map((v) => v.optionKey));
   const survivors = computeSurvivors(votes, titleMap);
   if (survivors.length <= 1) {
+    const winnerRef = survivors[0] ? parseOptionKey(survivors[0]) : null;
     await db
       .update(polls)
-      .set({ status: "done", round2TitleIds: survivors, winnerTitleId: survivors[0] ?? null })
+      .set({
+        status: "done",
+        round2OptionKeys: survivors,
+        winnerTitleId: winnerRef?.titleId ?? null,
+        winnerSeasonNumber: winnerRef?.season ?? 0,
+        winnerEpisodeNumber: winnerRef?.episode ?? 0,
+      })
       .where(eq(polls.id, pollId));
   } else {
-    await db.update(polls).set({ status: "round2", round2TitleIds: survivors }).where(eq(polls.id, pollId));
+    await db.update(polls).set({ status: "round2", round2OptionKeys: survivors }).where(eq(polls.id, pollId));
   }
 }
 
 /** Close round 2: most-voted survivor wins (tie → higher TMDB rating, then title). */
 async function closeRound2(pollId: string): Promise<void> {
   const votes = await roundVotes(pollId, 2);
-  const titleMap = await loadTitles(votes.map((v) => v.titleId));
+  const titleMap = await loadOptions(votes.map((v) => v.optionKey));
   const tally = new Map<string, number>();
-  for (const v of votes) tally.set(v.titleId, (tally.get(v.titleId) ?? 0) + 1);
+  for (const v of votes) tally.set(v.optionKey, (tally.get(v.optionKey) ?? 0) + 1);
   let winner: string | null = null;
   let best = { votes: -1, rating: -1, title: "" };
-  for (const [id, n] of tally) {
-    const t = titleMap.get(id);
+  for (const [key, n] of tally) {
+    const t = titleMap.get(key);
     const cand = { votes: n, rating: t?.rating ?? 0, title: t?.title ?? "" };
     if (
       cand.votes > best.votes ||
@@ -119,10 +186,19 @@ async function closeRound2(pollId: string): Promise<void> {
       (cand.votes === best.votes && cand.rating === best.rating && cand.title.localeCompare(best.title) < 0)
     ) {
       best = cand;
-      winner = id;
+      winner = key;
     }
   }
-  await db.update(polls).set({ status: "done", winnerTitleId: winner }).where(eq(polls.id, pollId));
+  const winnerRef = winner ? parseOptionKey(winner) : null;
+  await db
+    .update(polls)
+    .set({
+      status: "done",
+      winnerTitleId: winnerRef?.titleId ?? null,
+      winnerSeasonNumber: winnerRef?.season ?? 0,
+      winnerEpisodeNumber: winnerRef?.episode ?? 0,
+    })
+    .where(eq(polls.id, pollId));
 }
 
 // ---------------------------------------------------------------------------
@@ -172,11 +248,14 @@ export async function listUserPolls(userId: string): Promise<PollSummary[]> {
     .from(polls)
     .where(eq(polls.creatorId, userId))
     .orderBy(desc(polls.createdAt));
-  const winnerIds = rows.map((r) => r.winnerTitleId).filter((x): x is string => Boolean(x));
-  const titleMap = await loadTitles(winnerIds);
+  const winnerKeys = rows
+    .filter((r): r is typeof r & { winnerTitleId: string } => Boolean(r.winnerTitleId))
+    .map((r) => optionKey(r.winnerTitleId, r.winnerSeasonNumber, r.winnerEpisodeNumber));
+  const titleMap = await loadOptions(winnerKeys);
   const summaries: PollSummary[] = [];
   for (const r of rows) {
     const votes = await roundVotes(r.id, 1);
+    const winnerKey = r.winnerTitleId ? optionKey(r.winnerTitleId, r.winnerSeasonNumber, r.winnerEpisodeNumber) : null;
     summaries.push({
       id: r.id,
       slug: r.slug,
@@ -186,7 +265,7 @@ export async function listUserPolls(userId: string): Promise<PollSummary[]> {
       deadline: r.deadline ? r.deadline.toISOString() : null,
       createdAt: r.createdAt.toISOString(),
       round1Votes: distinctVoters(votes),
-      winnerTitle: r.winnerTitleId ? titleMap.get(r.winnerTitleId)?.title ?? null : null,
+      winnerTitle: winnerKey ? titleMap.get(winnerKey)?.title ?? null : null,
     });
   }
   return summaries;
@@ -216,6 +295,8 @@ export async function castVote(
 
   const round = poll.status === "round1" ? 1 : 2;
   const title = await getOrCreateTitle(mediaType, tmdbId);
+  // Episodes arrive in a later task; every option cast here is the whole title.
+  const key = optionKey(title.id, 0, 0);
 
   if (round === 1) {
     const votes = await roundVotes(poll.id, 1);
@@ -229,7 +310,7 @@ export async function castVote(
       .from(pollVotes)
       .where(and(eq(pollVotes.pollId, poll.id), eq(pollVotes.voterKey, voter.voterKey), eq(pollVotes.round, 1)));
     if (!mine) throw new PollError(403, "Only round-1 voters can vote in round 2");
-    if (!(poll.round2TitleIds ?? []).includes(title.id)) {
+    if (!(poll.round2OptionKeys ?? []).includes(key)) {
       throw new PollError(409, "That option was eliminated in round 1");
     }
   }
@@ -276,12 +357,15 @@ export async function closePoll(slug: string, userId: string): Promise<PollViewS
 // ---------------------------------------------------------------------------
 
 export interface PollOption {
-  titleId: string;
+  key: string;
   title: string;
   year: number | null;
   posterUrl: string | null;
   href: string;
   genres: string[];
+  seasonNumber: number;
+  episodeNumber: number;
+  episodeName: string | null;
   votes: number | null; // null while the round is still blind
   survived?: boolean;
 }
@@ -300,7 +384,14 @@ export interface PollViewState {
   // Live progress for the active round (counts only — picks stay hidden).
   votesIn: number;
   votesNeeded: number;
-  myPick: { titleId: string; title: string; posterUrl: string | null } | null;
+  myPick: {
+    key: string;
+    title: string;
+    posterUrl: string | null;
+    seasonNumber: number;
+    episodeNumber: number;
+    episodeName: string | null;
+  } | null;
   // Round-1 reveal (present once round 1 has closed).
   reveal: { topGenres: string[]; picks: PollOption[] } | null;
   // Round-2 ballot (survivors). Per-option votes only appear once done.
@@ -320,13 +411,17 @@ export async function getPollState(
   const r1Voters = distinctVoters(r1);
   const r2Voters = distinctVoters(r2);
 
+  const winnerKey = poll.winnerTitleId
+    ? optionKey(poll.winnerTitleId, poll.winnerSeasonNumber, poll.winnerEpisodeNumber)
+    : null;
+
   const referenced = new Set<string>([
-    ...r1.map((v) => v.titleId),
-    ...r2.map((v) => v.titleId),
-    ...(poll.round2TitleIds ?? []),
-    ...(poll.winnerTitleId ? [poll.winnerTitleId] : []),
+    ...r1.map((v) => v.optionKey),
+    ...r2.map((v) => v.optionKey),
+    ...(poll.round2OptionKeys ?? []),
+    ...(winnerKey ? [winnerKey] : []),
   ]);
-  const titleMap = await loadTitles([...referenced]);
+  const titleMap = await loadOptions([...referenced]);
 
   const voterKey = voter?.voterKey ?? null;
   const isCreator = Boolean(voter?.userId && poll.creatorId === voter.userId);
@@ -334,7 +429,7 @@ export async function getPollState(
   const myVote = voterKey
     ? (poll.status === "round1" ? r1 : r2).find((v) => v.voterKey === voterKey) ?? null
     : null;
-  const myPickTitle = myVote ? titleMap.get(myVote.titleId) : null;
+  const myPickTitle = myVote ? titleMap.get(myVote.optionKey) : null;
 
   // Can this voter still cast/change a vote in the active round? Guests count —
   // a null voterKey just means "no vote yet", so capacity is what gates round 1.
@@ -356,23 +451,26 @@ export async function getPollState(
   let reveal: PollViewState["reveal"] = null;
   if (poll.status !== "round1") {
     const tally = new Map<string, number>();
-    for (const v of r1) tally.set(v.titleId, (tally.get(v.titleId) ?? 0) + 1);
-    const survivors = new Set(poll.round2TitleIds ?? []);
+    for (const v of r1) tally.set(v.optionKey, (tally.get(v.optionKey) ?? 0) + 1);
+    const survivors = new Set(poll.round2OptionKeys ?? []);
     const top = topTierGenres(r1, titleMap);
     const genreNames = new Map<number, string>();
     for (const t of titleMap.values()) for (const g of t.genres) genreNames.set(g.id, g.name);
     const picks: PollOption[] = [...tally.keys()]
-      .map((id) => {
-        const t = titleMap.get(id);
+      .map((key) => {
+        const t = titleMap.get(key);
         return {
-          titleId: id,
+          key,
           title: t?.title ?? "Unknown",
           year: t?.year ?? null,
           posterUrl: t?.posterUrl ?? null,
           href: t?.href ?? "#",
           genres: (t?.genres ?? []).map((g) => g.name).slice(0, 3),
-          votes: tally.get(id) ?? 0,
-          survived: survivors.has(id),
+          seasonNumber: t?.seasonNumber ?? 0,
+          episodeNumber: t?.episodeNumber ?? 0,
+          episodeName: t?.episodeName ?? null,
+          votes: tally.get(key) ?? 0,
+          survived: survivors.has(key),
         };
       })
       .sort((a, b) => Number(b.survived) - Number(a.survived) || (b.votes ?? 0) - (a.votes ?? 0));
@@ -384,25 +482,28 @@ export async function getPollState(
 
   // Round-2 ballot.
   let round2: PollOption[] | null = null;
-  if (poll.status === "round2" || (poll.status === "done" && (poll.round2TitleIds ?? []).length > 1)) {
+  if (poll.status === "round2" || (poll.status === "done" && (poll.round2OptionKeys ?? []).length > 1)) {
     const done = poll.status === "done";
     const tally = new Map<string, number>();
-    if (done) for (const v of r2) tally.set(v.titleId, (tally.get(v.titleId) ?? 0) + 1);
-    round2 = (poll.round2TitleIds ?? []).map((id) => {
-      const t = titleMap.get(id);
+    if (done) for (const v of r2) tally.set(v.optionKey, (tally.get(v.optionKey) ?? 0) + 1);
+    round2 = (poll.round2OptionKeys ?? []).map((key) => {
+      const t = titleMap.get(key);
       return {
-        titleId: id,
+        key,
         title: t?.title ?? "Unknown",
         year: t?.year ?? null,
         posterUrl: t?.posterUrl ?? null,
         href: t?.href ?? "#",
         genres: (t?.genres ?? []).map((g) => g.name).slice(0, 3),
-        votes: done ? tally.get(id) ?? 0 : null,
+        seasonNumber: t?.seasonNumber ?? 0,
+        episodeNumber: t?.episodeNumber ?? 0,
+        episodeName: t?.episodeName ?? null,
+        votes: done ? tally.get(key) ?? 0 : null,
       };
     });
   }
 
-  const winnerT = poll.winnerTitleId ? titleMap.get(poll.winnerTitleId) : null;
+  const winnerT = winnerKey ? titleMap.get(winnerKey) : null;
 
   return {
     slug: poll.slug,
@@ -417,9 +518,17 @@ export async function getPollState(
     canClose,
     votesIn: poll.status === "round1" ? r1Voters : r2Voters,
     votesNeeded: poll.status === "round1" ? poll.expectedVoters : r1Voters,
-    myPick: myPickTitle
-      ? { titleId: myPickTitle.id, title: myPickTitle.title, posterUrl: myPickTitle.posterUrl }
-      : null,
+    myPick:
+      myVote && myPickTitle
+        ? {
+            key: myVote.optionKey,
+            title: myPickTitle.title,
+            posterUrl: myPickTitle.posterUrl,
+            seasonNumber: myPickTitle.seasonNumber,
+            episodeNumber: myPickTitle.episodeNumber,
+            episodeName: myPickTitle.episodeName,
+          }
+        : null,
     reveal,
     round2,
     winner: winnerT

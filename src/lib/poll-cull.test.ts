@@ -4,7 +4,7 @@ import { computeSurvivors, topTierGenres, OTHER_GENRE, type CullTitle } from "./
 const T = (id: string, title: string, genreIds: number[]): [string, CullTitle] => [id, { title, genreIds }];
 
 const map = (...entries: [string, CullTitle][]) => new Map<string, CullTitle>(entries);
-const votes = (...titleIds: string[]) => titleIds.map((titleId) => ({ titleId }));
+const votes = (...optionKeys: string[]) => optionKeys.map((optionKey) => ({ optionKey }));
 
 test("the dominant genre's titles survive; others are culled", () => {
   const m = map(
@@ -55,4 +55,14 @@ test("survivors are ordered by vote count, then title", () => {
 
 test("no votes → no survivors", () => {
   expect(computeSurvivors([], map())).toEqual([]);
+});
+
+test("two episodes of one show both survive, since they share its genres", () => {
+  const map = new Map([
+    ["t1:1:1", { genreIds: [35], title: "Bottom: S1E1" }],
+    ["t1:1:2", { genreIds: [35], title: "Bottom: S1E2" }],
+  ]);
+  const votes = [{ optionKey: "t1:1:1" }, { optionKey: "t1:1:2" }];
+  // No genre separation, so nothing is culled and round 2 is a straight runoff.
+  expect(computeSurvivors(votes, map).sort()).toEqual(["t1:1:1", "t1:1:2"]);
 });
