@@ -295,7 +295,7 @@ export default async function TitlePage({
               <h2 className="mb-3 text-lg font-semibold text-text">Episodes</h2>
               <EpisodeFinder tvId={id} />
               <TopEpisodesPanel tvId={id} />
-              <SeasonsAccordion tvId={id} seasons={seasons} />
+              <SeasonsAccordion tvId={id} seasons={seasons} todayYmd={new Date().toISOString().slice(0, 10)} />
             </section>
           )}
 

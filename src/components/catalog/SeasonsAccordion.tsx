@@ -271,6 +271,7 @@ function SeasonItem({
   onToggle,
   onMarkSeason,
   signedIn,
+  todayYmd,
 }: {
   tvId: number;
   season: SeasonSummary;
@@ -283,6 +284,10 @@ function SeasonItem({
   onToggle: (season: number, episode: number) => void;
   onMarkSeason: (season: number, episodes: number[], watched: boolean) => void;
   signedIn: boolean;
+  /** Today as YYYY-MM-DD, resolved on the server. Read from a prop rather than
+   *  the clock so render stays pure and the server and client agree on which
+   *  episodes have aired. */
+  todayYmd: string;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -304,9 +309,10 @@ function SeasonItem({
   // "Mark season watched" only makes sense once the season has fully aired — every
   // loaded episode has an air date in the past. An ongoing/upcoming season hides
   // the bulk action; individual episode checks still work.
+  // ISO dates compare lexicographically, so this is a plain string comparison
+  // against the server-supplied date rather than a clock read during render.
   const seasonComplete =
-    episodes.length > 0 &&
-    episodes.every((e) => e.airDate != null && new Date(e.airDate).getTime() <= Date.now());
+    episodes.length > 0 && episodes.every((e) => e.airDate != null && e.airDate <= todayYmd);
 
   // Becoming the deep-link target: open this season. Runs after mount (not during
   // render) so the server/client first paint match — no hydration mismatch.
@@ -414,7 +420,16 @@ function SeasonItem({
   );
 }
 
-export function SeasonsAccordion({ tvId, seasons }: { tvId: number; seasons: SeasonSummary[] }) {
+export function SeasonsAccordion({
+  tvId,
+  seasons,
+  todayYmd,
+}: {
+  tvId: number;
+  seasons: SeasonSummary[];
+  /** Today as YYYY-MM-DD from the server, see SeasonItem. */
+  todayYmd: string;
+}) {
   const [target, setTarget] = useState<HashTarget | null>(null);
   const { isSignedIn } = useAuth();
   const signedIn = isSignedIn ?? false;
@@ -488,6 +503,7 @@ export function SeasonsAccordion({ tvId, seasons }: { tvId: number; seasons: Sea
               onToggle={toggle}
               onMarkSeason={markSeason}
               signedIn={signedIn}
+              todayYmd={todayYmd}
             />
           );
         })}
