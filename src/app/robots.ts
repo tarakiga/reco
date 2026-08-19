@@ -39,10 +39,12 @@ export default function robots(): MetadataRoute.Robots {
       // every distinct query is a new URL, so crawling them generates unbounded
       // paths (12k distinct in six hours at last measure) and each one runs a
       // vector search. Search results are conventionally kept out of the index.
+      // Episode pages are excluded for the same reason of volume: one page per
+      // episode is a very large surface, and they exist to be shared, not found.
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/account", "/admin", "/api", "/find", "/rank"],
+        disallow: ["/account", "/admin", "/api", "/find", "/rank", "/title/*/*/s*e*"],
         crawlDelay: 10,
       },
     ],
