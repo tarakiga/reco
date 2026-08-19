@@ -105,24 +105,22 @@ crawled. It now has `cacheLife("weeks")` like `correctTitleQuery` and
 `guessEpisodes`. The whole `sceneSearch` pipeline is cached too, so a repeated
 query no longer buys a fresh Voyage embedding and vector scan either.
 
-**2. Vercel WAF rule is live in LOG mode, needs a decision.**
+**2. Vercel WAF rule now enforces. Decision made 2026-08-19.**
 
 Rule `rule_rate_limit_find_bC4fFw` ("Rate limit find"): `path starts with /find`,
-60 req / 60s per IP, action = **log only, blocks nothing**. Published 2026-08-03.
+60 req / 60s per IP. Published 2026-08-03 in log mode, switched to **deny** on
+2026-08-19 after the crawler incident below.
 
-Review at
-`https://vercel.com/tars-projects-8492f88e/reco/firewall/traffic?filter=rule_rate_limit_find_bC4fFw`
-then either tighten to enforcement:
+60 requests a minute is one a second sustained, so no person reaches it. A denied
+request is stopped at the edge and never reaches a function, so it costs nothing
+to serve and buys no Voyage embedding.
+
+If it ever fires against real people, most likely a shared office or mobile
+connection, raise the limit or soften the action to `challenge`:
 
 ```
-npx vercel firewall rules edit "Rate limit find" --rate-limit-action deny --yes
+npx vercel firewall rules edit "Rate limit find" --rate-limit-action challenge --yes
 npx vercel firewall publish --yes
-```
-
-or disable it if robots.txt already solved the traffic:
-
-```
-npx vercel firewall rules disable "Rate limit find" --yes
 ```
 
 Context: `/find` was taking ~6,980 hits in 6 hours (~1.7 req/s) across 12,216
@@ -177,3 +175,72 @@ middleware. Crawler traffic, not users.
 - 2 pre-existing test failures on main, unrelated: `site-config.test.ts > nav falls
   back when namespace empty`, and `PageShell.stories.tsx > Default` (Storybook missing
   ClerkProvider).
+
+## 2026-08-19: Crawler incident, episode share cards, caching sweep
+
+### Crawler incident, 14 August, resolved
+
+A headless crawler identifying as `Lightpanda/1.0` walked title ids at roughly
+218 req/s from a spread of residential ISPs. Two things made it expensive: each
+title page fans out into four RSC segment requests, so it hit function duration
+four times over, and `/find` was taking about 12 req/s, each one a Voyage
+embedding plus a CockroachDB vector query.
+
+Response, in order of effect: Attack Challenge Mode stopped it within minutes,
+the proxy now refuses that user agent by name (`src/lib/blocked-agents.ts`), and
+the `/find` rate limit rule was switched to deny.
+
+Challenge Mode was turned off again on 19 August after traffic stayed flat at
+about 12 req/min for half an hour with zero blocked requests. The crawl had
+already ended on its own days earlier.
+
+No second bot was ever identified. Vercel only retains firewall traffic for a
+day, so the 14 August user agents are gone. If it recurs, capture the user agent
+list from Firewall, Traffic while it is happening: that is the only window.
+
+### Shipped
+
+- **Episode share cards.** `/title/tv/{idSlug}/s1e1` now has its own page and OG
+  image (show poster, show title, season and episode, episode title, year,
+  synopsis). Spec and plan under `docs/superpowers/`. Pages are `noindex` and
+  robots-disallowed, but link unfurlers are explicitly allowed, see below.
+- **Canonical host redirect.** Every non-canonical host 308s to
+  `VERCEL_PROJECT_PRODUCTION_URL`. The `*.vercel.app` hosts were serving a full
+  duplicate of the site, with Clerk auth broken on them.
+- **`tmdbBriefToTitleResult`** in `src/lib/tmdb/brief.ts` replaces four copies of
+  the same TMDB brief to card mapping.
+- **Caching, 11 fixes.** Nine cached functions had `cacheTag` but no `cacheLife`,
+  so they ran on the roughly 15 minute default. `episodeIndex` was rebuilding a
+  show's whole season index about 96 times a day. Two public API routes hit TMDB
+  on every request.
+- **`next/cache` is aliased to a stub in `vitest.config.ts`**, the same way
+  `server-only` already was, so functions carrying `"use cache"` stay unit
+  testable. Without it `cacheLife` throws outside a Server Component.
+
+### Lessons worth keeping
+
+**Errors thrown inside a `"use cache"` function lose their prototype.** They
+arrive at callers as a plain `Error` with a digest, so `instanceof` is false on
+the far side. This shipped a live bug: the episode OG route rendered a full card
+for every made-up season instead of a 404. Return values across that boundary,
+do not throw types you intend to catch. See `src/services/tv-season.ts`.
+
+**Link unfurlers honour robots.txt.** Twitterbot, Slackbot, Discordbot and
+LinkedInBot all do. A blanket `Disallow` on a page means its share card never
+renders anywhere, because the crawler never fetches the page to read the OG tags,
+and it suppresses `noindex` for the same reason. `robots.ts` now has a named
+unfurler group with access, sitting above the catch-all rule.
+
+### Known and open
+
+- **Soft 404s, app wide.** All 12 routes calling `notFound()` return HTTP 200.
+  Fully dynamic routes do it too, so PPR shell streaming is the leading
+  explanation but is unconfirmed. Only a genuinely unrouted path 404s correctly.
+  Needs a spike before any fix.
+- **react-hooks lint: 27 problems across 20 files.** Spec at
+  `docs/superpowers/specs/2026-08-19-react-hooks-lint-cleanup-design.md`.
+- **Episode voting engine.** Designed, not yet specced. Two-step picker (search a
+  show, then pick the episode); `poll_votes` gains season and episode columns
+  following the `list_items` convention where 0/0 means the whole title;
+  `round2TitleIds` becomes option keys since a uuid array cannot express an
+  episode.
