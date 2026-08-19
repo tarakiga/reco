@@ -51,7 +51,7 @@ test("aggregateCast orders by episode count and reads the first role's character
 
 test("aggregateCast ranks a high-episode recurring role above a low-episode guest with lower billing", () => {
   // Candy Davis (13 eps, order 558) should outrank a 2-episode guest billed at
-  // order 8 — episode count is the significance signal, order only breaks ties.
+  // order 8: episode count is the significance signal, order only breaks ties.
   const cast = aggregateCast([
     { id: 1, name: "Low-ep Guest", order: 8, total_episode_count: 2, roles: [{ character: "Guest" }] },
     { id: 2, name: "Candy Davis", order: 558, total_episode_count: 13, roles: [{ character: "Miss Belfridge" }] },

@@ -7,6 +7,7 @@ vi.mock("./public-config", () => ({
 
 import { publishedOptions, publishedBlock } from "./public-config";
 import { getBrandName, getNavLinks } from "./site-config";
+import { NAV_LINKS } from "@/lib/nav";
 
 beforeEach(() => vi.clearAllMocks());
 
@@ -25,10 +26,10 @@ test("brand strips html and uses block body", async () => {
 test("nav falls back when namespace empty", async () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (publishedOptions as any).mockResolvedValue([]);
-  expect(await getNavLinks()).toEqual([
-    { href: "/", label: "Home" },
-    { href: "/for-you", label: "For you" },
-  ]);
+  // Compared against the constant, not a copy of it: the fallback nav is meant
+  // to grow as pages are added, and snapshotting it here made this test fail on
+  // four unrelated feature commits before anyone noticed.
+  expect(await getNavLinks()).toEqual(NAV_LINKS);
 });
 
 test("nav maps published option values", async () => {

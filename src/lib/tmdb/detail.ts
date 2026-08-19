@@ -69,7 +69,7 @@ export function topCast(cast: TmdbCastMember[] | undefined, limit = 12): CastEnt
  *  before the final season, e.g. someone billed across seasons 1–4 of 8).
  *
  *  Ranked by episode count first, then billing `order`. TMDB's `order` is
- *  unreliable for long-running shows — recurring cast added later often get a
+ *  unreliable for long-running shows: recurring cast added later often get a
  *  huge order number (e.g. Candy Davis on Are You Being Served: 13 episodes but
  *  order 558), which a pure-order sort would bury below 2-episode guests who
  *  happen to have a low order. Episode count is the better significance signal;
@@ -117,7 +117,7 @@ function toCrewPeople(list: { id: number; name: string }[]): CrewPerson[] {
   return out;
 }
 
-/** Director/Writers for movies, Creator(s) for TV — pulled from credits.crew / created_by. */
+/** Director/Writers for movies, Creator(s) for TV, pulled from credits.crew / created_by. */
 export function keyCrew(meta: TmdbTitleDetail, mediaType: MediaType): KeyCrew[] {
   if (mediaType === "tv") {
     const creators = toCrewPeople(meta.created_by ?? []);
@@ -198,7 +198,7 @@ export function formatReleaseDate(iso: string | null | undefined): string | null
   return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
-/** "More like this" — TMDB recommendations mapped to title cards. */
+/** "More like this": TMDB recommendations mapped to title cards. */
 export function recommendations(meta: TmdbTitleDetail, limit = 12): TitleResult[] {
   const items = meta.recommendations?.results ?? [];
   const out: TitleResult[] = [];
@@ -283,7 +283,7 @@ export function titleFacts(
       const vod = formatReleaseDate(vodIso);
       if (vod) facts.push({ label: "VOD", value: vod });
     } else if (cinemaIso && todayYmd) {
-      // No confirmed digital date — a common TMDB gap for smaller films. Estimate
+      // No confirmed digital date, a common TMDB gap for smaller films. Estimate
       // from the theatrical window, but only for films still in/near their release
       // window (don't guess a VOD date for decades-old catalogue titles). Clearly
       // labelled "Est." so it never reads as a confirmed date.
