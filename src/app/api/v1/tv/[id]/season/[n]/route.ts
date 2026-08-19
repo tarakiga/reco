@@ -12,7 +12,10 @@ export async function GET(
     return NextResponse.json({ error: "Invalid id or season" }, { status: 400 });
   }
   try {
-    return NextResponse.json({ episodes: await seasonEpisodes(tvId, seasonNumber) });
+    const episodes = await seasonEpisodes(tvId, seasonNumber);
+    // Null is "no such season", which is a 404 rather than an upstream fault.
+    if (!episodes) return NextResponse.json({ error: "No such season" }, { status: 404 });
+    return NextResponse.json({ episodes });
   } catch {
     return NextResponse.json({ error: "Season unavailable" }, { status: 502 });
   }
