@@ -1,5 +1,6 @@
 import {
   parseIdSlug,
+  parseEpisodeSlug,
   pickTrailerKey,
   topCast,
   keyCrew,
@@ -17,6 +18,25 @@ test("parseIdSlug extracts leading integer id", () => {
   expect(parseIdSlug("603-the-matrix-1999")).toBe(603);
   expect(parseIdSlug("42")).toBe(42);
   expect(parseIdSlug("not-a-number")).toBeNull();
+});
+
+test("parseEpisodeSlug reads season and episode numbers", () => {
+  expect(parseEpisodeSlug("s1e1")).toEqual({ season: 1, episode: 1 });
+  expect(parseEpisodeSlug("S12E07")).toEqual({ season: 12, episode: 7 });
+  expect(parseEpisodeSlug("s3e120")).toEqual({ season: 3, episode: 120 });
+});
+
+test("parseEpisodeSlug rejects specials and zero episodes", () => {
+  expect(parseEpisodeSlug("s0e1")).toBeNull();
+  expect(parseEpisodeSlug("s1e0")).toBeNull();
+});
+
+test("parseEpisodeSlug rejects anything that is not an episode segment", () => {
+  expect(parseEpisodeSlug("og")).toBeNull();
+  expect(parseEpisodeSlug("")).toBeNull();
+  expect(parseEpisodeSlug("s1e1x")).toBeNull();
+  expect(parseEpisodeSlug("season1")).toBeNull();
+  expect(parseEpisodeSlug("1396-breaking-bad")).toBeNull();
 });
 
 test("aggregateCast orders by episode count and reads the first role's character", () => {

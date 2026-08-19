@@ -12,6 +12,26 @@ export function parseIdSlug(idSlug: string): number | null {
   return m ? Number(m[1]) : null;
 }
 
+export interface EpisodeRef {
+  season: number;
+  episode: number;
+}
+
+/**
+ * Parse an episode path segment ("s1e1") into its season and episode numbers.
+ * Null for anything else, which is what keeps the sibling static "og" segment
+ * safe. Season 0 is rejected because specials are hidden everywhere else in the
+ * app, so they have no page to link to.
+ */
+export function parseEpisodeSlug(slug: string): EpisodeRef | null {
+  const m = slug.match(/^s(\d{1,3})e(\d{1,4})$/i);
+  if (!m) return null;
+  const season = Number(m[1]);
+  const episode = Number(m[2]);
+  if (season < 1 || episode < 1) return null;
+  return { season, episode };
+}
+
 export function pickTrailerKey(videos: TmdbVideo[] | undefined): string | null {
   if (!videos) return null;
   const yt = videos.filter((v) => v.site === "YouTube");
