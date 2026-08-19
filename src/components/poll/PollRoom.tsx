@@ -54,7 +54,10 @@ export function PollRoom({ initial, shareUrl }: { initial: PollViewState; shareU
   useEffect(() => {
     if (state.status === "done") return;
     const id = setInterval(() => {
-      if (!busyRef.current) refresh();
+      // Skip hidden tabs: an abandoned tab on a poll that never fills would
+      // otherwise refresh every 4s indefinitely, each tick a function
+      // invocation plus four database queries.
+      if (!busyRef.current && !document.hidden) refresh();
     }, 4000);
     return () => clearInterval(id);
   }, [state.status, refresh]);

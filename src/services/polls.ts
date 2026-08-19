@@ -244,9 +244,23 @@ export async function listUserPolls(userId: string): Promise<PollSummary[]> {
     .filter((r): r is typeof r & { winnerTitleId: string } => Boolean(r.winnerTitleId))
     .map((r) => optionKey(r.winnerTitleId, r.winnerSeasonNumber, r.winnerEpisodeNumber));
   const titleMap = await loadOptions(winnerKeys.map((key) => ({ key, episodeName: null })));
+  // One grouped query for all round-1 voters rather than one per poll: a
+  // creator with N polls previously paid N+1 queries to render this list.
+  const voterRows = rows.length
+    ? await db
+        .select({ pollId: pollVotes.pollId, voterKey: pollVotes.voterKey })
+        .from(pollVotes)
+        .where(and(inArray(pollVotes.pollId, rows.map((r) => r.id)), eq(pollVotes.round, 1)))
+    : [];
+  const votersByPoll = new Map<string, Set<string>>();
+  for (const v of voterRows) {
+    let set = votersByPoll.get(v.pollId);
+    if (!set) votersByPoll.set(v.pollId, (set = new Set()));
+    set.add(v.voterKey);
+  }
+
   const summaries: PollSummary[] = [];
   for (const r of rows) {
-    const votes = await roundVotes(r.id, 1);
     const winnerKey = r.winnerTitleId ? optionKey(r.winnerTitleId, r.winnerSeasonNumber, r.winnerEpisodeNumber) : null;
     summaries.push({
       id: r.id,
@@ -256,7 +270,7 @@ export async function listUserPolls(userId: string): Promise<PollSummary[]> {
       expectedVoters: r.expectedVoters,
       deadline: r.deadline ? r.deadline.toISOString() : null,
       createdAt: r.createdAt.toISOString(),
-      round1Votes: distinctVoters(votes),
+      round1Votes: votersByPoll.get(r.id)?.size ?? 0,
       winnerTitle: winnerKey ? titleMap.get(winnerKey)?.title ?? null : null,
     });
   }
