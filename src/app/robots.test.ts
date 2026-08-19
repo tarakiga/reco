@@ -15,3 +15,15 @@ test("still disallows the search result pages", () => {
   expect(disallow).toContain("/find");
   expect(disallow).toContain("/rank");
 });
+
+test("lets link unfurlers fetch episode pages so share cards render", () => {
+  const rules = robots().rules;
+  const list = Array.isArray(rules) ? rules : [rules];
+  const unfurlers = list.find((r) =>
+    Array.isArray(r.userAgent) ? r.userAgent.includes("Twitterbot") : r.userAgent === "Twitterbot",
+  );
+  expect(unfurlers).toBeDefined();
+  const disallow = (Array.isArray(unfurlers?.disallow) ? unfurlers.disallow : []) as string[];
+  expect(disallow).not.toContain("/title/*/*/s*e*");
+  expect(disallow).toContain("/api");
+});

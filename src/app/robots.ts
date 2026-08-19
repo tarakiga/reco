@@ -34,6 +34,27 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       // Disallow the scraper bots entirely.
       { userAgent: AI_SCRAPERS, disallow: "/" },
+      // Link unfurlers must be allowed to fetch episode pages: a disallowed URL
+      // is never fetched, so the card never renders and the page's own noindex
+      // is never even read. These are preview fetchers, not indexers, and they
+      // request one URL that a human just pasted rather than walking the site.
+      // Note facebookexternalhit is the unfurler and is deliberately separate
+      // from FacebookBot and meta-externalagent above, which are AI crawlers.
+      {
+        userAgent: [
+          "Twitterbot",
+          "facebookexternalhit",
+          "Slackbot-LinkExpanding",
+          "Slackbot",
+          "Discordbot",
+          "LinkedInBot",
+          "TelegramBot",
+          "WhatsApp",
+          "Applebot",
+        ],
+        allow: "/",
+        disallow: ["/account", "/admin", "/api"],
+      },
       // Everyone else: allowed, but throttled, and kept off private/API paths.
       // /find and /rank are excluded because they are result pages, not content:
       // every distinct query is a new URL, so crawling them generates unbounded
