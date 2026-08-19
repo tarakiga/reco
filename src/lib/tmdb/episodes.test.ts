@@ -173,3 +173,48 @@ test("rankTopEpisodes falls back to all rated when none clear the vote gate", ()
 test("rankTopEpisodes returns [] when no episode has a rating", () => {
   expect(rankTopEpisodes([entry({ voteAverage: null }), entry({ voteAverage: 7, voteCount: 0 })])).toEqual([]);
 });
+
+test("searchEpisodes matches a bare episode number across seasons", () => {
+  const entries = [
+    entry({ seasonNumber: 1, episodeNumber: 1, name: "Pilot" }),
+    entry({ seasonNumber: 1, episodeNumber: 2, name: "Second" }),
+    entry({ seasonNumber: 2, episodeNumber: 1, name: "The Return" }),
+  ];
+  const res = searchEpisodes(entries, "1");
+  expect(res.map((e) => `${e.seasonNumber}:${e.episodeNumber}`)).toEqual(["1:1", "2:1"]);
+});
+
+test("searchEpisodes reads 101 as season 1 episode 1", () => {
+  const entries = [
+    entry({ seasonNumber: 1, episodeNumber: 1, name: "Pilot" }),
+    entry({ seasonNumber: 10, episodeNumber: 1, name: "Tenth Opener" }),
+  ];
+  const res = searchEpisodes(entries, "101");
+  expect(res[0].seasonNumber).toBe(1);
+  expect(res[0].episodeNumber).toBe(1);
+});
+
+test("searchEpisodes accepts s2e3, S2 E3 and 2x03 forms", () => {
+  const entries = [
+    entry({ seasonNumber: 2, episodeNumber: 3, name: "Target" }),
+    entry({ seasonNumber: 3, episodeNumber: 2, name: "Decoy" }),
+  ];
+  expect(searchEpisodes(entries, "s2e3")[0]?.name).toBe("Target");
+  expect(searchEpisodes(entries, "S2 E3")[0]?.name).toBe("Target");
+  expect(searchEpisodes(entries, "2x03")[0]?.name).toBe("Target");
+});
+
+test("searchEpisodes puts positional hits ahead of text hits for a numeric query", () => {
+  const entries = [
+    entry({ seasonNumber: 1, episodeNumber: 1, name: "Pilot" }),
+    entry({ seasonNumber: 5, episodeNumber: 9, name: "Room 101", overview: "A door marked 101." }),
+  ];
+  const res = searchEpisodes(entries, "101");
+  expect(res[0].episodeNumber).toBe(1);
+  expect(res.some((e) => e.name === "Room 101")).toBe(true);
+});
+
+test("searchEpisodes still returns nothing for a short non-numeric query", () => {
+  const entries = [entry({ seasonNumber: 1, episodeNumber: 1, name: "Pilot" })];
+  expect(searchEpisodes(entries, "p")).toEqual([]);
+});

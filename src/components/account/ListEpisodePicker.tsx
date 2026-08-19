@@ -34,7 +34,9 @@ export function ListEpisodePicker({
 
   useEffect(() => {
     const query = q.trim();
-    if (query.length < 2) {
+    // A single digit is a real query here ("1" means episode 1), so only bail
+    // on short input when it is not numeric.
+    if (query.length < 2 && !/^\d$/.test(query)) {
       setResults([]);
       setGuesses([]);
       return;
@@ -104,7 +106,7 @@ export function ListEpisodePicker({
         autoFocus
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Search this show's episodes (title, plot, a guest star…)"
+        placeholder="Episode number (1, 101, s2e3), a title, plot, or guest star…"
         className="h-8 w-full rounded-md border border-border bg-surface-raised px-3 text-xs text-text placeholder:text-text-muted focus:outline-2 focus:outline-accent"
       />
       {results.length > 0 && (

@@ -90,6 +90,25 @@ const EPISODE_STOP_WORDS = new Set([
   "starring", "featuring", "appears", "appeared", "who",
 ]);
 
+/** Positional episode references parsed from a query. "s2e3", "S2 E3" and
+ *  "2x03" are exact; a bare number tries the SxEE convention first ("101" is
+ *  season 1 episode 1) and then a plain episode number in any season ("1" is
+ *  the first episode of every season). Empty when the query is not positional. */
+function positionalRefs(q: string): { season: number | null; episode: number }[] {
+  const compact =
+    q.match(/^s\s*(\d{1,2})\s*e\s*(\d{1,3})$/i) ?? q.match(/^(\d{1,2})\s*x\s*(\d{1,3})$/);
+  if (compact) return [{ season: Number(compact[1]), episode: Number(compact[2]) }];
+  if (!/^\d{1,4}$/.test(q)) return [];
+  const refs: { season: number | null; episode: number }[] = [];
+  if (q.length >= 3) {
+    const season = Number(q.slice(0, -2));
+    const episode = Number(q.slice(-2));
+    if (season >= 1 && episode >= 1) refs.push({ season, episode });
+  }
+  refs.push({ season: null, episode: Number(q) });
+  return refs;
+}
+
 /**
  * Rank episodes against a free-text query over title + overview + guest stars +
  * crew. AND semantics (every query word must appear somewhere), with boosts for
@@ -101,7 +120,25 @@ export function searchEpisodes(
   limit = 12,
 ): EpisodeMatch[] {
   const q = query.trim().toLowerCase();
-  if (q.length < 2) return [];
+
+  // Positional queries ("1", "101", "s2e3") name an episode by number, which
+  // never appears in the text haystack below, so they are resolved directly and
+  // ranked ahead of text hits. This is what makes typing an episode number work.
+  const taken = new Set<string>();
+  const positional: EpisodeMatch[] = [];
+  for (const ref of positionalRefs(q)) {
+    for (const e of entries) {
+      if (e.episodeNumber !== ref.episode) continue;
+      if (ref.season != null && e.seasonNumber !== ref.season) continue;
+      const key = `${e.seasonNumber}:${e.episodeNumber}`;
+      if (taken.has(key)) continue;
+      taken.add(key);
+      positional.push({ ...e, matchedOn: null });
+    }
+  }
+
+  if (q.length < 2 && positional.length === 0) return [];
+  if (q.length < 2) return positional.slice(0, limit);
   // Strip filler so natural phrasing ("the episode with brad pitt") matches like
   // "brad pitt" — AND-matching shouldn't require the words "episode"/"with"/etc.
   const allWords = q.split(/\s+/).filter(Boolean);
@@ -137,7 +174,10 @@ export function searchEpisodes(
   }
 
   scored.sort((a, b) => b.score - a.score || (b.entry.voteAverage ?? 0) - (a.entry.voteAverage ?? 0));
-  return scored.slice(0, limit).map((s) => ({ ...s.entry, matchedOn: s.matchedOn }));
+  const text = scored
+    .filter((s) => !taken.has(`${s.entry.seasonNumber}:${s.entry.episodeNumber}`))
+    .map((s) => ({ ...s.entry, matchedOn: s.matchedOn }));
+  return [...positional, ...text].slice(0, limit);
 }
 
 /** A single ranked "best of" episode — a slim shape for the top-rated panel. */
