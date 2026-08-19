@@ -24,6 +24,10 @@ test("parseOptionKey rejects malformed keys", () => {
   expect(parseOptionKey(`${UUID}:a:1`)).toBeNull();
   expect(parseOptionKey(`${UUID}:1:2:3`)).toBeNull();
   expect(parseOptionKey(`${UUID}:-1:2`)).toBeNull();
+  // Right shape, empty titleId. Without this case the !titleId guard is dead
+  // code as far as the tests are concerned: every other example above is
+  // already rejected by the part count or the numeric check.
+  expect(parseOptionKey(":1:2")).toBeNull();
 });
 
 test("isEpisode is false for anything unparseable", () => {
