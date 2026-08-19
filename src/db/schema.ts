@@ -276,10 +276,6 @@ export const polls = pgTable("polls", {
   // Surviving option keys after the round-1 genre cull (the round-2 ballot).
   // Text rather than uuid because an option can be one episode of a title.
   round2OptionKeys: text("round2_option_keys").array(),
-  // Superseded by round2OptionKeys. Kept until the new code is deployed, since
-  // the running app still reads it: dropping it first would break live polls.
-  // Remove in a follow-up push once the option-key code is in production.
-  round2TitleIds: uuid("round2_title_ids").array(),
   winnerTitleId: uuid("winner_title_id").references(() => titles.id, { onDelete: "set null" }),
   winnerSeasonNumber: integer("winner_season_number").notNull().default(0),
   winnerEpisodeNumber: integer("winner_episode_number").notNull().default(0),
