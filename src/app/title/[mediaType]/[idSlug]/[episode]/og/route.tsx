@@ -67,7 +67,8 @@ export async function GET(
     }
   }
 
-  const nameSize = episodeName.length > 40 ? 46 : episodeName.length > 24 ? 58 : 70;
+  const nameSize =
+    episodeName.length > 60 ? 38 : episodeName.length > 40 ? 46 : episodeName.length > 24 ? 58 : 70;
 
   const image = new ImageResponse(
     (
@@ -82,13 +83,10 @@ export async function GET(
         }}
       >
         {poster ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={poster}
-            width={346}
-            height={518}
-            style={{ width: 346, height: 518, borderRadius: 12, objectFit: "cover" }}
-          />
+          <div style={{ display: "flex", width: 346, height: 518, borderRadius: 12, overflow: "hidden" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={poster} width={346} height={518} style={{ width: 346, height: 518, objectFit: "cover" }} />
+          </div>
         ) : null}
 
         <div
@@ -108,19 +106,21 @@ export async function GET(
                 {metaLine}
               </div>
             ) : null}
-            <div
-              style={{
-                display: "flex",
-                marginTop: 16,
-                fontSize: nameSize,
-                fontWeight: 800,
-                lineHeight: 1.05,
-                letterSpacing: -1,
-                color: TEXT,
-              }}
-            >
-              {episodeName}
-            </div>
+            {episodeName ? (
+              <div
+                style={{
+                  display: "flex",
+                  marginTop: 16,
+                  fontSize: nameSize,
+                  fontWeight: 800,
+                  lineHeight: 1.05,
+                  letterSpacing: -1,
+                  color: TEXT,
+                }}
+              >
+                {episodeName}
+              </div>
+            ) : null}
             {yearLine ? (
               <div style={{ display: "flex", marginTop: 12, fontSize: 26, color: MUTED }}>{yearLine}</div>
             ) : null}
