@@ -116,7 +116,12 @@ export function MoviePicker({
                           seasonNumber: ep.seasonNumber,
                           episodeNumber: ep.episodeNumber,
                         });
+                        // Clear the search too, matching what picking a whole
+                        // title does. Leaving it open was the one inconsistency
+                        // between the two pick paths.
                         setEpisodeShow(null);
+                        setQ("");
+                        setResults([]);
                       }}
                       onClose={() => setEpisodeShow(null)}
                     />

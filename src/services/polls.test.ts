@@ -160,3 +160,17 @@ test("an episode and its whole show are two distinct options", async () => {
   const state = await castVote(slug, voter("ep4"), "tv", 99912004, 0, 0);
   expect(state?.reveal?.picks.length).toBe(2);
 });
+
+test("the service refuses an episode on a movie, even bypassing the contract", async () => {
+  // The route validates with Zod, but castVote is callable directly from server
+  // code, so it must enforce this itself rather than trust its only caller.
+  const { slug } = await createPoll(creatorId, { title: "__vitest__ movieep", expectedVoters: 3 });
+  await expect(castVote(slug, voter("mv1"), "movie", 99912001, 1, 1)).rejects.toBeInstanceOf(PollError);
+});
+
+test("the service refuses a season without an episode", async () => {
+  // Otherwise this stores titleId:5:0, a second option that renders identically
+  // to the whole title and quietly splits the vote between them.
+  const { slug } = await createPoll(creatorId, { title: "__vitest__ halfep", expectedVoters: 3 });
+  await expect(castVote(slug, voter("hf1"), "tv", 99912004, 5, 0)).rejects.toBeInstanceOf(PollError);
+});

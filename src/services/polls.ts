@@ -283,6 +283,18 @@ export async function castVote(
   seasonNumber = 0,
   episodeNumber = 0,
 ): Promise<PollViewState | null> {
+  // The route validates this with Zod, but castVote is callable directly from
+  // server code, so the service enforces its own invariants rather than trusting
+  // its only current caller. Without these, a movie could be stored with an
+  // episode and then render a /title/tv href, and a season with no episode would
+  // become a second whole-title option that looks identical but splits the vote.
+  if (mediaType === "movie" && (seasonNumber > 0 || episodeNumber > 0)) {
+    throw new PollError(400, "Only a TV show has episodes");
+  }
+  if (seasonNumber > 0 !== episodeNumber > 0) {
+    throw new PollError(400, "Season and episode must be given together");
+  }
+
   const [poll] = await db.select().from(polls).where(eq(polls.slug, slug));
   if (!poll) return null;
   if (poll.status === "done") throw new PollError(409, "Voting has ended");
