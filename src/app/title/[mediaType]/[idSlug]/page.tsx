@@ -306,7 +306,7 @@ export default async function TitlePage({
               </Suspense>
               <EpisodeFinder tvId={id} />
               <TopEpisodesPanel tvId={id} />
-              <SeasonsAccordion tvId={id} seasons={seasons} todayYmd={new Date().toISOString().slice(0, 10)} />
+              <SeasonsAccordion tvId={id} seasons={seasons} todayYmd={todayYmd} />
             </section>
           )}
 

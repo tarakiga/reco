@@ -27,6 +27,7 @@ test("a past or malformed air date degrades to returning", () => {
   expect(airingLabel(info({ nextEpisode: { ...NEXT, airDate: "2026-08-19" } }), "2026-08-20")?.kind).toBe("returning");
   expect(airingLabel(info({ nextEpisode: { ...NEXT, airDate: "not-a-date" } }), "2026-08-20")?.kind).toBe("returning");
   expect(airingLabel(info({ nextEpisode: { ...NEXT, airDate: null } }), "2026-08-20")?.kind).toBe("returning");
+  expect(airingLabel(info({ nextEpisode: { ...NEXT, seasonNumber: 0, episodeNumber: 0 } }), "2026-08-20")?.kind).toBe("returning");
 });
 
 test("a well-shaped but invalid calendar date is rejected, not rolled over", () => {

@@ -59,7 +59,8 @@ export function airingLabel(info: TvAiringInfo, todayYmd: string): AiringLabel |
   // viewer wants there, not a bare "Cancelled".
   const today = ymdToUtc(todayYmd);
   const air = ymdToUtc(info.nextEpisode?.airDate ?? null);
-  if (info.nextEpisode && today != null && air != null && air >= today) {
+  const ep = info.nextEpisode;
+  if (ep && ep.seasonNumber > 0 && ep.episodeNumber > 0 && today != null && air != null && air >= today) {
     const days = Math.round((air - today) / DAY_MS);
     const when =
       days === 0
