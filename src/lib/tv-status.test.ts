@@ -29,6 +29,13 @@ test("a past or malformed air date degrades to returning", () => {
   expect(airingLabel(info({ nextEpisode: { ...NEXT, airDate: null } }), "2026-08-20")?.kind).toBe("returning");
 });
 
+test("a well-shaped but invalid calendar date is rejected, not rolled over", () => {
+  // Date.parse turns 2026-02-30 into 2026-03-02 rather than failing. With
+  // today just before the rollover target, an unfixed parser would report
+  // next-episode "2 Mar" for a date that does not exist.
+  expect(airingLabel(info({ nextEpisode: { ...NEXT, airDate: "2026-02-30" } }), "2026-02-25")?.kind).toBe("returning");
+});
+
 test("returning with nothing scheduled", () => {
   expect(airingLabel(info({}), "2026-08-20")).toMatchObject({ kind: "returning", when: null });
 });

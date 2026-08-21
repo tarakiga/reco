@@ -42,7 +42,10 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 function ymdToUtc(ymd: string | null): number | null {
   if (!ymd || !/^\d{4}-\d{2}-\d{2}$/.test(ymd)) return null;
   const t = Date.parse(`${ymd}T00:00:00Z`);
-  return Number.isNaN(t) ? null : t;
+  if (Number.isNaN(t)) return null;
+  // Date.parse normalises out-of-range days ("2026-02-30" becomes 2 Mar) rather
+  // than failing, so only a value that survives the round trip is a real date.
+  return new Date(t).toISOString().slice(0, 10) === ymd ? t : null;
 }
 
 /**
