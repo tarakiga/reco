@@ -29,5 +29,7 @@ test("specials are ignored on both sides", () => {
 });
 
 test("seasons arriving out of order are walked in order", () => {
-  expect(nextUnwatched(set([1, 1], [1, 2], [1, 3]), [...seasons].reverse())).toEqual({ season: 2, episode: 1 });
+  // Season 1 must still hold an unwatched episode: with it fully watched, scan
+  // order never matters and this test would pass even without the sort.
+  expect(nextUnwatched(set([1, 1]), [...seasons].reverse())).toEqual({ season: 1, episode: 2 });
 });
