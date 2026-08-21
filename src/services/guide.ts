@@ -215,3 +215,34 @@ export async function getTvmazeChannel(
     return null;
   }
 }
+
+export interface Broadcast {
+  channel: string;
+  /** Channel-local clock time, e.g. "21:00", when the guide has it. */
+  time: string | null;
+}
+
+/** Pure scan of one day's guide for a show, matched by the tmdb id its entries
+ *  embed in their hrefs ("/title/tv/1396-slug"). The trailing hyphen is what
+ *  stops id 139 matching 1396. */
+export function findBroadcast(channels: GuideChannel[], tmdbId: number): Broadcast | null {
+  const prefix = `/title/tv/${tmdbId}-`;
+  for (const c of channels) {
+    for (const e of c.entries) {
+      if (e.href.startsWith(prefix)) return { channel: c.channel, time: e.time };
+    }
+  }
+  return null;
+}
+
+/** GB broadcast of a show on one date, if the guide lists it. Reads the same
+ *  hours-cached schedule the guide page renders, so this adds no TVmaze volume
+ *  on a warm day; a cold date costs the one fetch the guide page would pay
+ *  anyway. Null on any failure: the channel line is decoration. */
+export async function broadcastFor(tmdbId: number, dateYmd: string): Promise<Broadcast | null> {
+  try {
+    return findBroadcast(await getSchedule("GB", dateYmd), tmdbId);
+  } catch {
+    return null;
+  }
+}
