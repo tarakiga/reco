@@ -198,6 +198,13 @@ test("titleFacts returns money for movies and counts for TV", () => {
   expect(facts.some((f) => f.label === "Binge watch")).toBe(false);
 });
 
+test("titleFacts leaves TV status to the airing banner", () => {
+  const meta = { status: "Returning Series" } as TmdbTitleDetail;
+  const labels = (mt: "movie" | "tv") => titleFacts(meta, mt, "2026-08-20").map((f) => f.label);
+  expect(labels("tv")).not.toContain("Status");
+  expect(labels("movie")).toContain("Status");
+});
+
 test("titleFacts adds cinema + VOD release dates for movies", () => {
   const movie: TmdbTitleDetail = {
     id: 1,

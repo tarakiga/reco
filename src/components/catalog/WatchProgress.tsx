@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { getWatchedEpisodes } from "@/services/episode-watches";
 import { nextUnwatched, watchKey } from "@/lib/watch-progress";
 import type { SeasonSummary } from "@/lib/tmdb/episodes";
@@ -46,9 +45,10 @@ export async function WatchProgress({
           {counted} of {total} episodes
         </span>
         {next ? (
-          <Link href={`#s${next.season}e${next.episode}`} className="font-medium text-accent-text hover:underline">
+          /* Plain anchor on purpose: next/link's pushState never fires the hashchange the accordion listens for. */
+          <a href={`#s${next.season}e${next.episode}`} className="font-medium text-accent-text hover:underline">
             Next up: S{next.season} E{next.episode}
-          </Link>
+          </a>
         ) : (
           <span className="font-medium text-success">All caught up</span>
         )}

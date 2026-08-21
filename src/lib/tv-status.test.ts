@@ -45,6 +45,12 @@ test("ended and cancelled map to their kinds", () => {
   expect(airingLabel(info({ status: "Canceled" }), "2026-08-20")?.kind).toBe("cancelled");
 });
 
+test("a cancelled show still airing its remaining episodes leads with the date", () => {
+  const cancelled = info({ status: "Canceled", nextEpisode: { ...NEXT, airDate: "2026-08-22" } });
+  expect(airingLabel(cancelled, "2026-08-20")).toMatchObject({ kind: "next-episode", when: "Saturday" });
+  expect(airingLabel(info({ status: "Canceled" }), "2026-08-20")?.kind).toBe("cancelled");
+});
+
 test("an unmapped status shows in-production only when nothing has aired", () => {
   expect(airingLabel(info({ status: "In Production", lastAirDate: null }), "2026-08-20")?.kind).toBe("in-production");
   expect(airingLabel(info({ status: "Pilot", lastAirDate: null }), "2026-08-20")?.kind).toBe("in-production");

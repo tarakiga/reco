@@ -270,7 +270,10 @@ export function titleFacts(
   todayYmd?: string,
 ): Fact[] {
   const facts: Fact[] = [];
-  if (meta.status) facts.push({ label: "Status", value: meta.status });
+  // TV status is the banner's job: it renders from the daily airing cache, while
+  // this metadata refreshes weekly, so a TV Status fact here could contradict
+  // the banner for days. Movies have no banner, so they keep the fact.
+  if (mediaType === "movie" && meta.status) facts.push({ label: "Status", value: meta.status });
   if (meta.original_language) {
     facts.push({ label: "Original language", value: languageName(meta.original_language) });
   }

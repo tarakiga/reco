@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
 import { meFetch } from "@/lib/me-client";
-import { CompletionBar } from "@/components/completion/CompletionBar";
 import type { SeasonSummary, EpisodeVM, EpisodeCastMember } from "@/lib/tmdb/episodes";
 
 function CheckButton({ watched, onClick }: { watched: boolean; onClick: () => void }) {
@@ -479,15 +478,9 @@ export function SeasonsAccordion({
   }, [seasons]);
 
   if (seasons.length === 0) return null;
-  const totalEpisodes = seasons.reduce((sum, s) => sum + (s.episodeCount || 0), 0);
 
   return (
     <div>
-      {signedIn && totalEpisodes > 0 && (
-        <div className="mb-3">
-          <CompletionBar label="Episodes watched" watched={Math.min(watched.size, totalEpisodes)} total={totalEpisodes} />
-        </div>
-      )}
       <div className="divide-y divide-border rounded-lg border border-border bg-surface-raised px-4">
         {seasons.map((s, i) => {
           const isTarget = target?.season === s.seasonNumber;

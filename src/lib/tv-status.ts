@@ -54,12 +54,9 @@ function ymdToUtc(ymd: string | null): number | null {
  * here: render purity, and the server and client must agree on what "today" is.
  */
 export function airingLabel(info: TvAiringInfo, todayYmd: string): AiringLabel | null {
-  const badge = statusBadge(info.status);
-  if (badge) return { kind: badge.label === "Ended" ? "ended" : "cancelled", when: null };
-
-  const s = info.status?.trim().toLowerCase() ?? null;
-  const returning = s === "returning series";
-
+  // A valid future next episode wins regardless of status: a show cancelled or
+  // ended mid-run can still have episodes left to air, and the date is what a
+  // viewer wants there, not a bare "Cancelled".
   const today = ymdToUtc(todayYmd);
   const air = ymdToUtc(info.nextEpisode?.airDate ?? null);
   if (info.nextEpisode && today != null && air != null && air >= today) {
@@ -75,6 +72,11 @@ export function airingLabel(info: TvAiringInfo, todayYmd: string): AiringLabel |
     return { kind: "next-episode", when };
   }
 
+  const badge = statusBadge(info.status);
+  if (badge) return { kind: badge.label === "Ended" ? "ended" : "cancelled", when: null };
+
+  const s = info.status?.trim().toLowerCase() ?? null;
+  const returning = s === "returning series";
   if (returning) return { kind: "returning", when: null };
   // Unmapped pre-release statuses ("In Production", "Pilot", "Planned"): only
   // worth a line when nothing has aired yet; on an airing show they are noise.

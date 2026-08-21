@@ -2,7 +2,6 @@ import { tvAiringInfo } from "@/services/tv-status";
 import { broadcastFor } from "@/services/guide";
 import { airingLabel } from "@/lib/tv-status";
 import { yearFromDate } from "@/lib/slug";
-import { shiftYmd } from "@/lib/release";
 
 /**
  * One line under the hero answering "is this show still alive?". Server
@@ -42,14 +41,12 @@ export async function AiringBanner({ tvId, todayYmd }: { tvId: number; todayYmd:
       break;
   }
 
-  // Only worth a guide lookup when the episode airs inside the next week: the
-  // guide realistically lists near dates, and a far-future date would pay a
-  // cold TVmaze fetch for a day that is almost certainly empty. YMD strings
-  // compare lexicographically, so this is a plain string comparison.
+  // The channel line only fires when the episode airs today: the notify cron
+  // already warms today's GB schedule hourly, so this is always a cache read.
+  // A future date's schedule is warmed by nothing, and cold it costs a TVmaze
+  // fetch plus a TMDB lookup per show in that day's guide, on anonymous traffic.
   const broadcast =
-    label.kind === "next-episode" && ep?.airDate && ep.airDate < shiftYmd(todayYmd, 7)
-      ? await broadcastFor(tvId, ep.airDate)
-      : null;
+    label.kind === "next-episode" && ep?.airDate === todayYmd ? await broadcastFor(tvId, ep.airDate) : null;
 
   return (
     <p className={`mt-2 text-sm font-medium ${tone}`}>
