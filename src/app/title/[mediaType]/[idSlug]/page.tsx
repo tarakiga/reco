@@ -35,6 +35,7 @@ import { HeroBackdrop } from "@/components/catalog/HeroBackdrop";
 import { AmbientBackground } from "@/components/catalog/AmbientBackground";
 import { FactsPanel } from "@/components/catalog/FactsPanel";
 import { AiringBanner } from "@/components/catalog/AiringBanner";
+import { WatchProgress } from "@/components/catalog/WatchProgress";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { SeasonsAccordion } from "@/components/catalog/SeasonsAccordion";
 import { EpisodeFinder } from "@/components/catalog/EpisodeFinder";
@@ -300,6 +301,9 @@ export default async function TitlePage({
           {seasons.length > 0 && (
             <section className="mb-8">
               <h2 className="mb-3 text-lg font-semibold text-text">Episodes</h2>
+              <Suspense fallback={null}>
+                <WatchProgress userId={viewer?.id ?? null} tvId={id} seasons={seasons} />
+              </Suspense>
               <EpisodeFinder tvId={id} />
               <TopEpisodesPanel tvId={id} />
               <SeasonsAccordion tvId={id} seasons={seasons} todayYmd={new Date().toISOString().slice(0, 10)} />
