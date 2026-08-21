@@ -34,6 +34,7 @@ import { NotifyButton } from "@/components/catalog/NotifyButton";
 import { HeroBackdrop } from "@/components/catalog/HeroBackdrop";
 import { AmbientBackground } from "@/components/catalog/AmbientBackground";
 import { FactsPanel } from "@/components/catalog/FactsPanel";
+import { AiringBanner } from "@/components/catalog/AiringBanner";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { SeasonsAccordion } from "@/components/catalog/SeasonsAccordion";
 import { EpisodeFinder } from "@/components/catalog/EpisodeFinder";
@@ -197,6 +198,12 @@ export default async function TitlePage({
                 </span>
               )}
             </div>
+
+            {mediaType === "tv" && (
+              <Suspense fallback={null}>
+                <AiringBanner tvId={id} todayYmd={todayYmd} />
+              </Suspense>
+            )}
 
             {/* Genres */}
             {genres.length > 0 && (
