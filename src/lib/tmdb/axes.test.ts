@@ -2,7 +2,7 @@ import { test, expect } from "vitest";
 import { axesFor, axisKey, type TitleAxis } from "./axes";
 import type { TmdbTitleDetail } from "./types";
 
-const movieMeta = {
+const movieMeta: TmdbTitleDetail = {
   id: 680,
   credits: {
     cast: [
@@ -25,7 +25,7 @@ const movieMeta = {
     { id: 53, name: "Thriller" },
     { id: 80, name: "Crime" },
   ],
-} as TmdbTitleDetail;
+};
 
 test("movie: director, lead, first non-stoplisted keyword, genre pair", () => {
   const axes = axesFor("movie", movieMeta);
@@ -38,7 +38,7 @@ test("movie: director, lead, first non-stoplisted keyword, genre pair", () => {
 });
 
 test("tv: person axis comes from created_by and keywords from results", () => {
-  const meta = {
+  const meta: TmdbTitleDetail = {
     id: 1396,
     created_by: [{ id: 66633, name: "Vince Gilligan" }],
     credits: { cast: [{ id: 17419, name: "Bryan Cranston", order: 0 }] },
@@ -47,7 +47,7 @@ test("tv: person axis comes from created_by and keywords from results", () => {
       { id: 18, name: "Drama" },
       { id: 80, name: "Crime" },
     ],
-  } as TmdbTitleDetail;
+  };
   const axes = axesFor("tv", meta);
   expect(axes).toEqual([
     { kind: "person", personId: 66633, label: "From creator Vince Gilligan" },
@@ -58,7 +58,7 @@ test("tv: person axis comes from created_by and keywords from results", () => {
 });
 
 test("lead is the lowest billing order, not array position", () => {
-  const meta = {
+  const meta: TmdbTitleDetail = {
     id: 1,
     credits: {
       cast: [
@@ -66,26 +66,27 @@ test("lead is the lowest billing order, not array position", () => {
         { id: 1, name: "First", order: 0 },
       ],
     },
-  } as TmdbTitleDetail;
+  };
   const axes = axesFor("movie", meta);
   expect(axes).toEqual([{ kind: "cast", personId: 1, label: "Also starring First" }]);
 });
 
 test("stoplisted and empty keywords never produce an axis", () => {
-  const meta = {
+  const meta: TmdbTitleDetail = {
     id: 1,
     keywords: { keywords: [{ id: 1, name: "aftercreditsstinger" }, { id: 2, name: "woman director" }] },
-  } as TmdbTitleDetail;
+  };
   expect(axesFor("movie", meta)).toEqual([]);
+  expect(axesFor("movie", { id: 1, keywords: { keywords: [] } })).toEqual([]);
 });
 
 test("fewer than two genres skips the genre axis", () => {
-  const meta = { id: 1, genres: [{ id: 18, name: "Drama" }] } as TmdbTitleDetail;
+  const meta: TmdbTitleDetail = { id: 1, genres: [{ id: 18, name: "Drama" }] };
   expect(axesFor("tv", meta)).toEqual([]);
 });
 
 test("empty meta yields no axes", () => {
-  expect(axesFor("movie", { id: 1 } as TmdbTitleDetail)).toEqual([]);
+  expect(axesFor("movie", { id: 1 })).toEqual([]);
 });
 
 test("axisKey is stable per axis identity and mediaType", () => {
