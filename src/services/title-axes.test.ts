@@ -22,17 +22,17 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-test("movie person axis queries discover with with_people and a vote floor", async () => {
+test("movie person axis queries discover with with_crew and a vote floor", async () => {
   (tmdb.discover as Mock).mockResolvedValue({ results: [item(1, "A"), item(2, "B")] });
-  const axis: TitleAxis = { kind: "person", personId: 138, label: "From director Quentin Tarantino" };
+  const axis: TitleAxis = { kind: "person", personId: 138, label: "More from Quentin Tarantino" };
   const out = await axisGroup("movie", axis, 999);
   expect(tmdb.discover).toHaveBeenCalledWith("movie", {
     sort_by: "popularity.desc",
     include_adult: "false",
     "vote_count.gte": "200",
-    with_people: "138",
+    with_crew: "138",
   });
-  expect(out.label).toBe("From director Quentin Tarantino");
+  expect(out.label).toBe("More from Quentin Tarantino");
   expect(out.items.map((i) => i.tmdbId)).toEqual([1, 2]);
 });
 
@@ -93,9 +93,66 @@ test("tv maker axis prefers Creator crew credits and dedupes repeat shows", asyn
       ],
     },
   });
-  const axis: TitleAxis = { kind: "person", personId: 66633, label: "From creator Vince Gilligan" };
+  const axis: TitleAxis = { kind: "person", personId: 66633, label: "More from Vince Gilligan" };
   const out = await axisGroup("tv", axis, 1);
   expect(out.items.map((i) => i.tmdbId)).toEqual([1396, 60059]);
+});
+
+test("tv maker axis falls back to all TV crew credits when there is no Creator credit", async () => {
+  (tmdb.getPerson as Mock).mockResolvedValue({
+    id: 12345,
+    name: "Some EP",
+    combined_credits: {
+      crew: [
+        { ...item(1, ""), name: "Show A", media_type: "tv", job: "Executive Producer", popularity: 100 },
+        { ...item(2, ""), name: "Show B", media_type: "tv", job: "Executive Producer", popularity: 300 },
+        { ...item(2, ""), name: "Show B", media_type: "tv", job: "Executive Producer", popularity: 300 },
+      ],
+    },
+  });
+  const axis: TitleAxis = { kind: "person", personId: 12345, label: "More from Some EP" };
+  const out = await axisGroup("tv", axis, 999);
+  expect(out.items.map((i) => i.tmdbId)).toEqual([2, 1]);
+});
+
+test("tv cast axis excludes low-quality genres and thin guest spots, keeping a regular role", async () => {
+  (tmdb.getPerson as Mock).mockResolvedValue({
+    id: 5,
+    name: "Some Actor",
+    combined_credits: {
+      cast: [
+        {
+          ...item(10, ""),
+          name: "Talk Show",
+          media_type: "tv",
+          first_air_date: "2010-01-01",
+          popularity: 999,
+          genre_ids: [10767],
+        },
+        {
+          ...item(11, ""),
+          name: "Guest Spot",
+          media_type: "tv",
+          first_air_date: "2015-01-01",
+          popularity: 50,
+          character: "Guest Star",
+          episode_count: 1,
+        },
+        {
+          ...item(12, ""),
+          name: "Regular Role",
+          media_type: "tv",
+          first_air_date: "2018-01-01",
+          popularity: 40,
+          character: "Detective Lane",
+          episode_count: 10,
+        },
+      ],
+    },
+  });
+  const axis: TitleAxis = { kind: "cast", personId: 5, label: "Also starring Some Actor" };
+  const out = await axisGroup("tv", axis, 1);
+  expect(out.items.map((i) => i.tmdbId)).toEqual([12]);
 });
 
 test("suppressed titles never enter a group", async () => {

@@ -25,10 +25,17 @@ export async function AlsoLikeSection({
   const groups = await Promise.all(axes.map((a) => axisGroup(mediaType, a, tmdbId)));
 
   const chips: ChipGroup[] = [
-    ...(recs.length > 0 ? [{ label: "Top picks", items: recs }] : []),
+    ...(recs.length >= MIN_GROUP ? [{ label: "Top picks", items: recs }] : []),
     ...groups.filter((g) => g.items.length >= MIN_GROUP),
   ];
   if (chips.length === 0) return null;
 
-  return <ChipRail title="You may also like" groups={chips} />;
+  return (
+    <ChipRail
+      key={`${mediaType}-${tmdbId}`}
+      title="You may also like"
+      groups={chips}
+      showSoloChip={chips[0].label !== "Top picks"}
+    />
+  );
 }

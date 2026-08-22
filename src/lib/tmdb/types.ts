@@ -12,6 +12,7 @@ export interface TmdbSearchItem {
   known_for_department?: string;
   popularity?: number;
   adult?: boolean;
+  genre_ids?: number[];
 }
 export interface TmdbCastMember {
   id: number;

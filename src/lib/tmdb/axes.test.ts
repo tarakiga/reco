@@ -30,7 +30,7 @@ const movieMeta: TmdbTitleDetail = {
 test("movie: director, lead, first non-stoplisted keyword, genre pair", () => {
   const axes = axesFor("movie", movieMeta);
   expect(axes).toEqual([
-    { kind: "person", personId: 138, label: "From director Quentin Tarantino" },
+    { kind: "person", personId: 138, label: "More from Quentin Tarantino" },
     { kind: "cast", personId: 8891, label: "Also starring John Travolta" },
     { kind: "keyword", keywordId: 622, label: "More hitman" },
     { kind: "genre", genreIds: [53, 80], label: "More thriller + crime" },
@@ -50,7 +50,7 @@ test("tv: person axis comes from created_by and keywords from results", () => {
   };
   const axes = axesFor("tv", meta);
   expect(axes).toEqual([
-    { kind: "person", personId: 66633, label: "From creator Vince Gilligan" },
+    { kind: "person", personId: 66633, label: "More from Vince Gilligan" },
     { kind: "cast", personId: 17419, label: "Also starring Bryan Cranston" },
     { kind: "keyword", keywordId: 15009, label: "More drug cartel" },
     { kind: "genre", genreIds: [18, 80], label: "More drama + crime" },
@@ -90,10 +90,30 @@ test("empty meta yields no axes", () => {
 });
 
 test("axisKey is stable per axis identity and mediaType", () => {
-  const person: TitleAxis = { kind: "person", personId: 138, label: "From director Quentin Tarantino" };
+  const person: TitleAxis = { kind: "person", personId: 138, label: "More from Quentin Tarantino" };
   const genre: TitleAxis = { kind: "genre", genreIds: [53, 80], label: "More thriller + crime" };
   expect(axisKey("movie", person)).toBe("axis:movie:person:138");
   expect(axisKey("tv", { kind: "cast", personId: 17419, label: "x" })).toBe("axis:tv:cast:17419");
   expect(axisKey("movie", { kind: "keyword", keywordId: 622, label: "x" })).toBe("axis:movie:keyword:622");
   expect(axisKey("movie", genre)).toBe("axis:movie:genre:53-80");
+});
+
+test("genre pair is normalized by ascending id, regardless of input order", () => {
+  const forward = axesFor("movie", { id: 1, genres: [{ id: 28, name: "Action" }, { id: 35, name: "Comedy" }] });
+  const reversed = axesFor("movie", { id: 1, genres: [{ id: 35, name: "Comedy" }, { id: 28, name: "Action" }] });
+  const expected = [{ kind: "genre", genreIds: [28, 35], label: "More action + comedy" }];
+  expect(forward).toEqual(expected);
+  expect(reversed).toEqual(expected);
+});
+
+test("cast axis is skipped when the lead is also the maker", () => {
+  const meta: TmdbTitleDetail = {
+    id: 1,
+    credits: {
+      cast: [{ id: 138, name: "Clint Eastwood", order: 0 }],
+      crew: [{ id: 138, name: "Clint Eastwood", job: "Director" }],
+    },
+  };
+  const axes = axesFor("movie", meta);
+  expect(axes).toEqual([{ kind: "person", personId: 138, label: "More from Clint Eastwood" }]);
 });

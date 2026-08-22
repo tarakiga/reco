@@ -26,7 +26,7 @@ function discoverParams(mediaType: "movie" | "tv", axis: TitleAxis): Record<stri
   // unfiltered discover call.
   switch (axis.kind) {
     case "person":
-      return { ...base, with_people: String(axis.personId) };
+      return { ...base, with_crew: String(axis.personId) };
     case "cast":
       return { ...base, with_cast: String(axis.personId) };
     case "keyword":
@@ -36,6 +36,11 @@ function discoverParams(mediaType: "movie" | "tv", axis: TitleAxis): Record<stri
   }
 }
 
+// TMDB genre ids too structural to signal a real "also like": talk, news, reality.
+const LOW_QUALITY_GENRES = new Set([10767, 10763, 10764]);
+// TMDB "Self" appearances (Self, Himself, Herself), not an acting role.
+const SELF_CHARACTER = /(^|\W)self\b/i;
+
 /** discover/tv has no people or cast filters, so TV person axes come from the
  *  person's combined credits instead: cast entries for the lead axis, crew for
  *  the maker axis (Creator credits when present, any TV crew credit otherwise). */
@@ -43,11 +48,23 @@ async function tvPersonItems(
   axis: Extract<TitleAxis, { kind: "person" | "cast" }>,
 ): Promise<TmdbSearchItem[]> {
   const person = await tmdb.getPerson(axis.personId);
-  const pool: (TmdbSearchItem & { job?: string })[] =
+  const pool: (TmdbSearchItem & { job?: string; character?: string; episode_count?: number })[] =
     axis.kind === "cast"
       ? (person.combined_credits?.cast ?? [])
       : (person.combined_credits?.crew ?? []);
-  let tv = pool.filter((c) => c.media_type === "tv" && !c.adult);
+  let tv = pool.filter(
+    (c) =>
+      c.media_type === "tv" &&
+      !c.adult &&
+      !(c.genre_ids ?? []).some((id) => LOW_QUALITY_GENRES.has(id)),
+  );
+  if (axis.kind === "cast") {
+    tv = tv.filter(
+      (c) =>
+        !(c.character && SELF_CHARACTER.test(c.character)) &&
+        !(c.episode_count !== undefined && c.episode_count < 3),
+    );
+  }
   if (axis.kind === "person") {
     const created = tv.filter((c) => c.job === "Creator");
     if (created.length) tv = created;
@@ -75,7 +92,10 @@ async function groupCached(mediaType: "movie" | "tv", axis: TitleAxis): Promise<
       ? await tvPersonItems(axis)
       : (await tmdb.discover(mediaType, discoverParams(mediaType, axis))).results;
 
-  return toBrowseResults(mediaType, items).slice(0, FETCH_SIZE);
+  // Slice before mapping: a person's entire filmography can be long, and we
+  // only need a small margin (30) over FETCH_SIZE so suppressed or adult drops
+  // still leave enough for a full rail.
+  return toBrowseResults(mediaType, items.slice(0, 30)).slice(0, FETCH_SIZE);
 }
 
 /** Titles for one axis, minus the source title. Never throws; empty items on failure. */
@@ -85,7 +105,8 @@ export async function axisGroup(
   excludeTmdbId: number,
 ): Promise<AxisGroup> {
   try {
-    const items = await groupCached(mediaType, axis);
+    // label is display-only and must not participate in cache identity.
+    const items = await groupCached(mediaType, { ...axis, label: "" });
     return {
       label: axis.label,
       items: items.filter((i) => i.tmdbId !== excludeTmdbId).slice(0, GROUP_SIZE),

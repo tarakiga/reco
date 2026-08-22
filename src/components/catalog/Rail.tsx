@@ -11,12 +11,16 @@ export function Rail({
   action,
   subheader,
   children,
+  scrollResetKey,
 }: {
   title: string;
   action?: ReactNode;
   /** Optional row between the heading and the cards (e.g. filter chips). */
   subheader?: ReactNode;
   children: ReactNode;
+  /** Changing this scrolls the rail back to the start without remounting it
+   *  (e.g. when a chip selection changes which cards are shown). */
+  scrollResetKey?: string | number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({ left: false, right: false });
@@ -38,6 +42,14 @@ export function Rail({
     ro.observe(el);
     return () => ro.disconnect();
   }, [update]);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.scrollLeft = 0;
+    update();
+    // scrollResetKey is the trigger; update is stable (useCallback with no deps).
+  }, [scrollResetKey, update]);
 
   function nudge(dir: -1 | 1) {
     const el = ref.current;

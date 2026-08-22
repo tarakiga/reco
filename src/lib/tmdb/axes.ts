@@ -36,14 +36,20 @@ export function axesFor(mediaType: "movie" | "tv", meta: TmdbTitleDetail): Title
     out.push({
       kind: "person",
       personId: maker.id,
-      label: mediaType === "tv" ? `From creator ${maker.name}` : `From director ${maker.name}`,
+      label: `More from ${maker.name}`,
     });
   }
 
+  // credits.cast is the current-season cast for TV (the page's Cast rail uses
+  // aggregate credits instead); the first-billed current lead is acceptable here.
   const lead = [...(meta.credits?.cast ?? [])].sort(
     (a, b) => (a.order ?? 999) - (b.order ?? 999),
   )[0];
-  if (lead) out.push({ kind: "cast", personId: lead.id, label: `Also starring ${lead.name}` });
+  // Skip the cast axis when the lead is also the maker, so we do not show
+  // "More from X" and "Also starring X" as duplicate chips for the same person.
+  if (lead && lead.id !== maker?.id) {
+    out.push({ kind: "cast", personId: lead.id, label: `Also starring ${lead.name}` });
+  }
 
   // TMDB quirk: movies nest keywords under .keywords, TV under .results.
   const keywords = mediaType === "tv" ? meta.keywords?.results : meta.keywords?.keywords;
@@ -56,10 +62,12 @@ export function axesFor(mediaType: "movie" | "tv", meta: TmdbTitleDetail): Title
 
   const genres = meta.genres ?? [];
   if (genres.length >= 2) {
+    // Sort the pair by id so [Action, Comedy] and [Comedy, Action] share one axis.
+    const [a, b] = [genres[0], genres[1]].sort((x, y) => x.id - y.id);
     out.push({
       kind: "genre",
-      genreIds: [genres[0].id, genres[1].id],
-      label: `More ${genres[0].name.toLowerCase()} + ${genres[1].name.toLowerCase()}`,
+      genreIds: [a.id, b.id],
+      label: `More ${a.name.toLowerCase()} + ${b.name.toLowerCase()}`,
     });
   }
 
