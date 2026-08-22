@@ -9,10 +9,13 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 export function Rail({
   title,
   action,
+  subheader,
   children,
 }: {
   title: string;
   action?: ReactNode;
+  /** Optional row between the heading and the cards (e.g. filter chips). */
+  subheader?: ReactNode;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -47,6 +50,8 @@ export function Rail({
         <h2 className="text-lg font-semibold text-text">{title}</h2>
         {action}
       </div>
+
+      {subheader}
 
       <div className="group relative">
         <div
