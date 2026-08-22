@@ -50,7 +50,10 @@ async function wikidataRelated(
     buildQuery(mediaType, wikidataId),
     `related:${mediaType}:${wikidataId}`,
   );
-  if (!bindings) return [];
+  // Throw rather than return empty: the caller runs inside "use cache", and a
+  // thrown error does not fill the entry, so a Wikidata timeout is retried
+  // instead of caching an empty rail for days.
+  if (!bindings) throw new Error(`wikidata unavailable: related:${mediaType}:${wikidataId}`);
 
   const out: { tmdbId: number; relation: string }[] = [];
   const seen = new Set<number>();
@@ -63,30 +66,21 @@ async function wikidataRelated(
   return out;
 }
 
-/** Wikidata-sourced related titles (spin-offs / remakes / franchise / other
- *  versions). Cached per title; [] when no Wikidata id, no relations, or error. */
-export async function relatedTitles(mediaType: RelatedMediaType, tmdbId: number): Promise<RelatedTitle[]> {
+/** Cached per title. Failures (a TMDB external-ids blip, a Wikidata timeout)
+ *  THROW out of this function on purpose so they never fill the cache entry;
+ *  only real data and the durable no-wikidata-id fact are worth remembering
+ *  for days. The catch lives in the exported wrapper. */
+async function relatedCached(mediaType: RelatedMediaType, tmdbId: number): Promise<RelatedTitle[]> {
   "use cache";
   // Franchise and remake links are near-static, so the default ~15 minute
   // revalidate was re-querying Wikidata far more often than the data changes.
   cacheLife("days");
   cacheTag(`related:${mediaType}:${tmdbId}`);
 
-  let wikidataId: string | null = null;
-  try {
-    const ext = await tmdb.externalIds(mediaType, tmdbId);
-    wikidataId = ext.wikidata_id ?? null;
-  } catch {
-    return [];
-  }
+  const wikidataId = (await tmdb.externalIds(mediaType, tmdbId)).wikidata_id ?? null;
   if (!wikidataId) return [];
 
-  let rels: { tmdbId: number; relation: string }[];
-  try {
-    rels = await wikidataRelated(mediaType, wikidataId);
-  } catch {
-    return [];
-  }
+  const rels = await wikidataRelated(mediaType, wikidataId);
 
   const cards = await Promise.all(
     rels.slice(0, 12).map(async (r): Promise<RelatedTitle | null> => {
@@ -101,4 +95,14 @@ export async function relatedTitles(mediaType: RelatedMediaType, tmdbId: number)
     }),
   );
   return cards.filter((c): c is RelatedTitle => c !== null);
+}
+
+/** Wikidata-sourced related titles (spin-offs / remakes / franchise / other
+ *  versions). Never throws; [] when no Wikidata id, no relations, or error. */
+export async function relatedTitles(mediaType: RelatedMediaType, tmdbId: number): Promise<RelatedTitle[]> {
+  try {
+    return await relatedCached(mediaType, tmdbId);
+  } catch {
+    return [];
+  }
 }

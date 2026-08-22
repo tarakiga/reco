@@ -20,7 +20,16 @@ interface RawRow {
   mediaType: "movie" | "tv";
 }
 
-async function build(qid: string, itemClause: string, label: string): Promise<Listing> {
+/** Cached per place. Throws on a failed SPARQL call ON PURPOSE: an error thrown
+ *  from inside "use cache" does not fill the entry, so a Wikidata timeout is
+ *  retried on the next request instead of freezing an empty page for days,
+ *  which is exactly what happened in production. The catch lives in the outer
+ *  wrappers, outside the boundary. */
+async function build(qid: string, itemClause: string, label: string, tag: string): Promise<Listing> {
+  "use cache";
+  cacheLife("days");
+  cacheTag(tag);
+
   const query = `SELECT DISTINCT ?tmdb ?mt ?srcLabel WHERE {
     BIND(wd:${qid} AS ?src)
     ${itemClause}
@@ -34,7 +43,7 @@ async function build(qid: string, itemClause: string, label: string): Promise<Li
     mt?: { value: string };
     srcLabel?: { value: string };
   }>(query, label);
-  if (!bindings) return { heading: "", items: [] };
+  if (!bindings) throw new Error(`wikidata unavailable: ${label}`);
 
   const heading = bindings[0]?.srcLabel?.value ?? "";
   const seen = new Set<number>();
@@ -65,22 +74,24 @@ async function build(qid: string, itemClause: string, label: string): Promise<Li
   return { heading, items };
 }
 
-/** Every movie/show based on a given Wikidata source work. */
+const EMPTY_LISTING: Listing = { heading: "", items: [] };
+
+/** Every movie/show based on a given Wikidata source work. Never throws. */
 export async function titlesBySource(qid: string): Promise<Listing> {
-  "use cache";
-  // Adaptations of a source work change rarely; the default ~15 minute
-  // revalidate was re-running this SPARQL far more often than needed.
-  cacheLife("days");
-  cacheTag(`wd-source:${qid}`);
-  if (!isWikidataQid(qid)) return { heading: "", items: [] };
-  return build(qid, `?item wdt:P144 ?src.`, `wd-source:${qid}`);
+  if (!isWikidataQid(qid)) return EMPTY_LISTING;
+  try {
+    return await build(qid, `?item wdt:P144 ?src.`, `wd-source:${qid}`, `wd-source:${qid}`);
+  } catch {
+    return EMPTY_LISTING;
+  }
 }
 
-/** Every movie/show filmed in or set in a given Wikidata place. */
+/** Every movie/show filmed in or set in a given Wikidata place. Never throws. */
 export async function titlesByLocation(qid: string): Promise<Listing> {
-  "use cache";
-  cacheLife("days");
-  cacheTag(`wd-location:${qid}`);
-  if (!isWikidataQid(qid)) return { heading: "", items: [] };
-  return build(qid, `?item (wdt:P915|wdt:P840) ?src.`, `wd-location:${qid}`);
+  if (!isWikidataQid(qid)) return EMPTY_LISTING;
+  try {
+    return await build(qid, `?item (wdt:P915|wdt:P840) ?src.`, `wd-location:${qid}`, `wd-location:${qid}`);
+  } catch {
+    return EMPTY_LISTING;
+  }
 }

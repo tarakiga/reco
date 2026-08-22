@@ -30,21 +30,19 @@ const EMPTY: TitleExtrasData = {
   narrativeLocations: [],
 };
 
-/** Awards, source material, and locations for a title, sourced from Wikidata.
- *  Cached per title; returns empties on no-wikidata-id or error. */
-export async function titleExtras(mediaType: "movie" | "tv", tmdbId: number): Promise<TitleExtrasData> {
+/** Cached per title. Failures THROW on purpose so they never fill the cache
+ *  entry: a Wikidata timeout used to cache the empty shape for days, hiding
+ *  awards and the Filmed-in links until the entry expired. Only real data and
+ *  the durable no-wikidata-id fact are cached; the catch lives in the exported
+ *  wrapper, outside the boundary. */
+async function extrasCached(mediaType: "movie" | "tv", tmdbId: number): Promise<TitleExtrasData> {
   "use cache";
   // Awards and source-material links are near-static, so the default profile's
   // ~15 minute revalidate was re-querying Wikidata far more than needed.
   cacheLife("days");
   cacheTag(`title-extras:${mediaType}:${tmdbId}`);
 
-  let wikidataId: string | null = null;
-  try {
-    wikidataId = (await tmdb.externalIds(mediaType, tmdbId)).wikidata_id ?? null;
-  } catch {
-    return EMPTY;
-  }
+  const wikidataId = (await tmdb.externalIds(mediaType, tmdbId)).wikidata_id ?? null;
   if (!wikidataId) return EMPTY;
 
   const query = `SELECT ?prop ?val ?valLabel WHERE {
@@ -61,7 +59,7 @@ export async function titleExtras(mediaType: "movie" | "tv", tmdbId: number): Pr
     val?: { value: string };
     valLabel?: { value: string };
   }>(query, `title-extras:${mediaType}:${tmdbId}`);
-  if (!bindings) return EMPTY;
+  if (!bindings) throw new Error(`wikidata unavailable: title-extras:${mediaType}:${tmdbId}`);
 
   const groups: Record<string, NamedRef[]> = {};
   const seen: Record<string, Set<string>> = {};
@@ -97,4 +95,14 @@ export async function titleExtras(mediaType: "movie" | "tv", tmdbId: number): Pr
     filmingLocations: groups.filming ?? [],
     narrativeLocations: groups.setin ?? [],
   };
+}
+
+/** Awards, source material, and locations for a title, sourced from Wikidata.
+ *  Never throws; the empty shape on any failure. */
+export async function titleExtras(mediaType: "movie" | "tv", tmdbId: number): Promise<TitleExtrasData> {
+  try {
+    return await extrasCached(mediaType, tmdbId);
+  } catch {
+    return EMPTY;
+  }
 }
