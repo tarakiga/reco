@@ -16,16 +16,24 @@ const GROUP_SIZE = 12;
 const FETCH_SIZE = GROUP_SIZE + 1;
 
 function discoverParams(mediaType: "movie" | "tv", axis: TitleAxis): Record<string, string> {
-  const params: Record<string, string> = {
+  const base: Record<string, string> = {
     sort_by: "popularity.desc",
     include_adult: "false",
     "vote_count.gte": mediaType === "movie" ? "200" : "100",
   };
-  if (axis.kind === "person") params.with_people = String(axis.personId);
-  if (axis.kind === "cast") params.with_cast = String(axis.personId);
-  if (axis.kind === "keyword") params.with_keywords = String(axis.keywordId);
-  if (axis.kind === "genre") params.with_genres = `${axis.genreIds[0]},${axis.genreIds[1]}`;
-  return params;
+  // Exhaustive over TitleAxis, like axisKey in axes.ts: every case returns, so a
+  // future fifth kind fails to compile here instead of silently issuing an
+  // unfiltered discover call.
+  switch (axis.kind) {
+    case "person":
+      return { ...base, with_people: String(axis.personId) };
+    case "cast":
+      return { ...base, with_cast: String(axis.personId) };
+    case "keyword":
+      return { ...base, with_keywords: String(axis.keywordId) };
+    case "genre":
+      return { ...base, with_genres: `${axis.genreIds[0]},${axis.genreIds[1]}` };
+  }
 }
 
 /** discover/tv has no people or cast filters, so TV person axes come from the

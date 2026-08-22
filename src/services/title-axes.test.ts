@@ -87,7 +87,7 @@ test("tv maker axis prefers Creator crew credits and dedupes repeat shows", asyn
     combined_credits: {
       crew: [
         { ...item(1396, ""), name: "Breaking Bad", media_type: "tv", job: "Creator", popularity: 300 },
-        { ...item(1396, ""), name: "Breaking Bad", media_type: "tv", job: "Executive Producer", popularity: 300 },
+        { ...item(1396, ""), name: "Breaking Bad", media_type: "tv", job: "Creator", popularity: 300 },
         { ...item(60059, ""), name: "Better Call Saul", media_type: "tv", job: "Creator", popularity: 200 },
         { ...item(999, ""), name: "Some EP Gig", media_type: "tv", job: "Executive Producer", popularity: 900 },
       ],
