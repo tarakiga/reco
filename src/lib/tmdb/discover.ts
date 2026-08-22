@@ -9,7 +9,7 @@ export function toBrowseResults(
   items: TmdbSearchItem[],
 ): TitleResult[] {
   return items
-    .filter((it) => !isSuppressedTitle(mediaType, it.id))
+    .filter((it) => !isSuppressedTitle(mediaType, it.id) && !it.adult)
     .map((it) => {
     const name = it.title ?? it.name ?? "Untitled";
     const date = it.release_date ?? it.first_air_date ?? null;

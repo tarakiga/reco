@@ -22,7 +22,6 @@ import type { TmdbTitleDetail } from "@/lib/tmdb/types";
 import { Badge } from "@/components/ui/Badge";
 import { Rail } from "@/components/catalog/Rail";
 import { PersonCard } from "@/components/catalog/PersonCard";
-import { TitleCard } from "@/components/catalog/TitleCard";
 import { TrailerEmbed } from "@/components/catalog/TrailerEmbed";
 import { WhereToWatchClient } from "@/components/catalog/WhereToWatchClient";
 import { AffiliateLinks } from "@/components/catalog/AffiliateLinks";
@@ -46,6 +45,7 @@ import { TitleExtras } from "@/components/catalog/TitleExtras";
 import { seasonSummaries } from "@/lib/tmdb/episodes";
 import { TitleMatch } from "@/components/catalog/TitleMatch";
 import { seriesCast } from "@/services/series-cast";
+import { AlsoLikeSection } from "@/components/catalog/AlsoLikeSection";
 
 export async function generateMetadata({
   params,
@@ -342,15 +342,9 @@ export default async function TitlePage({
             </>
           )}
 
-          {recs.length > 0 && (
-            <Rail title="More like this">
-              {recs.map((r) => (
-                <div key={`${r.mediaType}-${r.tmdbId}`} className="w-28 shrink-0">
-                  <TitleCard href={r.href} title={r.title} year={r.year} posterUrl={r.posterUrl} />
-                </div>
-              ))}
-            </Rail>
-          )}
+          <Suspense fallback={null}>
+            <AlsoLikeSection mediaType={mediaType} tmdbId={id} meta={meta} recs={recs} />
+          </Suspense>
         </div>
 
         <aside className="space-y-6">

@@ -198,7 +198,8 @@ export function formatReleaseDate(iso: string | null | undefined): string | null
   return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
-/** "More like this": TMDB recommendations mapped to title cards. */
+/** TMDB recommendations mapped to title cards, feeding the Top picks chip of
+ *  the You may also like section. */
 export function recommendations(meta: TmdbTitleDetail, limit = 12): TitleResult[] {
   const items = meta.recommendations?.results ?? [];
   const out: TitleResult[] = [];

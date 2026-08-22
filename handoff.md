@@ -272,3 +272,40 @@ Operational lessons, each learned the hard way this session:
 
 round2_title_ids is fully gone: code, schema and database column. The ballot
 lives in round2_option_keys.
+
+## 2026-08-22: Axis-grouped "You may also like" shipped
+
+The flat "More like this" rail on title detail pages is now a chip-switched
+"You may also like" section (AlsoLikeSection + ChipRail). Default chip "Top
+picks" is the old curated TMDB recs; up to 4 extra chips are groups built from
+a fact the title shares with every member: "More from {maker}" (with_crew on
+movies, combined_credits on TV since discover/tv has no people filters), "Also
+starring {lead}", "More {keyword}" (first non-stoplisted; keywords were fetched
+on every title and previously discarded), "More {genre1} + {genre2}" (pair
+sorted by id so both orderings share one cache entry). No LLM. Spec and plan
+under docs/superpowers/ (2026-08-22-also-like-axes).
+
+Design decisions and accepted trade-offs:
+
+- **Groups are cached per axis, not per title** (axis:{mt}:{kind}:{id} tags,
+  cacheLife days, label stripped from the cache key). Every title sharing a
+  director/keyword/genre pair shares one entry. Inner-throws/outer-catches
+  boundary as everywhere else.
+- **Cost accepted:** up to 4 extra TMDB calls and 4 cache entries per cold
+  title page (two are full combined_credits fetches on TV pages), on a route
+  robots.txt lets any crawler walk. Amortised by the days cache; TMDB is free;
+  revisit if function CPU creeps.
+- **Top picks is gated behind the axis fetches** (one Promise.all) and behind
+  MIN_GROUP=3, so a title with only 1-2 curated recs and no qualifying axis now
+  renders no section where main showed a thin rail. Intended: sub-3-poster
+  rails read as broken.
+- **Maker label is "More from {name}", not "From director {name}":** TMDB's
+  with_people matches acting credits and person crew credits are not
+  job-filterable, so the stronger label would be false (Eastwood problem).
+- **TV person axes carry a quality floor** (drop talk/news/reality genre ids,
+  word-final "self" characters, episode_count under 3). The movie cast axis has
+  no equivalent floor because discover/movie cannot filter role size; a cameo
+  can surface there. Known asymmetry.
+- Rail gained scrollResetKey (instant scroll reset without remounting, keeps
+  keyboard focus); ChipRail clamps its selected index and is keyed per title so
+  client-side navigation resets to Top picks.

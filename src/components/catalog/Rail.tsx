@@ -9,11 +9,18 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 export function Rail({
   title,
   action,
+  subheader,
   children,
+  scrollResetKey,
 }: {
   title: string;
   action?: ReactNode;
+  /** Optional row between the heading and the cards (e.g. filter chips). */
+  subheader?: ReactNode;
   children: ReactNode;
+  /** Changing this scrolls the rail back to the start without remounting it
+   *  (e.g. when a chip selection changes which cards are shown). */
+  scrollResetKey?: string | number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({ left: false, right: false });
@@ -36,6 +43,16 @@ export function Rail({
     return () => ro.disconnect();
   }, [update]);
 
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    // "instant" skips the scroller's scroll-smooth animation, so the edge
+    // fades in update() reflect the reset position right away.
+    el.scrollTo({ left: 0, behavior: "instant" });
+    update();
+    // scrollResetKey is the trigger; update is stable (useCallback with no deps).
+  }, [scrollResetKey, update]);
+
   function nudge(dir: -1 | 1) {
     const el = ref.current;
     if (el) el.scrollBy({ left: dir * el.clientWidth * 0.85, behavior: "smooth" });
@@ -47,6 +64,8 @@ export function Rail({
         <h2 className="text-lg font-semibold text-text">{title}</h2>
         {action}
       </div>
+
+      {subheader}
 
       <div className="group relative">
         <div
