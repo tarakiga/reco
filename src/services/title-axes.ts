@@ -38,8 +38,8 @@ function discoverParams(mediaType: "movie" | "tv", axis: TitleAxis): Record<stri
 
 // TMDB genre ids too structural to signal a real "also like": talk, news, reality.
 const LOW_QUALITY_GENRES = new Set([10767, 10763, 10764]);
-// TMDB "Self" appearances (Self, Himself, Herself), not an acting role.
-const SELF_CHARACTER = /(^|\W)self\b/i;
+// TMDB "Self" appearances (Self, Himself, Herself, Themselves), not an acting role.
+const SELF_CHARACTER = /self\b/i;
 
 /** discover/tv has no people or cast filters, so TV person axes come from the
  *  person's combined credits instead: cast entries for the lead axis, crew for

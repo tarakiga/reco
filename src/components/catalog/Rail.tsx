@@ -46,7 +46,9 @@ export function Rail({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    el.scrollLeft = 0;
+    // "instant" skips the scroller's scroll-smooth animation, so the edge
+    // fades in update() reflect the reset position right away.
+    el.scrollTo({ left: 0, behavior: "instant" });
     update();
     // scrollResetKey is the trigger; update is stable (useCallback with no deps).
   }, [scrollResetKey, update]);

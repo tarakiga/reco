@@ -9,6 +9,10 @@ export interface ChipGroup {
   items: TitleResult[];
 }
 
+/** Label for the curated-recommendations chip, shared with AlsoLikeSection so
+ *  the two never drift out of sync when compared. */
+export const TOP_PICKS_LABEL = "Top picks";
+
 /** Chip-switched title rail. Every group arrives server-fetched, so switching
  *  chips swaps the cards instantly with zero requests. A single group renders
  *  as a plain rail with no chip row, unless showSoloChip keeps its label visible. */
@@ -28,8 +32,12 @@ export function ChipRail({
   const active = groups[idx];
   if (!active) return null;
 
+  const selectedChipClass = "border-accent bg-accent/15 text-accent-text";
+  const unselectedChipClass =
+    "border-border bg-surface-raised text-text-muted hover:bg-surface-overlay hover:text-text";
+
   const chips =
-    groups.length > 1 || (showSoloChip && groups.length === 1) ? (
+    groups.length > 1 ? (
       <div className="mb-3 flex flex-wrap gap-2">
         {groups.map((g, i) => (
           <button
@@ -38,14 +46,20 @@ export function ChipRail({
             onClick={() => setSelected(i)}
             aria-pressed={i === idx}
             className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-              i === idx
-                ? "border-accent bg-accent/15 text-accent-text"
-                : "border-border bg-surface-raised text-text-muted hover:bg-surface-overlay hover:text-text"
+              i === idx ? selectedChipClass : unselectedChipClass
             }`}
           >
             {g.label}
           </button>
         ))}
+      </div>
+    ) : showSoloChip && groups.length === 1 ? (
+      // A single group with no other chip to switch to, so it's a label, not
+      // a control: no onClick, no aria-pressed.
+      <div className="mb-3 flex flex-wrap gap-2">
+        <span className={`rounded-full border px-3 py-1.5 text-xs font-medium ${selectedChipClass}`}>
+          {groups[0].label}
+        </span>
       </div>
     ) : null;
 

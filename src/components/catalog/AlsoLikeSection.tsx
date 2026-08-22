@@ -2,7 +2,7 @@ import { axesFor } from "@/lib/tmdb/axes";
 import { axisGroup } from "@/services/title-axes";
 import type { TmdbTitleDetail } from "@/lib/tmdb/types";
 import type { TitleResult } from "@/lib/tmdb/transform";
-import { ChipRail, type ChipGroup } from "./ChipRail";
+import { ChipRail, TOP_PICKS_LABEL, type ChipGroup } from "./ChipRail";
 
 // A rail with fewer than 3 posters looks broken; hide the chip instead.
 const MIN_GROUP = 3;
@@ -25,7 +25,7 @@ export async function AlsoLikeSection({
   const groups = await Promise.all(axes.map((a) => axisGroup(mediaType, a, tmdbId)));
 
   const chips: ChipGroup[] = [
-    ...(recs.length >= MIN_GROUP ? [{ label: "Top picks", items: recs }] : []),
+    ...(recs.length >= MIN_GROUP ? [{ label: TOP_PICKS_LABEL, items: recs }] : []),
     ...groups.filter((g) => g.items.length >= MIN_GROUP),
   ];
   if (chips.length === 0) return null;
@@ -35,7 +35,7 @@ export async function AlsoLikeSection({
       key={`${mediaType}-${tmdbId}`}
       title="You may also like"
       groups={chips}
-      showSoloChip={chips[0].label !== "Top picks"}
+      showSoloChip={chips[0].label !== TOP_PICKS_LABEL}
     />
   );
 }

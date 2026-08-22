@@ -139,6 +139,15 @@ test("tv cast axis excludes low-quality genres and thin guest spots, keeping a r
           episode_count: 1,
         },
         {
+          ...item(13, ""),
+          name: "Talk Show Guest",
+          media_type: "tv",
+          first_air_date: "2016-01-01",
+          popularity: 800,
+          character: "Himself",
+          episode_count: 8,
+        },
+        {
           ...item(12, ""),
           name: "Regular Role",
           media_type: "tv",
