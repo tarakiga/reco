@@ -9,11 +9,15 @@ const WD_HEADERS = {
 
 /** query.wikidata.org throttles hard and allows queries to run up to 60s server
  *  side. Without a client deadline a throttled request keeps the function alive
- *  and billing, so cap it below any function timeout. But the cap must exceed
- *  the queries' honest latency: the location and related queries measure 2.5s
- *  to 6s from an unthrottled connection, and the original 5s cap made nearly
- *  every production call time out, which emptied all the Wikidata panels. */
-const TIMEOUT_MS = 20_000;
+ *  and billing, so cap it below any function timeout. The cap must exceed the
+ *  queries' honest latency: the location and related queries measure 2.5s to 6s
+ *  from an unthrottled connection, and the original 5s cap made nearly every
+ *  production call time out, which emptied all the Wikidata panels. The 20s cap
+ *  that replaced it was safe but expensive: a month of production logs showed
+ *  throttled requests hang to whatever cap is set, ~900 times a day, and every
+ *  one of those held a function for the full 20s. 8s keeps 2s of headroom over
+ *  the slowest measured query while capping what a throttled call can bill. */
+const TIMEOUT_MS = 8_000;
 
 export type SparqlBinding = Record<string, { value: string } | undefined>;
 

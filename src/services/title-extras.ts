@@ -30,20 +30,24 @@ const EMPTY: TitleExtrasData = {
   narrativeLocations: [],
 };
 
-/** Cached per title. Failures THROW on purpose so they never fill the cache
- *  entry: a Wikidata timeout used to cache the empty shape for days, hiding
- *  awards and the Filmed-in links until the entry expired. Only real data and
- *  the durable no-wikidata-id fact are cached; the catch lives in the exported
- *  wrapper, outside the boundary. */
+/** Cached per title. A Wikidata failure is cached as the empty shape for HOURS
+ *  (not the days a real result gets): production showed Wikidata throttling us
+ *  for weeks at a stretch, so refusing to cache failures meant every view of an
+ *  uncached title held a function for the full client timeout, ~900 times a
+ *  day. Hours keeps the panel self-healing without paying per view. A TMDB
+ *  external-ids blip still throws (rare and genuinely transient, so not worth
+ *  caching); the catch for that lives in the exported wrapper. */
 async function extrasCached(mediaType: "movie" | "tv", tmdbId: number): Promise<TitleExtrasData> {
   "use cache";
-  // Awards and source-material links are near-static, so the default profile's
-  // ~15 minute revalidate was re-querying Wikidata far more than needed.
-  cacheLife("days");
   cacheTag(`title-extras:${mediaType}:${tmdbId}`);
 
+  // Every path below sets exactly one cacheLife: days for durable answers
+  // (awards and source links are near-static), hours for a failed call.
   const wikidataId = (await tmdb.externalIds(mediaType, tmdbId)).wikidata_id ?? null;
-  if (!wikidataId) return EMPTY;
+  if (!wikidataId) {
+    cacheLife("days");
+    return EMPTY;
+  }
 
   const query = `SELECT ?prop ?val ?valLabel WHERE {
     VALUES (?prop ?p) {
@@ -59,7 +63,11 @@ async function extrasCached(mediaType: "movie" | "tv", tmdbId: number): Promise<
     val?: { value: string };
     valLabel?: { value: string };
   }>(query, `title-extras:${mediaType}:${tmdbId}`);
-  if (!bindings) throw new Error(`wikidata unavailable: title-extras:${mediaType}:${tmdbId}`);
+  if (!bindings) {
+    cacheLife("hours");
+    return EMPTY;
+  }
+  cacheLife("days");
 
   const groups: Record<string, NamedRef[]> = {};
   const seen: Record<string, Set<string>> = {};

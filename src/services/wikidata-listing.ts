@@ -20,14 +20,15 @@ interface RawRow {
   mediaType: "movie" | "tv";
 }
 
-/** Cached per place. Throws on a failed SPARQL call ON PURPOSE: an error thrown
- *  from inside "use cache" does not fill the entry, so a Wikidata timeout is
- *  retried on the next request instead of freezing an empty page for days,
- *  which is exactly what happened in production. The catch lives in the outer
- *  wrappers, outside the boundary. */
+/** Cached per place. A failed SPARQL call is cached as the empty listing for
+ *  HOURS rather than the days a real result gets. The first design here cached
+ *  failures for days (froze empty pages), the second refused to cache them at
+ *  all (a month of logs showed Wikidata throttling us continuously, so every
+ *  view of an uncached page held a function for the full client timeout).
+ *  Hours is the middle: at most one probe per entry per hour, self-healing
+ *  within the hour once Wikidata recovers. */
 async function build(qid: string, itemClause: string, label: string, tag: string): Promise<Listing> {
   "use cache";
-  cacheLife("days");
   cacheTag(tag);
 
   const query = `SELECT DISTINCT ?tmdb ?mt ?srcLabel WHERE {
@@ -43,7 +44,12 @@ async function build(qid: string, itemClause: string, label: string, tag: string
     mt?: { value: string };
     srcLabel?: { value: string };
   }>(query, label);
-  if (!bindings) throw new Error(`wikidata unavailable: ${label}`);
+  // Exactly one cacheLife per path: hours for a failed call, days for data.
+  if (!bindings) {
+    cacheLife("hours");
+    return EMPTY_LISTING;
+  }
+  cacheLife("days");
 
   const heading = bindings[0]?.srcLabel?.value ?? "";
   const seen = new Set<number>();

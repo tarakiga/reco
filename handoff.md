@@ -309,3 +309,35 @@ Design decisions and accepted trade-offs:
 - Rail gained scrollResetKey (instant scroll reset without remounting, keeps
   keyboard focus); ChipRail clamps its selected index and is keyed per title so
   client-side navigation resets to Top picks.
+
+## 2026-09-26: Wikidata failures now negative-cached for hours
+
+A cost-leak sweep of production logs found ~31,000 "wikidata unavailable"
+errors since 2026-08-22, roughly 900 a day, every one a client timeout at the
+full 20s. Wikidata's query service throttles Vercel egress essentially
+permanently, so the 2026-08-22 design (never cache a failure so it retries)
+turned that steady-state throttling into a 20s function hold per view of any
+uncached title, location or source page: about 5 function-hours of billed
+memory a day.
+
+The fix, third iteration of this policy:
+
+- v1 cached failures for DAYS: froze empty panels (the Filmed-in outage).
+- v2 cached failures NEVER: paid per view while Wikidata throttles for weeks.
+- v3 caches failures for HOURS: at most one probe per entry per hour, panels
+  self-heal within the hour of Wikidata recovering.
+
+Mechanics: each cached function (build in wikidata-listing, relatedCached,
+extrasCached) sets exactly ONE cacheLife per code path (days for data and for
+the durable no-wikidata-id fact, hours for a failed SPARQL call) rather than
+relying on multiple-cacheLife-call semantics, which the docs do not pin down.
+TMDB external-id blips still throw and stay uncached (rare, genuinely
+transient; wrapper catches). TIMEOUT_MS in src/lib/wikidata.ts dropped 20s to
+8s: measured honest latency is 2.5-6s, and throttled requests hang to whatever
+the cap is, so the cap is the price. Tests pin cacheLife("hours") on the
+failure path in all three services.
+
+Same sweep confirmed clean: the new axis groups (3 TMDB errors in a month,
+none cached), /find volume is CDN-served middleware lines not scene searches,
+no CockroachDB error patterns. Watch [wikidata] warn volume after deploy; if
+throttling ever ends, success entries take over automatically.

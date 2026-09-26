@@ -2,7 +2,9 @@ import { vi, test, expect, beforeEach, type Mock } from "vitest";
 
 vi.mock("@/lib/wikidata", () => ({ sparql: vi.fn() }));
 vi.mock("@/lib/tmdb/client", () => ({ tmdb: { titleBrief: vi.fn() } }));
+vi.mock("next/cache", () => ({ cacheLife: vi.fn(), cacheTag: vi.fn() }));
 
+import { cacheLife } from "next/cache";
 import { sparql } from "@/lib/wikidata";
 import { tmdb } from "@/lib/tmdb/client";
 import { titlesByLocation } from "./wikidata-listing";
@@ -25,11 +27,14 @@ test("maps bindings into title cards with the place heading", async () => {
   const out = await titlesByLocation("Q45");
   expect(out.heading).toBe("Portugal");
   expect(out.items.map((i) => i.title)).toEqual(["The Matrix", "Breaking Bad"]);
+  expect(cacheLife).toHaveBeenCalledWith("days");
 });
 
-test("a failed SPARQL call degrades to an empty listing", async () => {
+test("a failed SPARQL call degrades to an empty listing cached for hours, not days", async () => {
   (sparql as Mock).mockResolvedValue(null);
   expect(await titlesByLocation("Q45")).toEqual({ heading: "", items: [] });
+  expect(cacheLife).toHaveBeenCalledWith("hours");
+  expect(cacheLife).not.toHaveBeenCalledWith("days");
 });
 
 test("an invalid qid never reaches Wikidata", async () => {

@@ -2,7 +2,9 @@ import { vi, test, expect, beforeEach, type Mock } from "vitest";
 
 vi.mock("@/lib/wikidata", () => ({ sparql: vi.fn() }));
 vi.mock("@/lib/tmdb/client", () => ({ tmdb: { externalIds: vi.fn(), titleBrief: vi.fn() } }));
+vi.mock("next/cache", () => ({ cacheLife: vi.fn(), cacheTag: vi.fn() }));
 
+import { cacheLife } from "next/cache";
 import { sparql } from "@/lib/wikidata";
 import { tmdb } from "@/lib/tmdb/client";
 import { relatedTitles } from "./related-titles";
@@ -20,9 +22,11 @@ test("maps related entries into labelled cards", async () => {
   expect(out[0]).toMatchObject({ title: "The Matrix", relation: "Remake" });
 });
 
-test("a failed SPARQL call degrades to an empty list", async () => {
+test("a failed SPARQL call degrades to an empty list cached for hours, not days", async () => {
   (sparql as Mock).mockResolvedValue(null);
   expect(await relatedTitles("movie", 550)).toEqual([]);
+  expect(cacheLife).toHaveBeenCalledWith("hours");
+  expect(cacheLife).not.toHaveBeenCalledWith("days");
 });
 
 test("a title with no wikidata id never queries SPARQL", async () => {

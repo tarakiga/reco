@@ -2,7 +2,9 @@ import { vi, test, expect, beforeEach, type Mock } from "vitest";
 
 vi.mock("@/lib/wikidata", () => ({ sparql: vi.fn() }));
 vi.mock("@/lib/tmdb/client", () => ({ tmdb: { externalIds: vi.fn() } }));
+vi.mock("next/cache", () => ({ cacheLife: vi.fn(), cacheTag: vi.fn() }));
 
+import { cacheLife } from "next/cache";
 import { sparql } from "@/lib/wikidata";
 import { tmdb } from "@/lib/tmdb/client";
 import { titleExtras } from "./title-extras";
@@ -31,10 +33,12 @@ test("groups awards and locations from the bindings", async () => {
   expect(out.narrativeLocations).toEqual([{ id: "Q4", label: "Mars" }]);
 });
 
-test("a failed SPARQL call degrades to the empty shape", async () => {
+test("a failed SPARQL call degrades to the empty shape cached for hours, not days", async () => {
   (sparql as Mock).mockResolvedValue(null);
   const out = await titleExtras("movie", 603);
   expect(out).toMatchObject({ awards: null, filmingLocations: [], narrativeLocations: [] });
+  expect(cacheLife).toHaveBeenCalledWith("hours");
+  expect(cacheLife).not.toHaveBeenCalledWith("days");
 });
 
 test("a title with no wikidata id never queries SPARQL", async () => {
