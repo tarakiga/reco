@@ -341,3 +341,21 @@ Same sweep confirmed clean: the new axis groups (3 TMDB errors in a month,
 none cached), /find volume is CDN-served middleware lines not scene searches,
 no CockroachDB error patterns. Watch [wikidata] warn volume after deploy; if
 throttling ever ends, success entries take over automatically.
+
+## 2026-09-28: Wikidata circuit breaker
+
+The two-day recheck: thrown "wikidata unavailable" errors went from ~900/day
+to zero and timeouts now cap at 8s, but [wikidata] warn volume was still ~3 a
+minute. Cause: a crawler walking DISTINCT cold pages defeats per-entry
+negative caching, since a crawler never revisits, so each new title still paid
+one 8s probe against an upstream that has now throttled us continuously for
+over a month.
+
+src/lib/wikidata.ts gained a circuit breaker: 5 consecutive failures open it
+for 10 minutes, during which sparql() returns null instantly (consumers
+negative-cache the empty shape as usual); the first call after the window is
+the half-open probe and one success closes it. Module state works because
+Fluid reuses instances; each instance keeps its own breaker. Log volume drops
+too: skipped calls do not log, only the breaker-open line and real probes.
+resetWikidataBreaker() exists for tests. If Wikidata ever unthrottles us,
+recovery is automatic within one open window.

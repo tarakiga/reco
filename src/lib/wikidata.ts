@@ -19,6 +19,37 @@ const WD_HEADERS = {
  *  the slowest measured query while capping what a throttled call can bill. */
 const TIMEOUT_MS = 8_000;
 
+/** Circuit breaker over all Wikidata calls. Post-fix logs still showed ~3
+ *  failed probes a minute: a crawler walking distinct cold pages defeats
+ *  per-entry negative caching (a crawler never revisits), and with Wikidata
+ *  throttling us continuously for over a month, every probe was 8s of held
+ *  function time spent learning nothing. After BREAKER_THRESHOLD consecutive
+ *  failures the breaker opens and sparql() returns null instantly for
+ *  BREAKER_OPEN_MS; the first call after that window is the half-open probe,
+ *  and one success closes the breaker again. Module state persists across
+ *  requests on Fluid Compute because instances are reused, which is exactly
+ *  what makes this effective; each instance keeps its own breaker. */
+const BREAKER_THRESHOLD = 5;
+const BREAKER_OPEN_MS = 10 * 60_000;
+
+const breaker = { failures: 0, openUntil: 0 };
+
+/** Test hook: the breaker is module state shared across calls. */
+export function resetWikidataBreaker(): void {
+  breaker.failures = 0;
+  breaker.openUntil = 0;
+}
+
+function recordFailure(): void {
+  breaker.failures += 1;
+  if (breaker.failures >= BREAKER_THRESHOLD) {
+    breaker.openUntil = Date.now() + BREAKER_OPEN_MS;
+    console.warn(
+      `[wikidata] breaker open for ${BREAKER_OPEN_MS / 60_000} minutes after ${breaker.failures} consecutive failures`,
+    );
+  }
+}
+
 export type SparqlBinding = Record<string, { value: string } | undefined>;
 
 /**
@@ -33,6 +64,11 @@ export async function sparql<T extends SparqlBinding>(
   query: string,
   label: string,
 ): Promise<T[] | null> {
+  // Open breaker: skip the call entirely, and skip per-call logging too, since
+  // the point is to stop paying (in held time and in log volume) for an
+  // upstream that has already told us its answer repeatedly.
+  if (Date.now() < breaker.openUntil) return null;
+
   try {
     const res = await fetch(
       `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(query)}`,
@@ -41,13 +77,16 @@ export async function sparql<T extends SparqlBinding>(
     if (!res.ok) {
       // 429 and 403 are the throttling signals worth watching for.
       console.warn(`[wikidata] ${label} failed: HTTP ${res.status}`);
+      recordFailure();
       return null;
     }
     const json = (await res.json()) as { results?: { bindings?: T[] } };
+    breaker.failures = 0;
     return json.results?.bindings ?? [];
   } catch (err) {
     const reason = err instanceof Error ? err.name : "unknown";
     console.warn(`[wikidata] ${label} failed: ${reason === "TimeoutError" ? `timeout after ${TIMEOUT_MS}ms` : reason}`);
+    recordFailure();
     return null;
   }
 }
