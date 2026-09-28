@@ -9,6 +9,9 @@ const ok = (bindings: unknown[] = []) => ({
   json: async () => ({ results: { bindings } }),
 });
 
+const fail = () => (fetchMock as Mock).mockRejectedValueOnce(new Error("boom"));
+const succeed = () => (fetchMock as Mock).mockResolvedValueOnce(ok());
+
 beforeEach(() => {
   vi.clearAllMocks();
   vi.useFakeTimers();
@@ -26,11 +29,11 @@ test("returns bindings on success and null on a failed fetch", async () => {
   (fetchMock as Mock).mockResolvedValueOnce(ok([{ x: { value: "1" } }]));
   expect(await sparql("q", "test")).toEqual([{ x: { value: "1" } }]);
 
-  (fetchMock as Mock).mockRejectedValueOnce(new Error("boom"));
+  fail();
   expect(await sparql("q", "test")).toBeNull();
 });
 
-test("opens after 5 consecutive failures and skips calls while open", async () => {
+test("opens after 5 failures in the window and skips calls while open", async () => {
   (fetchMock as Mock).mockRejectedValue(new Error("boom"));
   for (let i = 0; i < 5; i++) await sparql("q", "test");
   expect(fetchMock).toHaveBeenCalledTimes(5);
@@ -41,20 +44,53 @@ test("opens after 5 consecutive failures and skips calls while open", async () =
   expect(fetchMock).toHaveBeenCalledTimes(5);
 });
 
-test("half-opens after the window and one success closes it", async () => {
+test("interleaved successes do NOT stop the window from filling", async () => {
+  // The production failure mode of the first breaker: Wikidata throttling is
+  // probabilistic, so successes between failures reset a consecutive counter
+  // and it never tripped. Failure RATE is what matters.
+  for (let i = 0; i < 4; i++) {
+    fail();
+    await sparql("q", "test");
+    succeed();
+    await sparql("q", "test");
+    vi.advanceTimersByTime(10_000);
+  }
+  fail();
+  await sparql("q", "test"); // 5th failure inside the 5 minute window
+
+  // Open now: skipped without fetching.
+  expect(await sparql("q", "test")).toBeNull();
+  expect(fetchMock).toHaveBeenCalledTimes(9);
+});
+
+test("failures older than the window do not count", async () => {
+  (fetchMock as Mock).mockRejectedValue(new Error("boom"));
+  for (let i = 0; i < 4; i++) await sparql("q", "test");
+
+  vi.advanceTimersByTime(6 * 60_000); // the 4 failures age out
+
+  await sparql("q", "test");
+  // Not open: this was 1 failure in the current window.
+  await sparql("q", "test");
+  expect(fetchMock).toHaveBeenCalledTimes(6);
+});
+
+test("half-opens after the open window and one success closes it fully", async () => {
   (fetchMock as Mock).mockRejectedValue(new Error("boom"));
   for (let i = 0; i < 5; i++) await sparql("q", "test");
 
   vi.advanceTimersByTime(10 * 60_000 + 1);
 
-  // The half-open probe goes through and succeeds, closing the breaker.
-  (fetchMock as Mock).mockResolvedValue(ok());
-  expect(await sparql("q", "test")).toEqual([]);
+  succeed();
+  expect(await sparql("q", "test")).toEqual([]); // half-open probe succeeds
   expect(fetchMock).toHaveBeenCalledTimes(6);
 
-  // Closed again: subsequent calls fetch normally.
+  // Fully closed: a single later blip must NOT reopen on its own.
+  fail();
   await sparql("q", "test");
-  expect(fetchMock).toHaveBeenCalledTimes(7);
+  succeed();
+  await sparql("q", "test");
+  expect(fetchMock).toHaveBeenCalledTimes(8);
 });
 
 test("a failed half-open probe reopens for another full window", async () => {
@@ -65,25 +101,10 @@ test("a failed half-open probe reopens for another full window", async () => {
   await sparql("q", "test"); // half-open probe, fails
   expect(fetchMock).toHaveBeenCalledTimes(6);
 
-  // Reopened: still skipping inside the new window.
+  // Reopened immediately: still skipping well inside the new window.
   vi.advanceTimersByTime(5 * 60_000);
   expect(await sparql("q", "test")).toBeNull();
   expect(fetchMock).toHaveBeenCalledTimes(6);
-});
-
-test("a success between failures resets the consecutive count", async () => {
-  (fetchMock as Mock).mockRejectedValue(new Error("boom"));
-  for (let i = 0; i < 4; i++) await sparql("q", "test");
-
-  (fetchMock as Mock).mockResolvedValueOnce(ok());
-  await sparql("q", "test");
-
-  (fetchMock as Mock).mockRejectedValue(new Error("boom"));
-  for (let i = 0; i < 4; i++) await sparql("q", "test");
-
-  // 4 + 4 failures with a success between never reaches 5 consecutive.
-  await sparql("q", "test");
-  expect(fetchMock).toHaveBeenCalledTimes(10);
 });
 
 test("an HTTP error status counts as a failure too", async () => {

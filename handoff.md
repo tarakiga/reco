@@ -351,11 +351,21 @@ negative caching, since a crawler never revisits, so each new title still paid
 one 8s probe against an upstream that has now throttled us continuously for
 over a month.
 
-src/lib/wikidata.ts gained a circuit breaker: 5 consecutive failures open it
-for 10 minutes, during which sparql() returns null instantly (consumers
-negative-cache the empty shape as usual); the first call after the window is
-the half-open probe and one success closes it. Module state works because
-Fluid reuses instances; each instance keeps its own breaker. Log volume drops
-too: skipped calls do not log, only the breaker-open line and real probes.
-resetWikidataBreaker() exists for tests. If Wikidata ever unthrottles us,
-recovery is automatic within one open window.
+src/lib/wikidata.ts gained a circuit breaker: 5 failures within a 5 minute
+SLIDING WINDOW open it for 10 minutes, during which sparql() returns null
+instantly (consumers negative-cache the empty shape as usual); the first call
+after the window is the half-open probe, one success closes it fully, another
+failure reopens it. Module state works because Fluid reuses instances; each
+instance keeps its own breaker. Log volume drops too: skipped calls do not
+log, only the breaker-open line and real probes. resetWikidataBreaker()
+exists for tests. If Wikidata ever unthrottles us, recovery is automatic
+within one open window.
+
+Lesson from v1 of the breaker, which deployed and never tripped: it counted
+CONSECUTIVE failures, but Wikidata's throttling is probabilistic, so the
+occasional success (invisible in logs, which record failures only) reset the
+counter every time while failures kept flowing at ~3 a minute. A breaker over
+a partially failing upstream must trigger on failure rate in a window, never
+on a consecutive run. A success closing the breaker must also fully reset
+openUntil, or the lapsed-window check re-arms half-open and one later blip
+reopens it alone (caught in review, pinned by test).
