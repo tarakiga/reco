@@ -67,6 +67,11 @@ export function useCardKeys(): UseCardKeys {
 
   const setKey = useCallback(
     (kind: CardKeyKind, key: string, on: boolean) => {
+      if (!queryClient.getQueryData<CardKeys>(queryKey)) return;
+      // Drop any refetch in flight: it was sent before this change and would
+      // land on top of it. Cancelling reverts the cache synchronously to the
+      // data from before that refetch, so the update below sticks.
+      void queryClient.cancelQueries({ queryKey });
       queryClient.setQueryData<CardKeys>(queryKey, (old) =>
         old ? withCardKey(old, kind, key, on) : old,
       );
