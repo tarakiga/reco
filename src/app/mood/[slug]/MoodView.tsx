@@ -5,7 +5,6 @@ import { cardTarget } from "@/lib/favourite";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { MoodTabs } from "@/components/catalog/MoodTabs";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { upcomingLabel } from "@/lib/release";
 
 export async function MoodView({ mood, media }: { mood: Mood; media: MoodMedia }) {
   const items = await getMoodTitles(mood.slug, media, 3);
@@ -36,7 +35,7 @@ export async function MoodView({ mood, media }: { mood: Mood; media: MoodMedia }
               title={t.title}
               year={t.year}
               posterUrl={t.posterUrl}
-              upcoming={upcomingLabel(t.releaseDate)}
+              releaseDate={t.releaseDate}
               favourite={cardTarget(t.mediaType, t.tmdbId)}
               watchlist={cardTarget(t.mediaType, t.tmdbId)}
             />

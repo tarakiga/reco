@@ -5,6 +5,13 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { cardTarget } from "@/lib/favourite";
 import { tvStatusBadges } from "@/services/tv-status";
 
+/** Build-time sample. With Cache Components the build needs at least one, and
+ *  prerendering it proves the route reads nothing per request; every other
+ *  source renders on its first visit and is then served from the cache. */
+export function generateStaticParams() {
+  return [{ id: "Q62879" }];
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const { heading } = await titlesBySource(id);

@@ -1,24 +1,19 @@
-import { connection } from "next/server";
 import Link from "next/link";
 import { Rail } from "@/components/catalog/Rail";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { cardTarget } from "@/lib/favourite";
 import { getMoodTitles } from "@/services/moods";
 import { featuredMoods } from "@/lib/moods";
+import { cachedTodayYmd } from "@/services/clock";
 
 /**
- * Home-page mood rails: two pinned moods plus seasonal/rotating slots. Dynamic
- * (resolves the current date), so render it inside a <Suspense> boundary on the
- * otherwise-static home page.
+ * Home-page mood rails: two pinned moods plus seasonal/rotating slots. The
+ * rotation follows the cached server date, so it can lag by up to an hour and
+ * the page stays fully static.
  */
 export async function MoodRails() {
-  await connection(); // dynamic: reads the current date
-  const now = new Date();
-  const month = now.getMonth() + 1;
-  const startOfYear = Date.UTC(now.getUTCFullYear(), 0, 0);
-  const dayOfYear = Math.floor(
-    (Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - startOfYear) / 86_400_000,
-  );
+  const [year, month, day] = (await cachedTodayYmd()).split("-").map(Number);
+  const dayOfYear = Math.floor((Date.UTC(year, month - 1, day) - Date.UTC(year, 0, 0)) / 86_400_000);
   const moods = featuredMoods(month, dayOfYear);
 
   const lists = await Promise.all(moods.map((m) => getMoodTitles(m.slug)));
