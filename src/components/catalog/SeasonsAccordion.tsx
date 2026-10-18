@@ -5,7 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { meFetch } from "@/lib/me-client";
 import type { SeasonSummary, EpisodeVM, EpisodeCastMember } from "@/lib/tmdb/episodes";
 import { useBrowserToday } from "@/components/ui/BrowserDate";
-import { episodeWatchesKey, useEpisodeWatches, type EpisodeWatches } from "./useEpisodeWatches";
+import { useEpisodeWatches, type EpisodeWatches } from "./useEpisodeWatches";
 
 function CheckButton({ watched, onClick }: { watched: boolean; onClick: () => void }) {
   return (
@@ -438,17 +438,17 @@ export function SeasonsAccordion({ tvId, seasons }: { tvId: number; seasons: Sea
   const [target, setTarget] = useState<HashTarget | null>(null);
   const todayYmd = useBrowserToday();
   const queryClient = useQueryClient();
-  const { signedIn, data: watchedData } = useEpisodeWatches(tvId);
+  const { signedIn, queryKey: watchesKey, data: watchedData } = useEpisodeWatches(tvId);
   const watched = useMemo(() => toSet(watchedData), [watchedData]);
 
   // Optimistic toggles written to the shared query, so WatchProgress follows
   // along; the API call is fire-and-forget. Each change starts from the cache
   // rather than the rendered set, so two quick clicks never undo each other.
   function current(): Set<string> {
-    return toSet(queryClient.getQueryData<EpisodeWatches>(episodeWatchesKey(tvId)));
+    return toSet(queryClient.getQueryData<EpisodeWatches>(watchesKey));
   }
   function write(next: Set<string>) {
-    queryClient.setQueryData<EpisodeWatches>(episodeWatchesKey(tvId), toWatches(next));
+    queryClient.setQueryData<EpisodeWatches>(watchesKey, toWatches(next));
   }
   function toggle(seasonNumber: number, episode: number) {
     const key = `${seasonNumber}:${episode}`;

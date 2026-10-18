@@ -40,6 +40,10 @@ export function useCardKeys(): UseCardKeys {
   });
 
   const data = signedIn ? query.data : undefined;
+  // A failed read must not leave every heart and bookmark disabled: report
+  // empty marks instead. Writes still work, and the next successful one
+  // refetches the keys.
+  const failed = signedIn && !data && query.isError;
   const sets = useMemo(
     () =>
       data
@@ -48,8 +52,10 @@ export function useCardKeys(): UseCardKeys {
             watchlist: new Set(data.watchlist),
             watched: new Set(data.watched),
           }
-        : null,
-    [data],
+        : failed
+          ? { favourites: new Set<string>(), watchlist: new Set<string>(), watched: new Set<string>() }
+          : null,
+    [data, failed],
   );
 
   const status: CardKeysStatus = !isLoaded

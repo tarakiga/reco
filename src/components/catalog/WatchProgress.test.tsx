@@ -2,6 +2,7 @@ import { act, render, screen } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { SeasonSummary } from "@/lib/tmdb/episodes";
 import { WatchProgress } from "./WatchProgress";
+import { episodeWatchesKey } from "./useEpisodeWatches";
 
 const auth = vi.hoisted(() => ({
   current: { isLoaded: true, isSignedIn: true, userId: "user_1" as string | null },
@@ -32,7 +33,7 @@ afterEach(() => {
 
 function setup(seed?: Watches) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  if (seed) client.setQueryData(["episode-watches", 1396], seed);
+  if (seed) client.setQueryData(episodeWatchesKey("user_1", 1396), seed);
   render(
     <QueryClientProvider client={client}>
       <WatchProgress tvId={1396} seasons={seasons} />
@@ -47,7 +48,7 @@ test("shows progress from the shared episode-watches query and follows cache upd
   expect(screen.getByText("Next up: S1 E2")).toBeInTheDocument();
 
   act(() => {
-    client.setQueryData<Watches>(["episode-watches", 1396], {
+    client.setQueryData<Watches>(episodeWatchesKey("user_1", 1396), {
       episodes: [
         { season: 1, episode: 1 },
         { season: 1, episode: 2 },
@@ -67,4 +68,15 @@ test("renders nothing and never fetches when signed out", async () => {
   await new Promise((r) => setTimeout(r, 20));
   expect(screen.queryByText(/episodes$/)).not.toBeInTheDocument();
   expect(fetchMock).not.toHaveBeenCalled();
+});
+
+test("the key carries the user id, so another account never reads the cached ticks", async () => {
+  expect(episodeWatchesKey("user_1", 1396)).toEqual(["episode-watches", "user_1", 1396]);
+  auth.current = { isLoaded: true, isSignedIn: true, userId: "user_2" };
+  fetchMock.mockReturnValue(new Promise(() => {}));
+  // user_1's ticks are in the cache; user_2 must not see them.
+  setup({ episodes: [{ season: 1, episode: 1 }] });
+  await new Promise((r) => setTimeout(r, 20));
+  expect(screen.queryByText("1 of 5 episodes")).not.toBeInTheDocument();
+  expect(fetchMock).toHaveBeenCalledTimes(1);
 });

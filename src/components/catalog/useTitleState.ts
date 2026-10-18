@@ -20,7 +20,14 @@ function invalidateCardKeysWhenIdle(qc: QueryClient) {
   }
 }
 
-interface TitleState { status: string | null; score: number | null; favourite: boolean; signedIn: boolean }
+interface TitleState {
+  status: string | null;
+  score: number | null;
+  favourite: boolean;
+  signedIn: boolean;
+  /** Catalog row id; present for signed-in users only. */
+  titleId?: string;
+}
 
 export function useTitleState(mediaType: "movie" | "tv", tmdbId: number) {
   return useQuery({

@@ -68,6 +68,32 @@ test("fetches once per provider for a signed-in user and reports the keys", asyn
   expect(result.current.a.has("favourites", "movie:604")).toBe(false);
 });
 
+test("a failed card-keys read reports ready with no marks, so buttons stay usable", async () => {
+  auth.current = { isLoaded: true, isSignedIn: true, userId: "user_a" };
+  fetchMock.mockRejectedValue(new TypeError("network down"));
+  const { result } = renderHook(() => useCardKeys(), { wrapper: wrapper() });
+  expect(result.current.status).toBe("loading");
+  await waitFor(() => expect(result.current.status).toBe("ready"));
+  expect(result.current.has("favourites", "movie:603")).toBe(false);
+  expect(result.current.has("watchlist", "tv:1396")).toBe(false);
+});
+
+test("a later successful refetch replaces the empty fallback with the real marks", async () => {
+  auth.current = { isLoaded: true, isSignedIn: true, userId: "user_a" };
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  function Wrapper({ children }: { children: ReactNode }) {
+    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+  }
+  fetchMock.mockResolvedValueOnce(new Response("{}", { status: 500 }));
+  const { result } = renderHook(() => useCardKeys(), { wrapper: Wrapper });
+  await waitFor(() => expect(result.current.status).toBe("ready"));
+  expect(result.current.has("favourites", "movie:603")).toBe(false);
+
+  fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(keysFor(["movie:603"]))));
+  await act(() => client.invalidateQueries({ queryKey: ["me", "card-keys"] }));
+  await waitFor(() => expect(result.current.has("favourites", "movie:603")).toBe(true));
+});
+
 test("setKey updates the keys locally without another fetch", async () => {
   auth.current = { isLoaded: true, isSignedIn: true, userId: "user_a" };
   fetchMock.mockResolvedValue(new Response(JSON.stringify(keysFor([]))));

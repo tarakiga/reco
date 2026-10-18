@@ -199,7 +199,7 @@ export default async function TitlePage({
                   )}
                 </>
               )}
-              {title.id && <TitleMatch titleId={title.id} />}
+              <TitleMatch titleId={title.id} mediaType={mediaType} tmdbId={id} />
               {cert && (
                 <span className="rounded border border-border px-1.5 py-0.5 text-xs text-text-muted">
                   {cert}

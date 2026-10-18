@@ -24,5 +24,7 @@ export async function GET(req: Request) {
   const title = await getOrCreateTitle(parsedMediaType.data, parsedTmdbId.data);
   const state = await getTitleState(profile.id, title.id);
 
-  return NextResponse.json({ ...state, signedIn: true });
+  // titleId: the persisted catalog row, so the page can show the match badge
+  // even when its cached render predates this title entering the catalog.
+  return NextResponse.json({ ...state, signedIn: true, titleId: title.id });
 }
