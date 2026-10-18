@@ -369,3 +369,58 @@ a partially failing upstream must trigger on failure rate in a window, never
 on a consecutive run. A success closing the breaker must also fully reset
 openUntil, or the lapsed-window check re-arms half-open and one later blip
 reopens it alone (caught in review, pinned by test).
+
+## 2026-10-18: Catalog pages served from the CDN (site paused, then rebuilt)
+
+Why: a residential-proxy botnet (thousands of IPs, real browser UAs, referrer
+spoofed to haystackk.com) crawled the catalog for days. The billing period hit
+$120; function invocations (17.5M) almost equalled CDN requests (17.7M), so
+nearly every request ran a function. The owner paused the project. Two
+settings removed about half the bill before any code: Observability Plus off
+(it was $51 of events) and the build machine from Elastic to Standard. Spend
+Management now has a $40 hard cap with pause-on-cap. Attack Challenge Mode
+and Bot Protection (challenge) are on; this fleet partly solves JS
+challenges, so the firewall alone was not enough.
+
+What changed (spec and plan: docs/superpowers/{specs,plans}/2026-10-18-static-catalog-pages*):
+
+- Root cause: Clerk's `<Show>` in the server layout called auth() on every
+  route, and catalog pages looked up the user to pre-fill card hearts. Every
+  route rendered per request. The header switch is now a client component
+  (`src/components/layout/HeaderAuth.tsx`).
+- Per-user marks come from the browser: `GET /api/v1/me/card-keys`
+  (favourites, watchlist, watched keys) through `useCardKeys`; watch progress
+  shares `useEpisodeWatches`. Query keys include the Clerk user id, and
+  `QueryProvider` clears the client when the signed-in user changes.
+- Title, episode, person, location, source, mood and home pages read data via
+  `"use cache"` (`src/services/cached-catalog.ts`, `src/services/clock.ts`)
+  with `generateStaticParams` samples. A never-seen URL renders once, then is
+  served from cache (local prod build: 7.5 s first, 37 ms after).
+- Those routes plus /tv, /movies, /find, /search are out of the Clerk
+  middleware matcher (`src/proxy.ts`, tested with Next's own matcher helper).
+  The vercel.app canonical redirect moved to `next.config.ts` redirects
+  (`canonicalRedirects`), production builds only, never `/api/*`.
+- Page views no longer write titles or people to the database.
+
+Rules for future work, learned here:
+
+- **Never import Clerk's `Show` (or call auth(), cookies(), headers(),
+  connection(), or read the clock outside "use cache") in any server
+  component on a Tier A route.** One such call makes every page render per
+  request again and silently restores the cost. Date-dependent UI renders
+  after mount via `useBrowserToday()`.
+- **Next 16 prints ◐ for every dynamic route with Cache Components, even when
+  fully cached.** Check `.next/server/app/<sample>.meta` has no `postponed`
+  instead of looking for ●.
+- **Vercel blocks all deployments, previews included, while a project is
+  paused.** Verify locally with `next build && next start`.
+- **The build now prerenders sample pages from TMDB, the DB and Wikidata.** A
+  TMDB stall can fail a deploy (TMDB fetch now times out per attempt at 10 s);
+  a failed build leaves the previous deployment live.
+- Known and accepted: a nonexistent title serves the "could not be found" page
+  with status 200 (the pre-existing soft 404), now from cache.
+
+Still to do at go-live: unpause, redeploy main, production smoke (second
+request to a title is a cache HIT with no runtime log; no middleware log on
+Tier A; vercel.app URL 308s with query kept; signed-in walkthrough on
+haystackk.com), then turn Attack Challenge Mode off after a calm day.
