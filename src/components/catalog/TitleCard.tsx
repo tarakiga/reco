@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CardFavouriteButton } from "./CardFavouriteButton";
 import { CardWatchlistButton } from "./CardWatchlistButton";
+import { UpcomingBadge } from "./UpcomingBadge";
 import type { CardFavourite, CardWatchlist } from "@/lib/favourite";
 import type { StatusBadge } from "@/lib/tv-status";
 
@@ -10,6 +11,7 @@ export function TitleCard({
   year,
   posterUrl,
   upcoming,
+  releaseDate,
   estimated,
   status,
   favourite,
@@ -22,6 +24,9 @@ export function TitleCard({
   /** Pre-computed "upcoming" date label (e.g. "Aug 15, 2026"); computed by the
    *  page since it depends on the current time (not allowed in prerendered cards). */
   upcoming?: string | null;
+  /** Raw release date (YYYY-MM-DD). When given instead of `upcoming`, the badge
+   *  is decided in the browser, so the card can be prerendered. */
+  releaseDate?: string | null;
   /** Release calendar: marks the date as an estimated VOD window (adds an "Est."
    *  badge) so a projected streaming date never reads as confirmed. */
   estimated?: boolean;
@@ -41,7 +46,7 @@ export function TitleCard({
             {favourite && <CardFavouriteButton {...favourite} />}
           </div>
         )}
-        {(status || upcoming || estimated) && (
+        {(status || upcoming || releaseDate || estimated) && (
           <div className="absolute left-1 top-1 z-10 flex flex-col items-start gap-1">
             {status && (
               <span
@@ -57,6 +62,7 @@ export function TitleCard({
                 {upcoming}
               </span>
             )}
+            {!upcoming && releaseDate && <UpcomingBadge releaseDate={releaseDate} />}
             {estimated && (
               <span
                 title="Estimated VOD date — not yet confirmed"
