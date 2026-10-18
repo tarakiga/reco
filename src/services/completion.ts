@@ -102,6 +102,8 @@ export async function personSets(personId: number): Promise<PersonSets> {
       wrote: dedupe(crew.filter((c) => c.job && WRITER_JOBS.has(c.job)).map(toItem)),
     };
   } catch {
+    // A failed TMDB call must not pin empty credits for days.
+    cacheLife("hours");
     return { acted: [], directed: [], wrote: [] };
   }
 }
@@ -124,6 +126,7 @@ export async function collectionItems(collectionId: number): Promise<CompletionI
         .map((p) => toItem({ ...p, media_type: "movie" })),
     );
   } catch {
+    cacheLife("hours");
     return [];
   }
 }

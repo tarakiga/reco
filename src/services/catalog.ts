@@ -8,7 +8,7 @@ import { slimTitleMetadata, slimPersonMetadata } from "@/lib/tmdb/slim";
 import { isSuppressedTitle } from "@/lib/tmdb/suppressed";
 import { titleSlug, slugify } from "@/lib/slug";
 
-const STALE_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
+export const STALE_MS = 1000 * 60 * 60 * 24 * 7; // 7 days
 
 function isFresh(refreshedAt: Date): boolean {
   return Date.now() - new Date(refreshedAt).getTime() < STALE_MS;
