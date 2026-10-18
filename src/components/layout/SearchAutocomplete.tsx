@@ -2,7 +2,6 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
 import { CardFavouriteButton } from "@/components/catalog/CardFavouriteButton";
 import { CardWatchlistButton } from "@/components/catalog/CardWatchlistButton";
 
@@ -28,8 +27,6 @@ type Result = TitleResult | PersonResult;
  *  watchlist + favourite, so users can act without opening a page. */
 export function SearchAutocomplete() {
   const router = useRouter();
-  const { isSignedIn } = useAuth();
-  const signedIn = isSignedIn ?? false;
 
   const [q, setQ] = useState("");
   const [results, setResults] = useState<Result[]>([]);
@@ -158,8 +155,8 @@ export function SearchAutocomplete() {
                     </div>
                   </Link>
                   <div className="flex shrink-0 items-center gap-1.5">
-                    <CardWatchlistButton mediaType={t.mediaType} tmdbId={t.tmdbId} initial={false} signedIn={signedIn} />
-                    <CardFavouriteButton mediaType={t.mediaType} tmdbId={t.tmdbId} initial={false} signedIn={signedIn} />
+                    <CardWatchlistButton mediaType={t.mediaType} tmdbId={t.tmdbId} />
+                    <CardFavouriteButton mediaType={t.mediaType} tmdbId={t.tmdbId} />
                   </div>
                 </div>
               ))}

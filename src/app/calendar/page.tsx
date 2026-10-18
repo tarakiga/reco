@@ -6,7 +6,7 @@ import { TitleCard } from "@/components/catalog/TitleCard";
 import { Rail } from "@/components/catalog/Rail";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { upcomingLabel } from "@/lib/release";
-import { cardActionContext, favouriteProp, watchlistProp } from "@/services/favourites";
+import { cardTarget } from "@/lib/favourite";
 
 export const metadata = { title: "Release calendar" };
 
@@ -34,10 +34,9 @@ export default async function CalendarPage({
   const region = profile?.region ?? "US";
   const today = todayYmd();
 
-  const [days, newToStreaming, ctx] = await Promise.all([
+  const [days, newToStreaming] = await Promise.all([
     getReleaseCalendar(region, filter, today),
     getNewToStreaming(region, today),
-    cardActionContext(),
   ]);
 
   return (
@@ -58,8 +57,8 @@ export default async function CalendarPage({
                 title={t.title}
                 year={t.year}
                 posterUrl={t.posterUrl}
-                favourite={favouriteProp(ctx, "movie", t.tmdbId)}
-                watchlist={watchlistProp(ctx, "movie", t.tmdbId)}
+                favourite={cardTarget("movie", t.tmdbId)}
+                watchlist={cardTarget("movie", t.tmdbId)}
               />
             </div>
           ))}
@@ -115,8 +114,8 @@ export default async function CalendarPage({
                     posterUrl={t.posterUrl}
                     upcoming={t.estimated ? null : upcomingLabel(t.releaseDate)}
                     estimated={t.estimated}
-                    favourite={favouriteProp(ctx, "movie", t.tmdbId)}
-                    watchlist={watchlistProp(ctx, "movie", t.tmdbId)}
+                    favourite={cardTarget("movie", t.tmdbId)}
+                    watchlist={cardTarget("movie", t.tmdbId)}
                   />
                 ))}
               </div>

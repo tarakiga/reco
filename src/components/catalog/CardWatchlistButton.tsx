@@ -1,37 +1,42 @@
 "use client";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
-import { useSetWatch, useRemoveWatch } from "./useTitleState";
+import { cardKey } from "@/lib/card-keys";
 import type { CardWatchlist } from "@/lib/favourite";
+import { useCardKeys } from "./useCardKeys";
+import { useSetWatch, useRemoveWatch } from "./useTitleState";
 
 /**
- * Bookmark overlay for grid/search cards — add to the watchlist (as "want to
- * watch") without opening the title. Optimistic, stops the card link from
- * navigating, nudges signed-out users to sign in.
+ * Bookmark overlay for grid/search cards. Adds to the watchlist (as "want to
+ * watch") without opening the title. The state comes from the browser-side
+ * card keys. Optimistic, stops the card link from navigating, nudges
+ * signed-out users to sign in.
  */
-export function CardWatchlistButton({ mediaType, tmdbId, initial, signedIn }: CardWatchlist) {
+export function CardWatchlistButton({ mediaType, tmdbId }: CardWatchlist) {
   const router = useRouter();
   const toast = useToast();
   const setWatch = useSetWatch(mediaType, tmdbId);
   const removeWatch = useRemoveWatch(mediaType, tmdbId);
-  const [on, setOn] = useState(initial);
-  const pending = setWatch.isPending || removeWatch.isPending;
+  const keys = useCardKeys();
+  const key = cardKey(mediaType, tmdbId);
+  const on = keys.has("watchlist", key);
+  const pending = keys.status === "loading" || setWatch.isPending || removeWatch.isPending;
 
   function handleClick(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    if (!signedIn) {
+    if (keys.status === "loading") return;
+    if (keys.status === "anonymous") {
       router.push("/sign-in");
       return;
     }
     const next = !on;
-    setOn(next);
+    keys.setKey("watchlist", key, next);
     if (next) {
       setWatch.mutate("want_to_watch", {
         onSuccess: () => toast({ title: "Added to watchlist", variant: "success" }),
         onError: (err) => {
-          setOn(false);
+          keys.setKey("watchlist", key, false);
           toast({ title: err.message, variant: "danger" });
         },
       });
@@ -39,7 +44,7 @@ export function CardWatchlistButton({ mediaType, tmdbId, initial, signedIn }: Ca
       removeWatch.mutate(undefined, {
         onSuccess: () => toast({ title: "Removed from watchlist", variant: "info" }),
         onError: (err) => {
-          setOn(true);
+          keys.setKey("watchlist", key, true);
           toast({ title: err.message, variant: "danger" });
         },
       });

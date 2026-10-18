@@ -2,17 +2,17 @@ import { connection } from "next/server";
 import Link from "next/link";
 import { Rail } from "@/components/catalog/Rail";
 import { TitleCard } from "@/components/catalog/TitleCard";
-import { cardActionContext, favouriteProp, watchlistProp } from "@/services/favourites";
+import { cardTarget } from "@/lib/favourite";
 import { getMoodTitles } from "@/services/moods";
 import { featuredMoods } from "@/lib/moods";
 
 /**
- * Home-page mood rails — two pinned moods plus seasonal/rotating slots. Dynamic
- * (resolves the current date + signed-in user for card quick-actions), so render
- * it inside a <Suspense> boundary on the otherwise-static home page.
+ * Home-page mood rails: two pinned moods plus seasonal/rotating slots. Dynamic
+ * (resolves the current date), so render it inside a <Suspense> boundary on the
+ * otherwise-static home page.
  */
 export async function MoodRails() {
-  await connection(); // dynamic: reads the current date + signed-in user
+  await connection(); // dynamic: reads the current date
   const now = new Date();
   const month = now.getMonth() + 1;
   const startOfYear = Date.UTC(now.getUTCFullYear(), 0, 0);
@@ -21,10 +21,7 @@ export async function MoodRails() {
   );
   const moods = featuredMoods(month, dayOfYear);
 
-  const [ctx, ...lists] = await Promise.all([
-    cardActionContext(),
-    ...moods.map((m) => getMoodTitles(m.slug)),
-  ]);
+  const lists = await Promise.all(moods.map((m) => getMoodTitles(m.slug)));
 
   const rails = moods
     .map((m, i) => ({ mood: m, items: lists[i] ?? [] }))
@@ -59,8 +56,8 @@ export async function MoodRails() {
                 title={t.title}
                 year={t.year}
                 posterUrl={t.posterUrl}
-                favourite={favouriteProp(ctx, t.mediaType, t.tmdbId)}
-                watchlist={watchlistProp(ctx, t.mediaType, t.tmdbId)}
+                favourite={cardTarget(t.mediaType, t.tmdbId)}
+                watchlist={cardTarget(t.mediaType, t.tmdbId)}
               />
             </div>
           ))}

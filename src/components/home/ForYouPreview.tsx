@@ -3,6 +3,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@clerk/nextjs";
 import { meFetch } from "@/lib/me-client";
+import { cardTarget } from "@/lib/favourite";
 import { Rail } from "@/components/catalog/Rail";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { MatchBadge } from "@/components/catalog/MatchBadge";
@@ -63,8 +64,8 @@ export function ForYouPreview() {
             title={item.title}
             year={item.year}
             posterUrl={item.posterUrl}
-            favourite={{ mediaType: item.mediaType, tmdbId: item.tmdbId, initial: item.favourite ?? false, signedIn: true }}
-            watchlist={{ mediaType: item.mediaType, tmdbId: item.tmdbId, initial: item.watchlist ?? false, signedIn: true }}
+            favourite={cardTarget(item.mediaType, item.tmdbId)}
+            watchlist={cardTarget(item.mediaType, item.tmdbId)}
           />
         </div>
       ))}

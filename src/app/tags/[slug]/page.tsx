@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCurrentProfile } from "@/services/profile";
 import { getTagCollection } from "@/services/tags";
-import { cardActionContext, favouriteProp, watchlistProp } from "@/services/favourites";
+import { cardTarget } from "@/lib/favourite";
 import { tvStatusBadges } from "@/services/tv-status";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -38,7 +38,6 @@ export default async function TagPage({ params }: { params: Promise<{ slug: stri
   const collection = await getTagCollection(profile.id, slug);
   if (!collection) notFound();
 
-  const ctx = await cardActionContext();
   const statuses = await tvStatusBadges(collection.items);
 
   return (
@@ -60,8 +59,8 @@ export default async function TagPage({ params }: { params: Promise<{ slug: stri
               year={it.year}
               posterUrl={it.posterUrl}
               status={statuses.get(it.tmdbId)}
-              favourite={favouriteProp(ctx, it.mediaType, it.tmdbId)}
-              watchlist={watchlistProp(ctx, it.mediaType, it.tmdbId)}
+              favourite={cardTarget(it.mediaType, it.tmdbId)}
+              watchlist={cardTarget(it.mediaType, it.tmdbId)}
             />
           ))}
         </div>

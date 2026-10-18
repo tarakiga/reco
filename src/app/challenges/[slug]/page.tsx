@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { getCurrentProfile } from "@/services/profile";
 import { challengeProgress } from "@/services/challenges";
 import { getChallenge } from "@/lib/challenges";
-import { cardActionContext, favouriteProp, watchlistProp } from "@/services/favourites";
+import { cardTarget } from "@/lib/favourite";
 import { CompletionBar } from "@/components/completion/CompletionBar";
 import { TitleCard } from "@/components/catalog/TitleCard";
 
@@ -17,7 +17,7 @@ export default async function ChallengePage({ params }: { params: Promise<{ slug
   await connection();
   const { slug } = await params;
   const profile = await getCurrentProfile();
-  const [p, ctx] = await Promise.all([challengeProgress(profile?.id ?? null, slug), cardActionContext()]);
+  const p = await challengeProgress(profile?.id ?? null, slug);
   if (!p) notFound();
 
   return (
@@ -42,8 +42,8 @@ export default async function ChallengePage({ params }: { params: Promise<{ slug
                 title={t.title}
                 year={t.year}
                 posterUrl={t.posterUrl}
-                favourite={favouriteProp(ctx, t.mediaType, t.tmdbId)}
-                watchlist={watchlistProp(ctx, t.mediaType, t.tmdbId)}
+                favourite={cardTarget(t.mediaType, t.tmdbId)}
+                watchlist={cardTarget(t.mediaType, t.tmdbId)}
               />
             ))}
           </div>
@@ -61,8 +61,8 @@ export default async function ChallengePage({ params }: { params: Promise<{ slug
                 title={t.title}
                 year={t.year}
                 posterUrl={t.posterUrl}
-                favourite={favouriteProp(ctx, t.mediaType, t.tmdbId)}
-                watchlist={watchlistProp(ctx, t.mediaType, t.tmdbId)}
+                favourite={cardTarget(t.mediaType, t.tmdbId)}
+                watchlist={cardTarget(t.mediaType, t.tmdbId)}
               />
             ))}
           </div>

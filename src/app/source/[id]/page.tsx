@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { titlesBySource, isWikidataQid } from "@/services/wikidata-listing";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { cardActionContext, favouriteProp, watchlistProp } from "@/services/favourites";
+import { cardTarget } from "@/lib/favourite";
 import { tvStatusBadges } from "@/services/tv-status";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -15,7 +15,6 @@ export default async function SourcePage({ params }: { params: Promise<{ id: str
   const { id } = await params;
   if (!isWikidataQid(id)) notFound();
   const { heading, items } = await titlesBySource(id);
-  const ctx = await cardActionContext();
   const statuses = await tvStatusBadges(items);
 
   return (
@@ -27,7 +26,7 @@ export default async function SourcePage({ params }: { params: Promise<{ id: str
       ) : (
         <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6">
           {items.map((it) => (
-            <TitleCard key={`${it.mediaType}-${it.tmdbId}`} href={it.href} title={it.title} year={it.year} posterUrl={it.posterUrl} status={statuses.get(it.tmdbId)} favourite={favouriteProp(ctx, it.mediaType, it.tmdbId)} watchlist={watchlistProp(ctx, it.mediaType, it.tmdbId)} />
+            <TitleCard key={`${it.mediaType}-${it.tmdbId}`} href={it.href} title={it.title} year={it.year} posterUrl={it.posterUrl} status={statuses.get(it.tmdbId)} favourite={cardTarget(it.mediaType, it.tmdbId)} watchlist={cardTarget(it.mediaType, it.tmdbId)} />
           ))}
         </div>
       )}

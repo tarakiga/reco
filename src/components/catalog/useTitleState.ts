@@ -1,6 +1,7 @@
 "use client";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { meFetch } from "@/lib/me-client";
+import { CARD_KEYS_QUERY_PREFIX } from "./useCardKeys";
 
 interface TitleState { status: string | null; score: number | null; favourite: boolean; signedIn: boolean }
 
@@ -17,7 +18,10 @@ export function useSetWatch(mediaType: "movie" | "tv", tmdbId: number) {
   return useMutation({
     mutationFn: (status: string) =>
       meFetch("/api/v1/me/watchlist", { method: "PUT", body: { mediaType, tmdbId, status } }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["title-state", mediaType, tmdbId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["title-state", mediaType, tmdbId] });
+      qc.invalidateQueries({ queryKey: CARD_KEYS_QUERY_PREFIX });
+    },
   });
 }
 
@@ -25,7 +29,10 @@ export function useRemoveWatch(mediaType: "movie" | "tv", tmdbId: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => meFetch("/api/v1/me/watchlist", { method: "DELETE", body: { mediaType, tmdbId } }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["title-state", mediaType, tmdbId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["title-state", mediaType, tmdbId] });
+      qc.invalidateQueries({ queryKey: CARD_KEYS_QUERY_PREFIX });
+    },
   });
 }
 
@@ -34,7 +41,10 @@ export function useSetRating(mediaType: "movie" | "tv", tmdbId: number) {
   return useMutation({
     mutationFn: (score: number) =>
       meFetch("/api/v1/me/ratings", { method: "PUT", body: { mediaType, tmdbId, score } }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["title-state", mediaType, tmdbId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["title-state", mediaType, tmdbId] });
+      qc.invalidateQueries({ queryKey: CARD_KEYS_QUERY_PREFIX });
+    },
   });
 }
 
@@ -42,7 +52,10 @@ export function useRemoveRating(mediaType: "movie" | "tv", tmdbId: number) {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: () => meFetch("/api/v1/me/ratings", { method: "DELETE", body: { mediaType, tmdbId } }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["title-state", mediaType, tmdbId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["title-state", mediaType, tmdbId] });
+      qc.invalidateQueries({ queryKey: CARD_KEYS_QUERY_PREFIX });
+    },
   });
 }
 
@@ -67,6 +80,7 @@ export function useLogDiary(mediaType: "movie" | "tv", tmdbId: number) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["diary-dates", mediaType, tmdbId] });
       qc.invalidateQueries({ queryKey: ["title-state", mediaType, tmdbId] });
+      qc.invalidateQueries({ queryKey: CARD_KEYS_QUERY_PREFIX });
     },
   });
 }
@@ -79,6 +93,7 @@ export function useRemoveDiary(mediaType: "movie" | "tv", tmdbId: number) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["diary-dates", mediaType, tmdbId] });
       qc.invalidateQueries({ queryKey: ["title-state", mediaType, tmdbId] });
+      qc.invalidateQueries({ queryKey: CARD_KEYS_QUERY_PREFIX });
     },
   });
 }
@@ -91,6 +106,9 @@ export function useToggleFavourite(mediaType: "movie" | "tv", tmdbId: number) {
         method: favourite ? "PUT" : "DELETE",
         body: { mediaType, tmdbId },
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["title-state", mediaType, tmdbId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["title-state", mediaType, tmdbId] });
+      qc.invalidateQueries({ queryKey: CARD_KEYS_QUERY_PREFIX });
+    },
   });
 }

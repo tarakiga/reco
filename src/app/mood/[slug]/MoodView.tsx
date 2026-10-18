@@ -1,17 +1,14 @@
 import Link from "next/link";
 import { hasTvTab, moodBlurb, type Mood, type MoodMedia } from "@/lib/moods";
 import { getMoodTitles } from "@/services/moods";
-import { cardActionContext, favouriteProp, watchlistProp } from "@/services/favourites";
+import { cardTarget } from "@/lib/favourite";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { MoodTabs } from "@/components/catalog/MoodTabs";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { upcomingLabel } from "@/lib/release";
 
 export async function MoodView({ mood, media }: { mood: Mood; media: MoodMedia }) {
-  const [items, ctx] = await Promise.all([
-    getMoodTitles(mood.slug, media, 3),
-    cardActionContext(),
-  ]);
+  const items = await getMoodTitles(mood.slug, media, 3);
 
   return (
     <div className="space-y-6">
@@ -40,8 +37,8 @@ export async function MoodView({ mood, media }: { mood: Mood; media: MoodMedia }
               year={t.year}
               posterUrl={t.posterUrl}
               upcoming={upcomingLabel(t.releaseDate)}
-              favourite={favouriteProp(ctx, t.mediaType, t.tmdbId)}
-              watchlist={watchlistProp(ctx, t.mediaType, t.tmdbId)}
+              favourite={cardTarget(t.mediaType, t.tmdbId)}
+              watchlist={cardTarget(t.mediaType, t.tmdbId)}
             />
           ))}
         </div>

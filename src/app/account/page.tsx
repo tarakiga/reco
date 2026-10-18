@@ -13,7 +13,6 @@ import { DiaryManager } from "@/components/account/DiaryManager";
 import { listUserPolls } from "@/services/polls";
 import { PollsManager } from "@/components/account/PollsManager";
 import { franchisesInProgress } from "@/services/completion";
-import { cardActionContext } from "@/services/favourites";
 import { FranchiseCompletion } from "@/components/account/FranchiseCompletion";
 import { Achievements } from "@/components/account/Achievements";
 import { computeBadges } from "@/lib/achievements";
@@ -53,7 +52,7 @@ export default async function AccountPage() {
     );
   }
 
-  const [watchlist, favourites, epg, userLists, userTags, diaryEntries, userPolls, franchiseData, cardCtx] =
+  const [watchlist, favourites, epg, userLists, userTags, diaryEntries, userPolls, franchiseData] =
     await Promise.all([
       listWatchlist(profile.id),
       listFavourites(profile.id),
@@ -63,7 +62,6 @@ export default async function AccountPage() {
       listDiary(profile.id),
       listUserPolls(profile.id),
       franchisesInProgress(profile.id),
-      cardActionContext(),
     ]);
   const listVMs = userLists.map((l) => ({
     id: l.id,
@@ -128,7 +126,7 @@ export default async function AccountPage() {
               franchisesCompleted: franchiseData.completed.length,
             })}
           />
-          <FranchiseCompletion data={franchiseData} ctx={cardCtx} />
+          <FranchiseCompletion data={franchiseData} />
         </div>
       ),
     },

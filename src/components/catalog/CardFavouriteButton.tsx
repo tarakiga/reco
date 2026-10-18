@@ -1,30 +1,35 @@
 "use client";
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ui/Toast";
-import { useToggleFavourite } from "./useTitleState";
+import { cardKey } from "@/lib/card-keys";
 import type { CardFavourite } from "@/lib/favourite";
+import { useCardKeys } from "./useCardKeys";
+import { useToggleFavourite } from "./useTitleState";
 
 /**
- * Heart overlay for grid cards — favourite without opening the title. Sits
- * inside the card's <Link>, so it stops the click from navigating. Optimistic:
- * flips immediately, reverts on error. Signed-out users are nudged to sign in.
+ * Heart overlay for grid cards. Favourite without opening the title. Sits
+ * inside the card's <Link>, so it stops the click from navigating. The state
+ * comes from the browser-side card keys. Optimistic: flips immediately,
+ * reverts on error. Signed-out users are nudged to sign in.
  */
-export function CardFavouriteButton({ mediaType, tmdbId, initial, signedIn }: CardFavourite) {
+export function CardFavouriteButton({ mediaType, tmdbId }: CardFavourite) {
   const router = useRouter();
   const toast = useToast();
   const toggle = useToggleFavourite(mediaType, tmdbId);
-  const [fav, setFav] = useState(initial);
+  const keys = useCardKeys();
+  const key = cardKey(mediaType, tmdbId);
+  const fav = keys.has("favourites", key);
 
   function handleClick(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    if (!signedIn) {
+    if (keys.status === "loading") return;
+    if (keys.status === "anonymous") {
       router.push("/sign-in");
       return;
     }
     const next = !fav;
-    setFav(next);
+    keys.setKey("favourites", key, next);
     toggle.mutate(next, {
       onSuccess: () =>
         toast({
@@ -32,7 +37,7 @@ export function CardFavouriteButton({ mediaType, tmdbId, initial, signedIn }: Ca
           variant: next ? "success" : "info",
         }),
       onError: (err) => {
-        setFav(!next); // revert optimistic flip
+        keys.setKey("favourites", key, !next); // revert optimistic flip
         toast({ title: err.message, variant: "danger" });
       },
     });
@@ -42,7 +47,7 @@ export function CardFavouriteButton({ mediaType, tmdbId, initial, signedIn }: Ca
     <button
       type="button"
       onClick={handleClick}
-      disabled={toggle.isPending}
+      disabled={keys.status === "loading" || toggle.isPending}
       aria-pressed={fav}
       aria-label={fav ? "Remove from favourites" : "Add to favourites"}
       title={fav ? "Remove from favourites" : "Add to favourites"}

@@ -2,16 +2,14 @@ import Link from "next/link";
 import { TitleCard } from "@/components/catalog/TitleCard";
 import { CompletionBar } from "@/components/completion/CompletionBar";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { favouriteProp, watchlistProp, type CardActionContext } from "@/services/favourites";
+import { cardTarget } from "@/lib/favourite";
 import type { FranchiseProgress, CompletedFranchise } from "@/services/completion";
 
 /** Account "Completion" tab — franchises you've started, closest-to-done first. */
 export function FranchiseCompletion({
   data,
-  ctx,
 }: {
   data: { inProgress: FranchiseProgress[]; completed: CompletedFranchise[] };
-  ctx: CardActionContext;
 }) {
   if (data.inProgress.length === 0 && data.completed.length === 0) {
     return (
@@ -40,8 +38,8 @@ export function FranchiseCompletion({
                 title={t.title}
                 year={t.year}
                 posterUrl={t.posterUrl}
-                favourite={favouriteProp(ctx, t.mediaType, t.tmdbId)}
-                watchlist={watchlistProp(ctx, t.mediaType, t.tmdbId)}
+                favourite={cardTarget(t.mediaType, t.tmdbId)}
+                watchlist={cardTarget(t.mediaType, t.tmdbId)}
               />
             ))}
           </div>
@@ -63,8 +61,8 @@ export function FranchiseCompletion({
                         title={t.title}
                         year={t.year}
                         posterUrl={t.posterUrl}
-                        favourite={favouriteProp(ctx, t.mediaType, t.tmdbId)}
-                        watchlist={watchlistProp(ctx, t.mediaType, t.tmdbId)}
+                        favourite={cardTarget(t.mediaType, t.tmdbId)}
+                        watchlist={cardTarget(t.mediaType, t.tmdbId)}
                       />
                     </div>
                   </div>
