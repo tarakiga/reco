@@ -17,6 +17,9 @@ function apiKey(): string {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** Per-attempt limit for one TMDB request, body included. */
+export const ATTEMPT_TIMEOUT_MS = 10_000;
+
 async function get<T>(path: string, params: Record<string, string> = {}): Promise<T> {
   const url = new URL(`${BASE}${path}`);
   url.searchParams.set("api_key", apiKey());
@@ -27,17 +30,21 @@ async function get<T>(path: string, params: Record<string, string> = {}): Promis
   // especially on heavy append_to_response calls under load. A single blip
   // shouldn't fail the whole request (e.g. adding a title to a list), so retry
   // transient failures a few times with exponential backoff before giving up.
+  //
+  // Each attempt has its own timeout, so a hung connection fails fast and is
+  // retried like any other blip instead of running into the "use cache" budget.
   let lastStatus = 0;
   for (let attempt = 0; attempt < 4; attempt++) {
     let res: Response;
     try {
-      res = await fetch(target);
+      res = await fetch(target, { signal: AbortSignal.timeout(ATTEMPT_TIMEOUT_MS) });
+      // The timeout also covers reading the body, so read it inside the try.
+      if (res.ok) return (await res.json()) as T;
     } catch {
-      lastStatus = 503; // network/connection blip — retryable
+      lastStatus = 503; // network/connection blip or timeout: retryable
       await sleep(200 * 2 ** attempt);
       continue;
     }
-    if (res.ok) return (await res.json()) as T;
     lastStatus = res.status;
     // 5xx and 429 can recover; other 4xx (404, 401, …) won't.
     if (res.status < 500 && res.status !== 429) break;
