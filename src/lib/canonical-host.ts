@@ -25,6 +25,9 @@ export function canonicalRedirects(env: CanonicalEnv): Redirect[] {
   // Previews and local dev are addressed by their own hosts, on purpose.
   const host = env.VERCEL_PROJECT_PRODUCTION_URL;
   if (env.VERCEL_ENV !== "production" || !host) return [];
+  // A project with no custom domain has a *.vercel.app production host. The
+  // host condition below would then match the destination too and loop.
+  if (/\.vercel\.app$/i.test(host)) return [];
   return [
     {
       // Every path except /api and /api/*. Machine callers keep whichever host

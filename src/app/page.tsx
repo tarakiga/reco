@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import Link from "next/link";
 import { tmdb } from "@/lib/tmdb/client";
 import { toSearchResults } from "@/lib/tmdb/transform";
@@ -233,9 +232,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <Suspense fallback={null}>
-        <MoodRails />
-      </Suspense>
+      <MoodRails />
 
       <AdSlot placement="home-feed" className="mb-10" />
 

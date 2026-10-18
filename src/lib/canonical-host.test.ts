@@ -65,6 +65,15 @@ test("no redirect in production without a production host", () => {
   expect(canonicalRedirects({ VERCEL_ENV: "production", VERCEL_PROJECT_PRODUCTION_URL: "" })).toEqual([]);
 });
 
+test("no redirect when the production host is itself a vercel.app host (would loop)", () => {
+  expect(
+    canonicalRedirects({ VERCEL_ENV: "production", VERCEL_PROJECT_PRODUCTION_URL: "reco-pink.vercel.app" }),
+  ).toEqual([]);
+  expect(
+    canonicalRedirects({ VERCEL_ENV: "production", VERCEL_PROJECT_PRODUCTION_URL: "Reco-Pink.Vercel.App" }),
+  ).toEqual([]);
+});
+
 test("production gets one permanent redirect to the production host", () => {
   const r = onlyRedirect();
   expect(r.permanent).toBe(true);
