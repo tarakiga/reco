@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import type { FilmographyCredit } from "@/lib/tmdb/person";
+import { useCardKeys } from "@/components/catalog/useCardKeys";
 import { FilmographyModal } from "./FilmographyModal";
 
 type Filter = "all" | "movie" | "tv" | "seen";
@@ -8,17 +9,15 @@ type Filter = "all" | "movie" | "tv" | "seen";
 export function FilmographyGrid({
   personId,
   credits,
-  watchedKeys,
 }: {
   personId: number;
   credits: FilmographyCredit[];
-  watchedKeys?: string[];
 }) {
   const [selected, setSelected] = useState<FilmographyCredit | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
 
-  const watched = new Set(watchedKeys ?? []);
-  const isSeen = (c: FilmographyCredit) => watched.has(`${c.mediaType}:${c.tmdbId}`);
+  const cardKeys = useCardKeys();
+  const isSeen = (c: FilmographyCredit) => cardKeys.has("watched", `${c.mediaType}:${c.tmdbId}`);
 
   const movies = credits.filter((c) => c.mediaType === "movie").length;
   const tv = credits.filter((c) => c.mediaType === "tv").length;

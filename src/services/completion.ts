@@ -7,27 +7,9 @@ import { tmdb } from "@/lib/tmdb/client";
 import { posterUrl } from "@/lib/tmdb/images";
 import { titleSlug } from "@/lib/slug";
 import type { TmdbTitleDetail, TmdbSearchItem } from "@/lib/tmdb/types";
+import { progressFor, releasedItems, type CompletionItem, type Progress } from "@/lib/completion";
 
-export interface CompletionItem {
-  key: string; // `${mediaType}:${tmdbId}`
-  mediaType: "movie" | "tv";
-  tmdbId: number;
-  title: string;
-  year: number | null;
-  /** ISO date ("YYYY-MM-DD") or null — used to drop not-yet-released titles. */
-  releaseDate: string | null;
-  posterUrl: string | null;
-  href: string;
-}
-
-export interface Progress {
-  total: number;
-  watched: number;
-  /** Titles still to watch, in order. */
-  remaining: CompletionItem[];
-  /** Titles already seen, in order. */
-  seen: CompletionItem[];
-}
+export type { CompletionItem, Progress };
 
 const WRITER_JOBS = new Set([
   "Writer", "Screenplay", "Story", "Author", "Novel", "Teleplay", "Characters", "Comic Book", "Book",
@@ -56,16 +38,6 @@ function toItem(c: TmdbSearchItem): CompletionItem | null {
   };
 }
 
-/**
- * Drop not-yet-released titles (future-dated) so the completion denominator only
- * counts what you can actually watch. Undated titles are kept (usually old
- * catalogue, not upcoming). Call at request time, not inside a cached function.
- */
-export function releasedItems(items: CompletionItem[]): CompletionItem[] {
-  const today = new Date().toISOString().slice(0, 10);
-  return items.filter((i) => !i.releaseDate || i.releaseDate <= today);
-}
-
 function dedupe(items: (CompletionItem | null)[]): CompletionItem[] {
   const seen = new Set<number>();
   const out: CompletionItem[] = [];
@@ -75,13 +47,6 @@ function dedupe(items: (CompletionItem | null)[]): CompletionItem[] {
     out.push(it);
   }
   return out;
-}
-
-/** Compute a watched/total split for a set against the user's watched keys. */
-export function progressFor(items: CompletionItem[], watched: Set<string>): Progress {
-  const seen = items.filter((i) => watched.has(i.key));
-  const remaining = items.filter((i) => !watched.has(i.key));
-  return { total: items.length, watched: seen.length, remaining, seen };
 }
 
 // ---------------------------------------------------------------------------
@@ -188,6 +153,8 @@ export async function franchisesInProgress(
 ): Promise<{ inProgress: FranchiseProgress[]; completed: CompletedFranchise[] }> {
   const ids = await watchedTitleIds(userId);
   if (ids.length === 0) return { inProgress: [], completed: [] };
+  // Request-time caller (the account page is already dynamic), so the server date is fine.
+  const today = new Date().toISOString().slice(0, 10);
 
   const movieRows = await db
     .select({ tmdbId: titles.tmdbId, metadata: titles.metadata })
@@ -209,7 +176,7 @@ export async function franchisesInProgress(
   for (const [collectionId, g] of groups) {
     // Only count what's actually out, so an announced sequel can't keep a
     // finished franchise stuck "in progress".
-    const items = releasedItems(await collectionItems(collectionId));
+    const items = releasedItems(await collectionItems(collectionId), today);
     if (items.length < 2) continue; // not really a franchise (or only one out yet)
     const watchedKeys = new Set([...g.watched].map((id) => `movie:${id}`));
     const { total, watched, remaining, seen } = progressFor(items, watchedKeys);

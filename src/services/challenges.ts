@@ -3,7 +3,8 @@ import { cacheLife, cacheTag } from "next/cache";
 import { tmdb } from "@/lib/tmdb/client";
 import { toBrowseResults } from "@/lib/tmdb/discover";
 import { CHALLENGES, getChallenge, type Challenge } from "@/lib/challenges";
-import { progressFor, watchedTitleKeys, type CompletionItem, type Progress } from "./completion";
+import { watchedTitleKeys } from "./completion";
+import { progressFor, type CompletionItem, type Progress } from "@/lib/completion";
 
 /** The films in a challenge (TMDB Discover, up to 3 pages). Cached per challenge. */
 async function challengeItems(c: Challenge): Promise<CompletionItem[]> {
