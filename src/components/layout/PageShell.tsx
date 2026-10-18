@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Show } from "@clerk/nextjs";
 import { MobileMenu } from "./MobileMenu";
+import { SignedInOnly } from "./HeaderAuth";
 
 const navLinkClass =
   "rounded-md px-3 py-2 text-sm font-medium text-text-muted transition-colors hover:bg-surface-raised hover:text-text";
@@ -41,11 +41,11 @@ export function PageShell({
                 {link.label}
               </Link>
             ))}
-            <Show when="signed-in">
+            <SignedInOnly>
               <Link href="/account" className={navLinkClass}>
                 Account
               </Link>
-            </Show>
+            </SignedInOnly>
           </nav>
           {search && <div className="hidden flex-1 items-center sm:flex">{search}</div>}
           {!search && <div className="hidden flex-1 sm:block" />}

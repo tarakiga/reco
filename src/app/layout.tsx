@@ -3,11 +3,11 @@ import Link from "next/link";
 import { Asap, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Suspense } from "react";
-import { ClerkProvider, Show, SignInButton } from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
 import { PageShell } from "@/components/layout/PageShell";
 import { AdLoader } from "@/components/ads/AdLoader";
 import { AdSlot } from "@/components/ads/AdSlot";
-import { AccountAvatar } from "@/components/layout/AccountAvatar";
+import { HeaderAuth } from "@/components/layout/HeaderAuth";
 import { NavigationProgress } from "@/components/layout/NavigationProgress";
 import { ToastProvider } from "@/components/ui/Toast";
 import { QueryProvider } from "@/components/providers/QueryProvider";
@@ -117,16 +117,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                     {footerAttribution}
                   </>
                 }
-                actions={
-                  <>
-                    <Show when="signed-out">
-                      <SignInButton mode="modal" />
-                    </Show>
-                    <Show when="signed-in">
-                      <AccountAvatar />
-                    </Show>
-                  </>
-                }
+                actions={<HeaderAuth />}
               >
                 {children}
               </PageShell>

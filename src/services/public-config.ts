@@ -15,7 +15,7 @@ import type { PublishedBlock, PublishedOption } from "@/lib/contracts/config";
  */
 export async function publishedOptions(namespace: string): Promise<PublishedOption[]> {
   "use cache";
-  cacheLife("hours"); // also revalidated instantly on publish; never cache forever
+  cacheLife("days"); // publishing revalidates by tag, so a long life is safe
   cacheTag(`config:options_namespace:${namespace}`);
   const result = await getPublishedOptions(namespace);
   const options: PublishedOption[] = result?.options ?? [];
@@ -32,6 +32,6 @@ export async function publishedOptions(namespace: string): Promise<PublishedOpti
 export async function publishedBlock(key: string): Promise<PublishedBlock | null> {
   "use cache";
   cacheTag(`config:content_block:${key}`);
-  cacheLife("hours"); // also revalidated instantly on publish; never cache forever
+  cacheLife("days"); // publishing revalidates by tag, so a long life is safe
   return getPublishedBlockRaw(key);
 }
