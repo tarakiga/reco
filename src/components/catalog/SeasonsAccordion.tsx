@@ -1,10 +1,11 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { useAuth } from "@clerk/nextjs";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { meFetch } from "@/lib/me-client";
 import type { SeasonSummary, EpisodeVM, EpisodeCastMember } from "@/lib/tmdb/episodes";
+import { useBrowserToday } from "@/components/ui/BrowserDate";
+import { episodeWatchesKey, useEpisodeWatches, type EpisodeWatches } from "./useEpisodeWatches";
 
 function CheckButton({ watched, onClick }: { watched: boolean; onClick: () => void }) {
   return (
@@ -283,10 +284,10 @@ function SeasonItem({
   onToggle: (season: number, episode: number) => void;
   onMarkSeason: (season: number, episodes: number[], watched: boolean) => void;
   signedIn: boolean;
-  /** Today as YYYY-MM-DD, resolved on the server. Read from a prop rather than
-   *  the clock so render stays pure and the server and client agree on which
-   *  episodes have aired. */
-  todayYmd: string;
+  /** The browser's date as YYYY-MM-DD, or null on the server and during
+   *  hydration. The season-complete controls wait for it, so the prerendered
+   *  HTML and the first client render always match. */
+  todayYmd: string | null;
 }) {
   const [open, setOpen] = useState(defaultOpen);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -309,9 +310,9 @@ function SeasonItem({
   // loaded episode has an air date in the past. An ongoing/upcoming season hides
   // the bulk action; individual episode checks still work.
   // ISO dates compare lexicographically, so this is a plain string comparison
-  // against the server-supplied date rather than a clock read during render.
+  // against the browser date from useBrowserToday rather than a clock read here.
   const seasonComplete =
-    episodes.length > 0 && episodes.every((e) => e.airDate != null && e.airDate <= todayYmd);
+    todayYmd != null && episodes.length > 0 && episodes.every((e) => e.airDate != null && e.airDate <= todayYmd);
 
   // Becoming the deep-link target: open this season. Runs after mount (not during
   // render) so the server/client first paint match — no hydration mismatch.
@@ -395,7 +396,7 @@ function SeasonItem({
                   {episodes.every((e) => watched.has(`${season.seasonNumber}:${e.episodeNumber}`)) ? "Unmark all" : "Mark season watched"}
                 </button>
               )}
-              {signedIn && !seasonComplete && episodes.length > 0 && (
+              {signedIn && todayYmd != null && !seasonComplete && episodes.length > 0 && (
                 <p className="mb-3 text-xs text-text-muted">Mark season unlocks once the finale has aired.</p>
               )}
               <ul className="space-y-3">
@@ -419,49 +420,53 @@ function SeasonItem({
   );
 }
 
-export function SeasonsAccordion({
-  tvId,
-  seasons,
-  todayYmd,
-}: {
-  tvId: number;
-  seasons: SeasonSummary[];
-  /** Today as YYYY-MM-DD from the server, see SeasonItem. */
-  todayYmd: string;
-}) {
+function toSet(data: EpisodeWatches | undefined): Set<string> {
+  return new Set((data?.episodes ?? []).map((e) => `${e.season}:${e.episode}`));
+}
+
+/** Watched set to the query's row shape, so the progress bar sees each tick. */
+function toWatches(watched: Set<string>): EpisodeWatches {
+  return {
+    episodes: [...watched].map((k) => {
+      const [season, episode] = k.split(":").map(Number);
+      return { season, episode };
+    }),
+  };
+}
+
+export function SeasonsAccordion({ tvId, seasons }: { tvId: number; seasons: SeasonSummary[] }) {
   const [target, setTarget] = useState<HashTarget | null>(null);
-  const { isSignedIn } = useAuth();
-  const signedIn = isSignedIn ?? false;
-  const [watched, setWatched] = useState<Set<string>>(new Set());
+  const todayYmd = useBrowserToday();
+  const queryClient = useQueryClient();
+  const { signedIn, data: watchedData } = useEpisodeWatches(tvId);
+  const watched = useMemo(() => toSet(watchedData), [watchedData]);
 
-  const { data: watchedData } = useQuery({
-    queryKey: ["episode-watches", tvId],
-    queryFn: () => meFetch<{ episodes: { season: number; episode: number }[] }>(`/api/v1/me/episodes?tmdbId=${tvId}`),
-    enabled: signedIn,
-    staleTime: 5 * 60 * 1000,
-  });
-  useEffect(() => {
-    if (watchedData) setWatched(new Set(watchedData.episodes.map((e) => `${e.season}:${e.episode}`)));
-  }, [watchedData]);
-
-  // Optimistic local toggles; the API call is fire-and-forget.
+  // Optimistic toggles written to the shared query, so WatchProgress follows
+  // along; the API call is fire-and-forget. Each change starts from the cache
+  // rather than the rendered set, so two quick clicks never undo each other.
+  function current(): Set<string> {
+    return toSet(queryClient.getQueryData<EpisodeWatches>(episodeWatchesKey(tvId)));
+  }
+  function write(next: Set<string>) {
+    queryClient.setQueryData<EpisodeWatches>(episodeWatchesKey(tvId), toWatches(next));
+  }
   function toggle(seasonNumber: number, episode: number) {
     const key = `${seasonNumber}:${episode}`;
-    const isWatched = watched.has(key);
-    const next = new Set(watched);
+    const next = current();
+    const isWatched = next.has(key);
     if (isWatched) next.delete(key);
     else next.add(key);
-    setWatched(next);
+    write(next);
     meFetch("/api/v1/me/episodes", { method: "POST", body: { tmdbId: tvId, season: seasonNumber, episode, watched: !isWatched } }).catch(() => {});
   }
   function markSeason(seasonNumber: number, eps: number[], watchedFlag: boolean) {
-    const next = new Set(watched);
+    const next = current();
     for (const e of eps) {
       const k = `${seasonNumber}:${e}`;
       if (watchedFlag) next.add(k);
       else next.delete(k);
     }
-    setWatched(next);
+    write(next);
     meFetch("/api/v1/me/episodes", { method: "POST", body: { tmdbId: tvId, season: seasonNumber, episodes: eps, watched: watchedFlag } }).catch(() => {});
   }
 

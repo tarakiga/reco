@@ -1,11 +1,8 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { after } from "next/server";
-import { getOrCreateTitle } from "@/services/catalog";
-import { getCurrentProfile } from "@/services/profile";
-import { onTitleViewed } from "@/services/taste-hooks";
-import { TmdbError } from "@/lib/tmdb/client";
+import { cachedTitle } from "@/services/cached-catalog";
+import { cachedTodayYmd } from "@/services/clock";
 import {
   parseIdSlug,
   pickTrailerKey,
@@ -47,6 +44,18 @@ import { TitleMatch } from "@/components/catalog/TitleMatch";
 import { seriesCast } from "@/services/series-cast";
 import { AlsoLikeSection } from "@/components/catalog/AlsoLikeSection";
 
+/** Build-time samples. With Cache Components the build needs at least one, and
+ *  prerendering them proves the route reads nothing per request; every other
+ *  title renders on its first visit and is then served from the cache. */
+export function generateStaticParams() {
+  return [
+    { mediaType: "movie", idSlug: "603-the-matrix-1999" },
+    { mediaType: "tv", idSlug: "1396-breaking-bad-2008" },
+  ];
+}
+
+const DAY_MS = 86_400_000;
+
 export async function generateMetadata({
   params,
 }: {
@@ -57,7 +66,8 @@ export async function generateMetadata({
   if (!id) return {};
   if (mediaType !== "movie" && mediaType !== "tv") return {};
   try {
-    const row = await getOrCreateTitle(mediaType, id, false);
+    const row = await cachedTitle(mediaType, id);
+    if (!row) return {};
     const description = row.overview ? row.overview.slice(0, 200) : undefined;
     // Dynamic share card: backdrop + play button (rendered by ./og).
     const ogImage = {
@@ -95,20 +105,12 @@ export default async function TitlePage({
   const id = parseIdSlug(idSlug);
   if (!id) notFound();
 
-  // Only persist on signed-in views; anonymous renders (incl. crawlers walking
-  // ids) mirror read-only so they can't grow the catalog.
-  const viewer = await getCurrentProfile();
-  let title;
-  try {
-    title = await getOrCreateTitle(mediaType, id, Boolean(viewer));
-  } catch (e) {
-    if (e instanceof TmdbError && e.status === 404) notFound();
-    throw e;
-  }
+  // Cached and read-only for every visitor, so page views never grow the
+  // catalog; signed-in actions create the row through their own API routes.
+  const title = await cachedTitle(mediaType, id);
+  if (!title) notFound();
 
   const meta = (title.metadata ?? {}) as TmdbTitleDetail;
-
-  after(() => onTitleViewed(title.id));
 
   const genres = meta.genres ?? [];
   const runtime = formatRuntime(
@@ -126,8 +128,10 @@ export default async function TitlePage({
   const trailerKey = pickTrailerKey(meta.videos?.results);
   const recs = recommendations(meta);
   const seasons = mediaType === "tv" ? seasonSummaries(meta) : [];
-  const now = new Date();
-  const todayYmd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  // Coarse "today" (server UTC, cached about an hour) so the page stays
+  // cacheable. Only values that may be an hour stale use it; anything a visitor
+  // reads as "today" is decided in the browser.
+  const todayYmd = await cachedTodayYmd();
   const facts = titleFacts(meta, mediaType, todayYmd);
   const voteAverage = meta.vote_average;
   const voteCount = meta.vote_count;
@@ -135,17 +139,20 @@ export default async function TitlePage({
   const colorSrc = posterUrlSmall(title.posterPath);
   const backdrop = backdropUrl(title.backdropPath);
 
-  // In cinemas ~ released within the last 90 days (or up to 14 days out). This
-  // route is dynamic (awaits params), so reading the current time is allowed.
+  // In cinemas ~ released within the last 90 days (or up to 14 days out).
   let inTheaters = false;
   if (mediaType === "movie" && meta.release_date) {
-    const days = (Date.now() - new Date(meta.release_date).getTime()) / 86_400_000;
+    const days = (Date.parse(`${todayYmd}T00:00:00Z`) - Date.parse(meta.release_date)) / DAY_MS;
     inTheaters = days >= -14 && days <= 90;
   }
 
   // Unreleased (release/air date still in the future): can't have rated or seen
   // it yet, so the rating control and the "I have seen this" diary widget hide.
-  const unreleased = Boolean(upcomingLabel(meta.release_date ?? meta.first_air_date ?? null));
+  // Decided here from the coarse date rather than in the browser: a browser
+  // decision would flash the rating control on every released title. Noon local
+  // time keeps upcomingLabel's local calendar read on the same day.
+  const releaseDate = meta.release_date ?? meta.first_air_date ?? null;
+  const unreleased = Boolean(upcomingLabel(releaseDate, new Date(`${todayYmd}T12:00:00`)));
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -202,7 +209,7 @@ export default async function TitlePage({
 
             {mediaType === "tv" && (
               <Suspense fallback={null}>
-                <AiringBanner tvId={id} todayYmd={todayYmd} />
+                <AiringBanner tvId={id} />
               </Suspense>
             )}
 
@@ -257,7 +264,7 @@ export default async function TitlePage({
               mediaType={mediaType}
               tmdbId={id}
               unreleased={unreleased}
-              releaseDate={meta.release_date ?? meta.first_air_date ?? null}
+              releaseDate={releaseDate}
             />
             <TitleTags mediaType={mediaType} tmdbId={id} />
           </div>
@@ -301,12 +308,10 @@ export default async function TitlePage({
           {seasons.length > 0 && (
             <section className="mb-8">
               <h2 className="mb-3 text-lg font-semibold text-text">Episodes</h2>
-              <Suspense fallback={null}>
-                <WatchProgress userId={viewer?.id ?? null} tvId={id} seasons={seasons} />
-              </Suspense>
+              <WatchProgress tvId={id} seasons={seasons} />
               <EpisodeFinder tvId={id} />
               <TopEpisodesPanel tvId={id} />
-              <SeasonsAccordion tvId={id} seasons={seasons} todayYmd={todayYmd} />
+              <SeasonsAccordion tvId={id} seasons={seasons} />
             </section>
           )}
 

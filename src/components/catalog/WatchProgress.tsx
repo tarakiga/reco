@@ -1,42 +1,20 @@
-import { getWatchedEpisodes } from "@/services/episode-watches";
-import { nextUnwatched, watchKey } from "@/lib/watch-progress";
+"use client";
+import { watchProgressSummary } from "@/lib/watch-progress";
 import type { SeasonSummary } from "@/lib/tmdb/episodes";
+import { useEpisodeWatches } from "./useEpisodeWatches";
 
 /**
  * "14 of 62 episodes · Next up: S2 E3" above the season list. Signed-in only,
  * and renders nothing until at least one episode is marked watched, so the
- * common case costs nothing and shows nothing. One indexed DB read; the season
- * episode counts come from metadata already on the page. The total includes a
- * currently airing season's unaired remainder, accepted in the spec: fixing it
- * needs a fetch this feature refuses to add.
+ * common case shows nothing. Reads the same browser query as the season list,
+ * so the page itself stays the same for every visitor and ticks in the list
+ * move the bar straight away.
  */
-export async function WatchProgress({
-  userId,
-  tvId,
-  seasons,
-}: {
-  userId: string | null;
-  tvId: number;
-  seasons: SeasonSummary[];
-}) {
-  if (!userId || seasons.length === 0) return null;
-
-  const rows = await getWatchedEpisodes(userId, tvId);
-  if (rows.length === 0) return null;
-
-  const real = seasons.filter((s) => s.seasonNumber > 0);
-  const total = real.reduce((n, s) => n + s.episodeCount, 0);
-  if (total === 0) return null;
-
-  const watched = new Set(rows.map((r) => watchKey(r.season, r.episode)));
-  // Count only watches that map onto listed real seasons, so a stale mark on a
-  // since-removed episode cannot push the bar past 100 percent.
-  const counted = rows.filter((r) => {
-    const s = real.find((x) => x.seasonNumber === r.season);
-    return s != null && r.episode >= 1 && r.episode <= s.episodeCount;
-  }).length;
-  const next = nextUnwatched(watched, real);
-  const pct = Math.min(100, Math.round((counted / total) * 100));
+export function WatchProgress({ tvId, seasons }: { tvId: number; seasons: SeasonSummary[] }) {
+  const { data } = useEpisodeWatches(tvId);
+  const summary = data ? watchProgressSummary(data.episodes, seasons) : null;
+  if (!summary) return null;
+  const { counted, total, pct, next } = summary;
 
   return (
     <div className="mb-4 rounded-md border border-border bg-surface-raised px-4 py-3">

@@ -1,7 +1,7 @@
 import { cache } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getOrCreateTitle } from "@/services/catalog";
+import { cachedTitle } from "@/services/cached-catalog";
 import { oneEpisode } from "@/services/tv-season";
 import { TmdbError } from "@/lib/tmdb/client";
 import { parseIdSlug, parseEpisodeSlug } from "@/lib/tmdb/detail";
@@ -31,7 +31,8 @@ const load = cache(async (mediaType: string, idSlug: string, episode: string) =>
   const ref = parseEpisodeSlug(episode);
   if (!id || !ref) return null;
   try {
-    const show = await getOrCreateTitle("tv", id, false);
+    const show = await cachedTitle("tv", id);
+    if (!show) return null;
     const ep = await oneEpisode(id, ref.season, ref.episode);
     return ep ? { show, episode: ep, ref } : null;
   } catch (e) {
@@ -39,6 +40,13 @@ const load = cache(async (mediaType: string, idSlug: string, episode: string) =>
     throw e;
   }
 });
+
+/** One build-time sample (Breaking Bad S1 E1). With Cache Components the build
+ *  needs at least one, and prerendering it proves the route reads nothing per
+ *  request; every other episode renders on its first visit and is then cached. */
+export function generateStaticParams(): Params[] {
+  return [{ mediaType: "tv", idSlug: "1396-breaking-bad-2008", episode: "s1e1" }];
+}
 
 export async function generateMetadata({ params }: { params: Promise<Params> }) {
   const p = await params;
