@@ -420,7 +420,18 @@ Rules for future work, learned here:
 - Known and accepted: a nonexistent title serves the "could not be found" page
   with status 200 (the pre-existing soft 404), now from cache.
 
-Still to do at go-live: unpause, redeploy main, production smoke (second
-request to a title is a cache HIT with no runtime log; no middleware log on
-Tier A; vercel.app URL 308s with query kept; signed-in walkthrough on
-haystackk.com), then turn Attack Challenge Mode off after a calm day.
+Go-live, 2026-10-18 (deployment of 988aef6; commits pushed while paused are
+BLOCKED and cannot be redeployed, so an empty commit triggered the build):
+
+- A non-sample title and a person page returned `x-vercel-cache: HIT` on
+  repeat, with zero runtime log entries for those requests (no function, no
+  middleware). Home served in 62 ms. Only first-ever renders of distinct pages
+  log anything.
+- `reco-pink.vercel.app/find?q=squid` lands on `haystackk.com/find?q=squid`;
+  `/api/*` on the vercel.app host is not redirected (cron safe).
+- Signed in on haystackk.com: marks, match %, avatar and Account link load in
+  the browser; the cached HTML carries none of the account's data.
+
+Still to do: turn Attack Challenge Mode off after a calm day (Bot Protection
+and the $40 spend cap stay on), and watch function invocations against CDN
+requests on the Usage page over the next days.
